@@ -5,7 +5,7 @@ from logging import INFO
 
 from .common import Direction, Exchange, Interval, Offset, Status, Product, OptionType, OrderType
 
-ACTIVE_STATUSES = set(Status.SUBMITTING, Status.NOTTRADED, Status.PARTTRADED)
+ACTIVE_STATUSES = {Status.SUBMITTING, Status.NOTTRADED, Status.PARTTRADED}
 
 
 @dataclass
@@ -191,6 +191,7 @@ class DepthData(BaseData):
         raise NotImplemented(' for now this type {} is not support yet.'.format(self.__class__))
 
 
+
 @dataclass
 class OrderData(BaseData):
     '''
@@ -229,7 +230,6 @@ class OrderData(BaseData):
 
     def is_active(self) -> bool:
         """
-        Check if the order is active.
         """
         if self.status in ACTIVE_STATUSES:
             return True
@@ -238,8 +238,9 @@ class OrderData(BaseData):
 
     def create_cancel_request(self) -> "CancelRequest":
         """
-        Create cancel request object from order.
         """
+        # deal with circle import 
+        from .object import CancelRequest
         req = CancelRequest(
             orderid=self.orderid, symbol=self.symbol, exchange=self.exchange
         )
