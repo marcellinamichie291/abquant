@@ -12,11 +12,15 @@ def check_ab_symbol(ab_symbol: str) -> bool:
     match = ab_symbol_parrtern.fullmatch(ab_symbol)
     if match:
         symbol_name, exchange_name = match.groups()
+        try:
         # checkout symbol_name
-        print(symbol_name, exchange_name)
-        # cehckout exchange_name
+            Exchange(exchange_name)
+        except ValueError as e:
+            return False
+
         return True
     else:
+  
         return False
 
 
@@ -25,19 +29,15 @@ def extract_vt_symbol(ab_symbol: str) -> Tuple[str, Exchange]:
     """
     :return: (symbol, exchange)
     """
-    symbol, exchange_str = ab_symbol.split(".")
-    return symbol, Exchange(exchange_str)
+    symbol, exchange_name = ab_symbol.split(".")
+    return symbol, Exchange(exchange_name)
 
 
 def generate_vt_symbol(symbol: str, exchange: Exchange) -> str:
     """
-    return vt_symbol
+    return ab_symbol
     """
     return f"{symbol}.{exchange.value}"
-
-class BarGenerator:
-    def __init__(self, interval):
-        pass
 
 if __name__ == '__main__':
     ab_test = 'syx'
