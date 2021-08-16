@@ -5,7 +5,9 @@ from threading import Thread
 import time
 from typing import Any, Callable, List
 
-from .event import EVENT_TIMER
+from .event import EVENT_EXCEPTION, EVENT_TIMER
+from abquant.trader.exception import CongestionException
+
 
 class Event:
 
@@ -15,14 +17,14 @@ class Event:
         self.data: Any = data
 
 
-# Defines handler function to be used in event engine.
 HandlerType = Callable[[Event], None]
 
 
 class EventDispatcher:
 
-    def __init__(self, interval: int = 1):
+    def __init__(self, event_threshold: int = 100, interval: int = 1):
         self._interval: int = interval
+        self._event_threshold = event_threshold
         self._queue: Queue = Queue()
         self._active: bool = False
         self._thread: Thread = Thread(target=self._run)
@@ -50,6 +52,7 @@ class EventDispatcher:
             time.sleep(self._interval)
             event = Event(EVENT_TIMER)
             self.put(event)
+            self.check_event_congestion()
 
     def start(self) -> None:
         self._active = True
@@ -85,3 +88,11 @@ class EventDispatcher:
     def unregister_general(self, handler: HandlerType) -> None:
         if handler in self._general_handlers:
             self._general_handlers.remove(handler)
+
+    def check_event_congestion(self) -> bool:
+        congested_event = self._queue.qsize()
+        if congested_event > self._event_threshold:
+            self._queue.put(Event(type=EVENT_EXCEPTION, data=CongestionException(
+                threshold=self._event_threshold, congested_event=congested_event)))
+            # TODO log here. at least warning level
+
