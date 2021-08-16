@@ -5,7 +5,7 @@ from threading import Thread
 import time
 from typing import Any, Callable, List
 
-from .event import EVENT_EXCEPTION, EVENT_TIMER
+from .event import EventType
 from abquant.trader.exception import CongestionException
 
 
@@ -50,7 +50,7 @@ class EventDispatcher:
     def _run_timer(self) -> None:
         while self._active:
             time.sleep(self._interval)
-            event = Event(EVENT_TIMER)
+            event = Event(type= EventType.EVENT_TIMER)
             self.put(event)
             self.check_event_congestion()
 
@@ -92,7 +92,7 @@ class EventDispatcher:
     def check_event_congestion(self) -> bool:
         congested_event = self._queue.qsize()
         if congested_event > self._event_threshold:
-            self._queue.put(Event(type=EVENT_EXCEPTION, data=CongestionException(
+            self._queue.put(Event(type=EventType.EVENT_EXCEPTION, data=CongestionException(
                 threshold=self._event_threshold, congested_event=congested_event)))
             # TODO log here. at least warning level
 
