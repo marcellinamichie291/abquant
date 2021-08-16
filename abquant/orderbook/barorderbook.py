@@ -1,6 +1,7 @@
 from typing import overload
 from .import OrderBook
 from abquant.trader.msg import BarData, TickData
+from abquant.trader.object import OrderData
 
 class BarOrderBook(OrderBook):
     
