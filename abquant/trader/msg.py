@@ -1,7 +1,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from logging import INFO
+from logging import INFO, currentframe
 
 from .common import Direction, Exchange, Interval, Offset, Status, Product, OptionType, OrderType
 
@@ -22,12 +22,12 @@ class TickData(BaseData):
     2. 回测易于实现的原因。
     3. 部分币所提供的接口存在特殊性（binance提供 real-time的ticker和 100ms-1000ms延时的depth）
     初期TickData这个数据会承载3个功能---即三种事件发生时会生成：
-    1. 最优ask，bid，分属字段best_{ask}/{bid}_{price}/{volumn}，当交易所发包最优ticker时。
-    2. 成交发生时，分属字段last_price, last_volume,以及 才会更新（币所传统）。订单流相关策略可以监控datetime字段。 
-    3. 最优5档ask，bid， 分属字段 {ask}/{bid}_price_{1-5}, {ask}/{bid}_volume_{1-5}, 
-    注意最优五档ask，bid和 最优best ask，bid，由于交易所提供api有可能存在不同延时，有可能不兼容，且由于无timestamp+延迟不同，
+    1. 最优ask，bid更新，分属字段best_{ask}/{bid}_{price}/{volumn}，当交易所发包最优ticker时。
+    2. 成交发生时，分属字段trade_price, trade_volume,才会更新。订单流相关策略可以监控这两个字段, 同时，部分交易所仅在成交发生时更新timestamp，需要注意。
+    3. 最优5档ask，bid更新， 分属字段 {ask}/{bid}_price_{1-5}, {ask}/{bid}_volume_{1-5}, 
+    注意最优五档ask，bid和 最优best ask，bid，由于交易所提供api有可能存在不同延时，有可能不兼容, 且由于timestamp机制比较诡异+延迟不同，
     根据depth信息推导best ask bid很可能存在错误。（
-    binance，的深度信息存在100ms+延迟，而ticker则为real-time stream。而bitmex总体都是实时。）
+    例如binance的深度信息存在100ms+延迟，而ticker则为real-time stream。而bitmex总体都是实时。）
     '''
     symbol: str
     exchange: Exchange
@@ -35,11 +35,10 @@ class TickData(BaseData):
     datetime: datetime
 
 
-    # 最近一次成交价格
-    last_price: float = 0
-    # 最近一次成交量
-    last_volume: float = 0
     # 最新更新的 最优 买一买一档
+    trade_price: float = 0
+    trade_volume: float = 0
+
     best_ask_price: float = 0
     best_ask_volune: float = 0
     best_bid_price: float = 0

@@ -123,10 +123,19 @@ class StrategyTemplate(ABC):
         pass
 
     @abstractmethod
+    def on_bar(self, bar: BarData) -> None:
+        """
+        该方法比较特殊，在实盘中需通过BarGenerator，在on_tick中更新并回调。 
+        在回测中，tick级别回测同理， 分钟bar级别回测则会被回测引擎自动调用。
+        """
+        pass
+
+
+    @abstractmethod
     def on_entrust(self, entrust: EntrustData) -> None:
         """
         委托单信息更新时的callback。通常用于重建orderbook.
-        尽量不要实现，而是是哟经on_tick的最优5档，
+        尽量不要实现，而是是经on_tick的最优5档，
         因为1. 短期内回测不会支持，2.大多数交易所不提供该广播委托/交易单的功能。
         """
         pass
@@ -134,14 +143,14 @@ class StrategyTemplate(ABC):
     def on_depth(self, depth: DepthData) -> None:
         """
         深度数据更新时的callback。通常用于重建orderbook.
-        尽量不要实现，而是是哟经on_tick的最优5档，因为短期内回测不会支持，
+        尽量不要实现，而是是哟经on_tick的最优5档，因为短期内回测不会支持。
         """
         pass
 
     def on_transaction(self, transaction: TransactionData) -> None:
         """
         交易所成交数据更新时的callback。通常用于订单流相关的策略.
-        尽量不要实现，而是是经由on_tick的last_trade，以及timestamp实现，因为短期内回测不会支持。
+        尽量不要实现，而是是经由on_tick， tickData中的trade_volume trade_price，以及timestamp实现，因为短期内回测不会支持。
         """
         pass
  
@@ -149,7 +158,7 @@ class StrategyTemplate(ABC):
     def on_exception(self, exception: Exception) -> None:
 
         """
-        TODO 初步的规划是提供两个交易所可能出现的异常类， OrderException， 以及MarketException，
+        TODO 初步的规划是提供两个交易所可能出现的异常类， OrderException， 以及MarketException，CongestionException.
         分别对应行情订阅异常，以及订单发送异常。
         """
         pass
@@ -170,7 +179,7 @@ class StrategyTemplate(ABC):
         """
         个人交易单出现成交时的callback，默认的实现是用来管理该策略的相关交易单单状态，尤其是尚处于活跃状态（可被动成交）的交易单。
         重写该方法时最好 super().update_order(order)，调用父类StrategeTemplate该方法的实现。
-        回测时会支持，模拟回报，调用该方法。
+        回测时会支持模拟回报，调用该方法。
         """
         self.orders[order.ab_orderid] = order
 
@@ -241,7 +250,8 @@ class StrategyTemplate(ABC):
         撤单， 注意，撤单操作是一个异步操作，从该方法调用到 update_order方法 被回调
         orderData中status 被置为 Cancelled， 存在时间差。
         请以update_order方法被回调为准，确定撤单成功。若撤单失败则 order status 为Rejected。
-        TODO： 暂时不确定撤单交易所未回报应该怎么处理。 可能会在update_order方法 被回调时，给出Rejected, 或增加Timeout的order status
+        TODO： 暂时不确定撤单交易所未回报应该怎么处理。 可能会在update_order方法 被回调时，给出Rejected, 或增加Timeout的order statui。
+        不过通常来说，交易所给cancel_order的级别极高，哪怕账户被权限冻结，一般都会保留撤单权限。
 
         """
         if self.trading:
@@ -262,6 +272,8 @@ class StrategyTemplate(ABC):
     def cancel_all(self) -> None:
         """
         撤销该策略所有订单。
+        可以考虑在on_exception时调用。
+        之后可以考虑根据sync_date函数 持久化的仓位信息。去交易所手动平仓。
         """
         for ab_orderid in list(self.active_orderids):
             self.cancel_order(ab_orderid)
@@ -294,6 +306,7 @@ class StrategyTemplate(ABC):
     def sync_data(self):
         """
         同步 策略内相关变量。通常用于记录仓位及参数信息，以便监控及复原。
+        如果调用建议发生在update_trade时进行。 因为该回调会在仓位发生变更时发生。
         """
         if self.trading:
             self.strategy_engine.sync_strategy_data(self)

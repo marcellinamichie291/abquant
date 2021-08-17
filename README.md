@@ -1,7 +1,8 @@
 # abquant
-abquant 是内部用的纯python实现的专注于数字货币金融产品的量化交易系统，设计理念是基于事件驱动的架构。支持tick2order在毫秒级以内的全种类策略。
+abquant 是内部用的纯python实现的专注于数字货币金融产品的量化交易系统，设计理念是基于事件驱动的架构。支持tick2order在毫秒级的全种类策略实现,且能保证实盘与回测的策略实现保持一致。
 
 初期版本仅支持策略实盘，后期计划会加入回测。
+
 
 # dependency and environment
 
@@ -15,7 +16,7 @@ pip install -r requirement.txt
 
 ## abquant库安装(后续支持)
 ```
-https://git.wecash.net/dct/abquant
+git clone https://git.wecash.net/dct/abquant
 cd abquant
 pip install .
 ```

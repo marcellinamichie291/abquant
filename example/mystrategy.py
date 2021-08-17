@@ -14,9 +14,6 @@ from abquant.trader.msg import TickData, BarData, TradeData, OrderData, EntrustD
 class MyStrategy(StrategyTemplate):
     """"""
 
-
-
-
     # parameter 超参数 初始化时确定，在初始化阶段被调用setattr(strategy, variable_name, variable_value)成为 object属性
     THRESHOLD = 50
     PRICE_ADD = 5
@@ -50,25 +47,29 @@ class MyStrategy(StrategyTemplate):
         self.targets: Dict[str, int] = {}
         self.last_tick_time: datetime = None
 
-        # 既往数据缓存
-        self.spread_data: np.array = np.zeros(100)
-
-        # Obtain contract info
         self.leg1_symbol, self.leg2_symbol = ab_symbols
 
-        def on_bar(bar: BarData):
-            pass
 
-        for ab_symbol in self.ab_symbols:
-            self.targets[ab_symbol] = 0
-            self.bgs[ab_symbol] = BarGenerator(on_bar)
 
     def on_init(self):
         """
         """
         self.write_log("策略初始化")
 
+        # 既往数据缓存
+        self.spread_data: np.array = np.zeros(100)
+
+        # Obtain contract info
+
+        def on_bar(bar: BarData):
+            pass
+
+        for ab_symbol in self.ab_symbols:
+            self.targets[ab_symbol] = 0
+            self.bgs[ab_symbol] = BarGenerator(self.on_5s_bar, interval=5)
         self.load_bars(1)
+
+
 
     def on_start(self):
         """
@@ -100,6 +101,13 @@ class MyStrategy(StrategyTemplate):
 
         self.last_tick_time = tick.datetime
 
+    def on_bar(self, bar: BarData):
+        # query
+        pass
+
+
+    def on_5s_bar(self, bar:BarData):
+        pass
     
 
     def on_bars(self, bars: Dict[str, BarData]):
@@ -189,3 +197,5 @@ class MyStrategy(StrategyTemplate):
         self.write_log("order still active: {}".format(self.active_orderids))
         self.write_log("order {} status: {}".format(order.ab_orderid, order.status))
 
+if __name__ == '__main__':
+    pass
