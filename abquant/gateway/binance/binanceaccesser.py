@@ -1,22 +1,25 @@
+
 from threading import Lock
 import urllib
 import time
-import hashlib
 import hmac
-from copy import copy
-from datetime import datetime, timedelta
-from enum import Enum
-from threading import Lock
-import pytz
+import hashlib
+from datetime import datetime
+from requests import Request
+from requests.exceptions import SSLError
 
-from . import DIRECTION_AB2BINANCE, DIRECTION_BINANCE2VT, REST_HOST
+from . import DIRECTION_AB2BINANCE, DIRECTION_BINANCE2AB, INTERVAL_AB2BINANCE, ORDERTYPE_AB2BINANCE, ORDERTYPE_BINANCE2AB, STATUS_BINANCE2AB, Security, REST_HOST, TIMEDELTA_MAP, WEBSOCKET_TRADE_HOST, symbol_name_map
 from abquant.gateway.accessor import RestfulAccessor
 from abquant.gateway.basegateway import Gateway
-from abquant.trader.object import OrderRequest
+from abquant.trader.common import Exchange, Product, Status
+from abquant.trader.msg import BarData, OrderData
+from abquant.trader.object import AccountData, CancelRequest, ContractData, HistoryRequest, OrderRequest
 
 
 class BinanceAccessor(RestfulAccessor):
-
+    """
+    BINANCE REST API
+    """
 
     def __init__(self, gateway: Gateway):
         """"""
@@ -25,7 +28,7 @@ class BinanceAccessor(RestfulAccessor):
         self.gateway = gateway
         self.gateway_name = gateway.gateway_name
 
-        self.trade_ws_api = self.gateway.trade_ws_api
+        # self.trade_ws_api = self.gateway.trade_ws_api
 
         self.key = ""
         self.secret = ""
@@ -41,15 +44,48 @@ class BinanceAccessor(RestfulAccessor):
 
     def sign(self, request):
 
+        security = request.data["security"]
+        if security == Security.NONE:
+            request.data = None
+            return request
 
-        # TODO 
-        query = urllib.parse.urlencode(sorted(request.params.items()))
-        signature = hmac.new(self.secret, query.encode(
-            "utf-8"), hashlib.sha256).hexdigest()
+        if request.params:
+            path = request.path + "?" + urllib.parse.urlencode(request.params)
+        else:
+            request.params = dict()
+            path = request.path
 
-        query += "&signature={}".format(signature)
-        path = request.path + "?" + query
+        if security == Security.SIGNED:
+            timestamp = int(time.time() * 1000)
 
+            if self.time_offset > 0:
+                timestamp -= abs(self.time_offset)
+            elif self.time_offset < 0:
+                timestamp += abs(self.time_offset)
+
+            request.params["timestamp"] = timestamp
+
+            query = urllib.parse.urlencode(sorted(request.params.items()))
+            signature = hmac.new(self.secret, query.encode(
+                "utf-8"), hashlib.sha256).hexdigest()
+
+            query += "&signature={}".format(signature)
+            path = request.path + "?" + query
+
+        request.path = path
+        request.params = {}
+        request.data = {}
+
+        # Add headers
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "application/json",
+            "X-MBX-APIKEY": self.key,
+            "Connection": "close"
+        }
+
+        if security in [Security.SIGNED, Security.API_KEY]:
+            request.headers = headers
 
         return request
 
@@ -74,7 +110,7 @@ class BinanceAccessor(RestfulAccessor):
         self.init(REST_HOST, proxy_host, proxy_port)
         self.start(session_number)
 
-        self.gateway.write_log("BINANCE restful accessor start")
+        self.gateway.write_log("REST API启动成功")
 
         self.query_time()
         self.query_account()
@@ -98,7 +134,7 @@ class BinanceAccessor(RestfulAccessor):
 
     def query_account(self):
         """"""
-        data = {}
+        data = {"security": Security.SIGNED}
 
         self.add_request(
             method="GET",
@@ -107,7 +143,28 @@ class BinanceAccessor(RestfulAccessor):
             data=data
         )
 
+    def query_order(self):
+        """"""
+        data = {"security": Security.SIGNED}
 
+        self.add_request(
+            method="GET",
+            path="/api/v3/openOrders",
+            callback=self.on_query_order,
+            data=data
+        )
+
+    def query_contract(self):
+        """"""
+        data = {
+            "security": Security.NONE
+        }
+        self.add_request(
+            method="GET",
+            path="/api/v1/exchangeInfo",
+            callback=self.on_query_contract,
+            data=data
+        )
 
     def _new_order_id(self):
         """"""
@@ -131,8 +188,8 @@ class BinanceAccessor(RestfulAccessor):
         params = {
             "symbol": req.symbol.upper(),
             "timeInForce": "GTC",
-            "side": DIRECTION_VT2BINANCE[req.direction],
-            "type": ORDERTYPE_VT2BINANCE[req.type],
+            "side": DIRECTION_AB2BINANCE[req.direction],
+            "type": ORDERTYPE_AB2BINANCE[req.type],
             "price": str(req.price),
             "quantity": str(req.volume),
             "newClientOrderId": orderid,
@@ -238,11 +295,11 @@ class BinanceAccessor(RestfulAccessor):
                 exchange=Exchange.BINANCE,
                 price=float(d["price"]),
                 volume=float(d["origQty"]),
-                type=ORDERTYPE_BINANCE2VT[d["type"]],
-                direction=DIRECTION_BINANCE2VT[d["side"]],
+                type=ORDERTYPE_BINANCE2AB[d["type"]],
+                direction=DIRECTION_BINANCE2AB[d["side"]],
                 traded=float(d["executedQty"]),
-                status=STATUS_BINANCE2VT.get(d["status"], None),
-                datetime=generate_datetime(d["time"]),
+                status=STATUS_BINANCE2AB.get(d["status"], None),
+                datetime=datetime.fromtimestamp(d["time"] / 1000),
                 gateway_name=self.gateway_name,
             )
             self.gateway.on_order(order)
@@ -283,13 +340,10 @@ class BinanceAccessor(RestfulAccessor):
         self.gateway.write_log("合约信息查询成功")
 
     def on_send_order(self, data, request):
-        """"""
         pass
 
     def on_send_order_failed(self, status_code: str, request: Request):
-        """
-        Callback when sending order failed on server.
-        """
+
         order = request.extra
         order.status = Status.REJECTED
         self.gateway.on_order(order)
@@ -337,7 +391,7 @@ class BinanceAccessor(RestfulAccessor):
             # Create query params
             params = {
                 "symbol": req.symbol.upper(),
-                "interval": INTERVAL_VT2BINANCE[req.interval],
+                "interval": INTERVAL_AB2BINANCE[req.interval],
                 "limit": limit,
                 "startTime": start_time * 1000,         # convert to millisecond
             }
@@ -373,7 +427,7 @@ class BinanceAccessor(RestfulAccessor):
                     bar = BarData(
                         symbol=req.symbol,
                         exchange=req.exchange,
-                        datetime=generate_datetime(l[0]),
+                        datetime=datetime.fromtimestamp(l[0] / 1000),
                         interval=req.interval,
                         volume=float(l[5]),
                         open_price=float(l[1]),
@@ -391,11 +445,9 @@ class BinanceAccessor(RestfulAccessor):
                 msg = f"获取历史数据成功，{req.symbol} - {req.interval.value}，{begin} - {end}"
                 self.gateway.write_log(msg)
 
-                # Break if total data count less than limit (latest date collected)
                 if len(data) < limit:
                     break
 
-                # Update start time
                 start_dt = bar.datetime + TIMEDELTA_MAP[req.interval]
                 start_time = int(datetime.timestamp(start_dt))
 
