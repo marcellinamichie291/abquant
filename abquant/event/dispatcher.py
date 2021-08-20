@@ -11,10 +11,10 @@ from abquant.trader.exception import CongestionException
 
 class Event:
 
-    def __init__(self, type: str, data: Any = None):
+    def __init__(self, type: EventType, data: Any = None):
         """"""
-        self.type: str = type
-        self.data: Any = data
+        self.type = type
+        self.data = data
 
 
 HandlerType = Callable[[Event], None]
