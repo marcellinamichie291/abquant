@@ -4,6 +4,8 @@ from enum import Enum
 from abquant.trader.msg import Status, OrderType, Direction, Interval
 from .binanceaccesser import BinanceAccessor
 
+from .binancegateway import BinanceGateway
+
 
 REST_HOST = "https://www.binance.com"
 WEBSOCKET_TRADE_HOST = "wss://stream.binance.com:9443/ws/"
