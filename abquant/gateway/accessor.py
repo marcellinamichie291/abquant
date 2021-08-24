@@ -8,9 +8,9 @@ from typing import Any, Callable, Optional, Union, Type
 from types import TracebackType
 from abc import ABC, abstractmethod
 import urllib.parse
-
 import requests
 
+from .basegateway import Gateway
 
 CALLBACK_TYPE = Callable[[dict, "Request"], Any]
 ON_FAILED_TYPE = Callable[[int, "Request"], Any]
@@ -85,8 +85,11 @@ class RestfulAccessor(ABC):
     """
      为后续可能存在的 dex 交易所（非restful http api）流出 基类Accessor 的空间。
     """
-    def __init__(self):
+    def __init__(self, gateway: Gateway):
         """"""
+        self.gateway = gateway
+        self.gateway_name = gateway.gateway_name
+
         self.url_base: str = ""
         self._active: bool = False
 
@@ -193,6 +196,7 @@ class RestfulAccessor(ABC):
         """
         http失败返回码的 callback.
         """
+        #  TODO Event exception event
         sys.stderr.write(str(request))
 
     @abstractmethod
