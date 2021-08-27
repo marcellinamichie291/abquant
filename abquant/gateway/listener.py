@@ -155,6 +155,7 @@ class WebsocketListener(ABC):
 
     def _run(self):
         try:
+            # TODO here is a really big problem. slow down retry.
             while self._active:
                 try:
                     self._ensure_connection()
@@ -168,11 +169,13 @@ class WebsocketListener(ABC):
                             continue
 
                         self._record_last_received_text(text)
-
+                        # TODO  may be there is no need to reconnected.
                         try:
                             data = self.unpack_data(text)
                         except ValueError as e:
                             print("websocket unable to parse data: " + text)
+                            et, ev, tb = sys.exc_info()
+                            self.on_error(et, ev, tb)
                             raise e
 
                         self._log('recv data: %s', data)
