@@ -1,3 +1,4 @@
+from abquant.event.dispatcher import EventDispatcher
 from abquant.trader.object import CancelRequest, HistoryRequest, OrderRequest, SubscribeRequest
 from .. import Gateway
 from . import BinanceAccessor
@@ -16,8 +17,8 @@ class BinanceSGateway(Gateway):
 
     exchanges = [Exchange.BINANCE]
 
-    def __init__(self, event_engine):
-        super().__init__(event_engine, "BINANCE")
+    def __init__(self, event_dispatcher: EventDispatcher):
+        super().__init__(event_dispatcher, "BINANCES")
 
         # self.market_listener =
         self.rest_accessor = BinanceAccessor(self)

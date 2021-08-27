@@ -7,6 +7,7 @@ from abquant.trader.common import Exchange
 from abquant.trader.object import AccountData, CancelRequest, ContractData, HistoryRequest, LogData, OrderRequest, PositionData
 
 class Gateway(ABC):
+    default_setting = {}
 
     def __init__(self, event_dispatcher: EventDispatcher, gateway_name: str):
         self.event_dispatcher: EventDispatcher = event_dispatcher
