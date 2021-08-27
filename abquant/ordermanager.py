@@ -114,19 +114,4 @@ class OrderManager:
         return self.contracts.get(ab_symbol, None)
 
 
-    def get_all_active_orders(self, ab_symbol: str = "") -> List[OrderData]:
-        """
-        Get all active orders by ab_symbol.
-
-        If ab_symbol is empty, return all active orders.
-        """
-        if not ab_symbol:
-            return list(self.active_orders.values())
-        else:
-            active_orders = [
-                order
-                for order in self.active_orders.values()
-                if order.ab_symbol == ab_symbol
-            ]
-            return active_orders
 
