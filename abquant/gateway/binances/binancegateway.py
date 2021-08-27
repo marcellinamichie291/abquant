@@ -3,7 +3,8 @@ from .. import Gateway
 from . import BinanceAccessor
 from abquant.trader.common import Exchange
 from abquant.event import EventType
-class BinanceGateway(Gateway):
+
+class BinanceSGateway(Gateway):
 
     default_setting = {
         "key": "",
@@ -36,7 +37,7 @@ class BinanceGateway(Gateway):
 
     def subscribe(self, req: SubscribeRequest):
         """"""
-        self.market_ws_api.subscribe(req)
+        self.market_listener.subscribe(req)
 
     def send_order(self, req: OrderRequest):
         """"""
@@ -56,7 +57,7 @@ class BinanceGateway(Gateway):
 
     def query_history(self, req: HistoryRequest):
         """"""
-        return self.rest_api.query_history(req)
+        return self.rest_accessor.query_history(req)
 
     def close(self):
         """"""

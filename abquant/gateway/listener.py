@@ -8,12 +8,13 @@ from datetime import datetime
 from threading import Lock, Thread
 from time import sleep
 from abc import ABC, abstractmethod, abstractstaticmethod
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 import websocket
 
 from .basegateway import Gateway
 from abquant.trader.utility import get_file_logger
+from abquant.trader.msg import DepthData, EntrustData, TickData, TransactionData
 
 
 class WebsocketListener(ABC):
@@ -198,6 +199,36 @@ class WebsocketListener(ABC):
     @staticmethod
     def unpack_data(data: str) -> Dict:
         return json.loads(data)
+
+    @staticmethod
+    def make_data(symbol: str, exchange: str, now: datetime, gateway: str) -> Tuple[TickData, DepthData, TransactionData, EntrustData]:
+
+        tick = TickData(
+            symbol=symbol,
+            # name=symbol_contract_map[req.symbol].name,
+            exchange=exchange,
+            datetime=now,
+            gateway_name=gateway,
+        )
+        depth = DepthData(
+            symbol=symbol,
+            exchange=exchange,
+            datetime=now,
+            gateway_name=gateway
+        )
+        transaction = TransactionData(
+            symbol=symbol,
+            exchange=exchange,
+            datetime=now,
+            gateway_name=gateway,
+        )
+        entrust = EntrustData(
+            symbol=symbol,
+            exchange=exchange,
+            datetime=now,
+            gateway_name=gateway,
+        )
+
 
     def _run_ping(self):
         while self._active:

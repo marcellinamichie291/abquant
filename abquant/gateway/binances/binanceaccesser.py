@@ -24,10 +24,6 @@ class BinanceAccessor(RestfulAccessor):
     def __init__(self, gateway: Gateway):
         """"""
         super().__init__()
-
-        self.gateway = gateway
-        self.gateway_name = gateway.gateway_name
-
         # self.trade_ws_api = self.gateway.trade_ws_api
 
         self.key = ""

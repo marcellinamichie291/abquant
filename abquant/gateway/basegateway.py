@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from abquant.event.event import EventType
 from typing import Iterable, Any, Set
-from abquant.trader.msg import BarData, DepthData, OrderData, TickData, TradeData, TransactionData
+from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
 from abquant.event import EventDispatcher, Event
 from abquant.trader.common import Exchange
 from abquant.trader.object import AccountData, CancelRequest, ContractData, HistoryRequest, LogData, OrderRequest, PositionData
@@ -12,6 +12,9 @@ class Gateway(ABC):
         self.event_dispatcher: EventDispatcher = event_dispatcher
         self.gateway_name: str = gateway_name
 
+
+    def set_gateway_name(self, gateway_name: str):
+        self.gateway_name = gateway_name
     
     def on_event(self, type: str, data: Any = None) -> None:
         event = Event(type, data)
@@ -72,6 +75,9 @@ class Gateway(ABC):
     def on_transaction(self, transaction: TransactionData) -> None:
         self.on_event(EventType.EVENT_TRANSACTION, transaction)
     
+    def on_entrust(self, entrust: EntrustData) -> None:
+        self.on_event(EventType.EVENT_ENTRUST, entrust)
+
     def on_depth(self, depth: DepthData) -> None:
         self.on_event(EventType.EVENT_DEPTH, depth)
 
