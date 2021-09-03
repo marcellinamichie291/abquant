@@ -252,25 +252,22 @@ class WebsocketListener(ABC):
         if ws:
             ws.send("ping", websocket.ABNF.OPCODE_PING)
 
-    @staticmethod
     @abstractmethod
-    def on_connected():
+    def on_connected(self):
         """
         Callback when websocket is connected successfully.
         """
         pass
 
-    @staticmethod
     @abstractmethod
-    def on_disconnected():
+    def on_disconnected(self):
         """
         Callback when websocket connection is lost.
         """
         pass
 
-    @staticmethod
     @abstractmethod
-    def on_packet(packet: dict):
+    def on_packet(self, packet: dict):
         pass
 
     def on_error(self, exception_type: type, exception_value: Exception, tb):

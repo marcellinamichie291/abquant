@@ -44,7 +44,7 @@ class Gateway(ABC):
         pass
 
     @abstractmethod
-    def inser_order(self, order_request: OrderRequest) -> OrderData:
+    def send_order(self, order_request: OrderRequest) -> OrderData:
         pass
     
     @abstractmethod

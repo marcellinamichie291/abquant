@@ -191,7 +191,6 @@ class RestfulAccessor(ABC):
         return request
 
 
-    @abstractmethod
     def on_failed(self, status_code: int, request: Request) -> None:
         """
         http失败返回码的 callback.
@@ -199,7 +198,6 @@ class RestfulAccessor(ABC):
         #  TODO Event exception event
         sys.stderr.write(str(request))
 
-    @abstractmethod
     def on_error(
         self,
         exception_type: type,

@@ -26,7 +26,7 @@ class BinanceCGateway(Gateway):
         # self.market_listener =
     def __init__(self, event_dispatcher: EventDispatcher):
         """Constructor"""
-        # attention! call the set_gateway_name in teh derived class.
+        # attention! call the set_gateway_name in the derived class.
         super().__init__(event_dispatcher, "BINANCEC")
 
         self.market_listener = BinanceCDataWebsocketListener(self)
@@ -46,7 +46,6 @@ class BinanceCGateway(Gateway):
         proxy_host = setting["proxy_host"]
         proxy_port = setting["proxy_port"]
 
-
         self.rest_accessor.connect(self.ustd_based(), key, secret, session_number, server,
                               proxy_host, proxy_port)
         self.market_listener.connect(self.ustd_based(), proxy_host, proxy_port, server)
@@ -64,6 +63,9 @@ class BinanceCGateway(Gateway):
     def cancel_order(self, req: CancelRequest) -> Request:
         """"""
         self.rest_accessor.cancel_order(req)
+
+    def cancel_orders(self, reqs: Iterable[CancelRequest]) -> None:
+        return super().cancel_orders(reqs)
 
     def query_account(self) -> Iterable[AccountData]:
         """"""
@@ -92,7 +94,6 @@ class BinanceCGateway(Gateway):
     def close(self) -> None:
         """"""
         self.rest_accessor.stop()
-
         self.trade_listener.stop()
         self.market_listener.stop()
 
