@@ -34,7 +34,7 @@ class BinanceCGateway(Gateway):
         self.rest_accessor = BinanceCAccessor(self)
 
     @abstractmethod 
-    def ustd_based() -> bool:
+    def ustd_based(self) -> bool:
         pass
 
     def connect(self, setting: dict) -> None:
