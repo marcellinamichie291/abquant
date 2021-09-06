@@ -69,6 +69,7 @@ class BinanceCGateway(Gateway):
 
     def query_account(self) -> Iterable[AccountData]:
         """"""
+        raise NotImplementedError("do not use this method. Use ordermanager to get the updated account information instead.")
         accounts = self.trade_listener.accounts
         if accounts is not None:
             return accounts
@@ -79,6 +80,7 @@ class BinanceCGateway(Gateway):
 
     def query_position(self) -> Iterable[AccountData]:
         """"""
+        raise NotImplementedError("do not use this method. Use ordermanager to get the updated position information instead.")
         positions = self.trade_listener.positions
         if positions is not None:
             return positions
