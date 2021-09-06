@@ -29,7 +29,7 @@ class WebsocketListener(ABC):
 
 
         self.gateway = gateway
-        self.gateway_name = gateway.gateway_name
+        # self.gateway_name = gateway.gateway_name
 
         self.host = None
 
@@ -50,6 +50,11 @@ class WebsocketListener(ABC):
         # For debugging
         self._last_sent_text = None
         self._last_received_text = None
+
+
+    @property
+    def gateway_name(self):
+        return self.gateway.gateway_name
 
     def init(self,
              host: str,

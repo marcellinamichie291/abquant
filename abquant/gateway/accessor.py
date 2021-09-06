@@ -88,7 +88,7 @@ class RestfulAccessor(ABC):
     def __init__(self, gateway: Gateway):
         """"""
         self.gateway = gateway
-        self.gateway_name = gateway.gateway_name
+        # self.gateway_name = gateway.gateway_name
 
         self.url_base: str = ""
         self._active: bool = False
@@ -97,7 +97,11 @@ class RestfulAccessor(ABC):
         self._pool: Pool = None
 
         self.proxies: dict = None
-
+    
+    @property
+    def gateway_name(self):
+        return self.gateway.gateway_name
+    
     def init(
         self,
         url_base: str,
@@ -197,6 +201,7 @@ class RestfulAccessor(ABC):
         """
         #  TODO Event exception event
         sys.stderr.write(str(request))
+        
 
     def on_error(
         self,

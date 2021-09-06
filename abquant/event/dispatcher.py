@@ -32,6 +32,10 @@ class EventDispatcher:
         self._handlers: defaultdict = defaultdict(list)
         self._general_handlers: List = []
 
+
+        # TODO  warning. start before all handler registered may cause race condition in self._randlers
+        self.start()
+
     def _run(self) -> None:
         while self._active:
             try:
@@ -96,3 +100,4 @@ class EventDispatcher:
                 threshold=self._event_threshold, congested_event=congested_event)))
             # TODO log here. at least warning level
 
+            
