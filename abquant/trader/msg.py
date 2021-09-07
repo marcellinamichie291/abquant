@@ -187,7 +187,6 @@ class DepthData(BaseData):
     def __post_init__(self):
         """"""
         self.ab_symbol = f"{self.symbol}.{self.exchange.value}"
-        raise NotImplemented(' for now this type {} is not support yet.'.format(self.__class__))
 
 
 
