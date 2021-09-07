@@ -33,7 +33,7 @@ STATUS_BINANCEC2AB: Dict[str, Status] = {
 
 ORDERTYPE_AB2BINANCEC: Dict[OrderType, Tuple[str, str]] = {
     OrderType.LIMIT: ("LIMIT", "GTC"),
-    OrderType.MARKET: ("MARKET", None),
+    OrderType.MARKET: ("MARKET", "GTC"),
     # TODO
     # fak: ("LIMIT", "IOC"),
     # fok: ("LIMIT", "FOK"),

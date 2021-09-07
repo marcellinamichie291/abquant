@@ -230,12 +230,14 @@ class WebsocketListener(ABC):
             datetime=now,
             gateway_name=gateway,
         )
-        entrust = EntrustData(
-            symbol=symbol,
-            exchange=exchange,
-            datetime=now,
-            gateway_name=gateway,
-        )
+        # entrust = EntrustData(
+        #     symbol=symbol,
+        #     exchange=exchange,
+        #     datetime=now,
+        #     gateway_name=gateway,
+        # )
+        entrust = None
+        return tick, depth, transaction, entrust
 
 
     def _run_ping(self):

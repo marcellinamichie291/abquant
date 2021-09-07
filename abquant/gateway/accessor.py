@@ -1,3 +1,4 @@
+from logging import ERROR, WARNING
 import sys
 import traceback
 from datetime import datetime
@@ -200,7 +201,8 @@ class RestfulAccessor(ABC):
         http失败返回码的 callback.
         """
         #  TODO Event exception event
-        sys.stderr.write(str(request))
+        self.gateway.write_log(str(request), level=WARNING)
+        # sys.stderr.write(str(request))
         
 
     def on_error(
@@ -210,6 +212,10 @@ class RestfulAccessor(ABC):
         tb: TracebackType,
         request: Optional[Request],
     ) -> None:
+        self.gateway.write_log(
+            self.exception_detail(exception_type, exception_value, tb, request),
+            level=ERROR
+            )
         sys.stderr.write(
             self.exception_detail(exception_type, exception_value, tb, request)
         )

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from logging import INFO
 from abquant.event.event import EventType
 from typing import Iterable, Any, Set
 from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
@@ -22,8 +23,8 @@ class Gateway(ABC):
         self.event_dispatcher.put(event)
 
 
-    def write_log(self, msg: str) -> None:
-        log = LogData(msg=msg, gateway_name=self.gateway_name)
+    def write_log(self, msg: str, level = INFO) -> None:
+        log = LogData(msg=msg, gateway_name=self.gateway_name, level=level)
         self.on_log(log)
 
 
@@ -69,7 +70,6 @@ class Gateway(ABC):
     def query_history(self, req: HistoryRequest) -> Iterable[BarData]:
         pass
 
-    
     def on_tick(self, tick: TickData) -> None:
         self.on_event(EventType.EVENT_TICK, tick)
     
