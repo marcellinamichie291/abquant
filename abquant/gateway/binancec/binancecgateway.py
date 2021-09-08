@@ -56,6 +56,9 @@ class BinanceCGateway(Gateway):
         """"""
         self.market_listener.subscribe(req)
 
+    def start(self):
+        self.market_listener.start()
+
     def send_order(self, req: OrderRequest) -> str:
         """"""
         return self.rest_accessor.send_order(req)

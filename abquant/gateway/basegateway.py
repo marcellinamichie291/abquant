@@ -5,7 +5,7 @@ from typing import Iterable, Any, Set
 from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
 from abquant.event import EventDispatcher, Event
 from abquant.trader.common import Exchange
-from abquant.trader.object import AccountData, CancelRequest, ContractData, HistoryRequest, LogData, OrderRequest, PositionData
+from abquant.trader.object import AccountData, CancelRequest, ContractData, HistoryRequest, LogData, OrderRequest, PositionData, SubscribeRequest
 
 class Gateway(ABC):
     default_setting = {}
@@ -41,7 +41,14 @@ class Gateway(ABC):
         pass
 
     @abstractmethod
-    def subscribe(self, ab_symbol):
+    def subscribe(self, req: SubscribeRequest):
+        pass
+
+    @abstractmethod
+    def start(self):
+        """
+        after start method called, the symbol subscribed by SubscribeRequest will start to receive.
+        """
         pass
 
     @abstractmethod
