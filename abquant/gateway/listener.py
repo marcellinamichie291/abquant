@@ -138,7 +138,8 @@ class WebsocketListener(ABC):
                     sslopt={"cert_reqs": ssl.CERT_NONE},
                     http_proxy_host=self.proxy_host,
                     http_proxy_port=self.proxy_port,
-                    header=self.header
+                    header=self.header,
+                    timeout=None
                 )
                 triggered = True
         if triggered:
