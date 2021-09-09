@@ -126,7 +126,7 @@ class WebsocketListener(ABC):
             self._log('sent binary: %s', data)
 
     def _create_connection(self, *args, **kwargs):
-        #TODO maybe it is ok to disable  lock for thread-safe, it is required to combine run_ping with run.
+        #todoDone maybe it is ok to disable  lock for thread-safe, it is required to combine run_ping with run.
         return websocket.create_connection(*args, **kwargs)
 
     def _ensure_connection(self):
@@ -139,6 +139,7 @@ class WebsocketListener(ABC):
                     http_proxy_host=self.proxy_host,
                     http_proxy_port=self.proxy_port,
                     header=self.header,
+                    # the timeout is key to make sure that socket do not disconnect silently without exception
                     timeout=None
                 )
                 triggered = True

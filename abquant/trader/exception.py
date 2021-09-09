@@ -5,7 +5,8 @@ class OrderException(Exception):
 
 
 class MarketException(Exception):
-    pass
+    def __init__(self, message: str):
+        super(MarketException, self).__init__(message)
 
 
 class CongestionException(Exception):
