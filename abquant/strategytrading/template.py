@@ -158,7 +158,7 @@ class StrategyTemplate(ABC):
     def on_exception(self, exception: Exception) -> None:
 
         """
-        TODO 初步的规划是提供两个交易所可能出现的异常类， OrderException， 以及MarketException，
+        TODO 初步的规划是提供两个交易所可能出现的异常类， OrderException， 以及MarketException，CongestionException.
         分别对应行情订阅异常，以及订单发送异常。
         """
         pass

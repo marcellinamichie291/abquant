@@ -14,7 +14,7 @@ abquant 是内部用的纯python实现的专注于数字货币金融产品的量
 pip install -r requirement.txt
 ```
 
-## abquant库安装(后续支持)
+## abquant库安装(已支持)
 ```
 git clone https://git.wecash.net/dct/abquant
 cd abquant
@@ -23,3 +23,11 @@ pip install .
 # strategy example
 
 策略样例将在 abquant/example 目录下。后续会逐步更新运行脚本。
+
+
+
+# QA
+q: binance 下单报 {"code":-4061,"msg":"Order\'s position side does not match user\'s setting."}'
+
+a: 请将下单中的偏好设置中的position mode 设置为 one-way mode. 不支持hedge mode的原因是，crypto不存在传统金融产品中平今平昨的概念 ，以及平昨费率低于平今的可能。而 hedge mode与one-way mode对于下单参数有不同要求，支持两者徒增api复杂度。
+

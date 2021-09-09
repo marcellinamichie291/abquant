@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 from abquant.trader.msg import DepthData, BarData, EntrustData, OrderData, TickData
+
 class OrderBook(ABC):
     def __init__(self):
         pass

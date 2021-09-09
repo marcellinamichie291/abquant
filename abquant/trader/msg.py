@@ -2,6 +2,8 @@
 from dataclasses import dataclass
 from datetime import datetime
 from logging import INFO, currentframe
+from time import localtime
+from typing import List, Optional
 
 from .common import Direction, Exchange, Interval, Offset, Status, Product, OptionType, OrderType
 
@@ -31,18 +33,19 @@ class TickData(BaseData):
     '''
     symbol: str
     exchange: Exchange
-    # 币所的特点是，发生成交的数据包才会返回时间戳，因此该字段变动，即意味着发生了taker成交。
+    # 有些币所的特点是，发生成交的数据包才会返回时间戳，因此该字段变动，即意味着发生了taker成交。
     datetime: datetime
 
 
-    # 最新更新的 最优 买一买一档
+    # 当发生交易，该字段有值。 可以根据该组字段判断tick来接收 市场中的成交信息。
     trade_price: float = 0
     trade_volume: float = 0
 
+    # 有些币所得最优 bid/ask 数据realtime，而深度数据并不实时，因此bid/ask_price_1字段有可能与该字段不一致。
     best_ask_price: float = 0
-    best_ask_volune: float = 0
+    best_ask_volume: float = 0
     best_bid_price: float = 0
-    best_bid_price: float = 0
+    best_bid_volume: float = 0
 
     # 最优5档，（会根据交易所提供的接口，选择实时成都最高的方式更新，有可能是根据委托单也有可能使用交易所提供的depth，）。
     bid_price_1: float = 0
@@ -69,7 +72,7 @@ class TickData(BaseData):
     ask_volume_4: float = 0
     ask_volume_5: float = 0
 
-    # 收到该事件是，本地时戳
+    # 收到该事件时候，本地时戳
     localtime: datetime = None
 
     def __post_init__(self):
@@ -127,8 +130,12 @@ class TransactionData(BaseData):
     # 部分交易所可能公示 交易双方的id。该字段在一些特殊的需重建orderbook的策略中可能有用。
     bid_no: int = 0 
     ask_no: int = 0
+    times: int = 0
     # taker 成交的方向
     direction: Direction = None
+
+    # 收到该事件时候，本地时戳
+    localtime: datetime = None
 
     def __post_init__(self):
         """"""
@@ -157,6 +164,7 @@ class EntrustData(BaseData):
 
     direction: Direction = None
     order_type: OrderType = OrderType.LIMIT
+    localtime: datetime = None
 
 
     def __post_init__(self):
@@ -179,15 +187,17 @@ class DepthData(BaseData):
     exchange: Exchange
     datetime: datetime
 
-    volume: float = 0
-    price: float = 0
+    ask_volumes: List[float] = None
+    ask_prices: List[float] = None
+    bid_volumes: List[float] = None
+    bid_prices: List[float] = None
 
-    direction: Direction = None
+    times: int = 0
+    localtime: datetime = None
 
     def __post_init__(self):
         """"""
         self.ab_symbol = f"{self.symbol}.{self.exchange.value}"
-        raise NotImplemented(' for now this type {} is not support yet.'.format(self.__class__))
 
 
 
