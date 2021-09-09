@@ -203,7 +203,6 @@ class WebsocketListener(ABC):
                     et, ev, tb = sys.exc_info()
                     self.on_error(et, ev, tb)
                     self._disconnect()
-                    sleep(3)
         except:  # noqa
             et, ev, tb = sys.exc_info()
             self.on_error(et, ev, tb)

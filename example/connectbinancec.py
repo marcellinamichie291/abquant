@@ -70,7 +70,10 @@ if __name__ == '__main__':
     gateway_ = BinanceBBCGateway(event_dispatcher)
     gateway.connect(binance_setting)
     gateway_.connect(binance_setting)
+
+    # sleep 是等待交易所 信息与账户信息同步的必要处理。这是异步框架比较丑陋的地方。
     time.sleep(3)
+    # 针对minghang策略特殊定制，正常情况无需调用，默认所有数据全部订阅。（除entrust外）想感受各种各样类型的数据的把，一下的depth，tick_5, best_tick项 赋值True，或comment掉下一行代码即可。
     gateway.set_subscribe_mode(SubscribeMode(
         #订阅 深度数据 depth
         depth=False,
@@ -95,11 +98,11 @@ if __name__ == '__main__':
         print(i, k, symbol_contract_map[k])
         gateway.subscribe(SubscribeRequest(
             symbol=k, exchange=Exchange.BINANCE))
-    # subscribe 各个产品后 要调用gateway.start 开始接受数据。该操作较为冗赘，有实现细节上的考虑。 实现strategy时，以上调用对交易员隐藏，有框架实现。
+    # subscribe 各个产品后 要调用gateway.start 开始接受数据。该操作较为冗赘，有实现细节上的考虑。 实现strategy时，以上调用对交易员隐藏，由框架实现。
     gateway.start()
     print("start to receive data from exchange")
 
-    # 下单撤单
+    # 下单撤单， 由框架异步执行。胆大的下单撤单吧。不必担心阻塞和 IO。
     ab_order_id: str = gateway.send_order(OrderRequest(symbol='XRPUSDT', exchange=Exchange.BINANCE,
                                           direction=Direction.LONG, type=OrderType.LIMIT, volume=7, price=1.09, offset=Offset.OPEN))
     print('ab orderid', ab_order_id)
@@ -113,7 +116,7 @@ if __name__ == '__main__':
 
 
 
-    # # 查询历史
+    #  查询历史 在初始化策略时 可以用到该功能。
     history = gateway_.query_history(HistoryRequest(
         symbol='BTCUSD_PERP', exchange=Exchange.BINANCE,
         start=datetime(year=2021, month=9, day=5, hour=0, minute=0),

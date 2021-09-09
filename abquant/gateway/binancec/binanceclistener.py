@@ -1,5 +1,6 @@
 
 
+from abquant.trader.exception import MarketException
 from logging import WARNING
 from abquant.gateway import accessor
 from abquant.trader.utility import round_to
@@ -52,7 +53,6 @@ class BinanceCDataWebsocketListener(WebsocketListener):
     def subscribe(self, req: SubscribeRequest) -> None:
         if req.symbol not in symbol_contract_map:
             self.gateway.write_log(f"找不到该合约代码{req.symbol}", level=WARNING)
-            # TODO exception
             return
         tick, depth, transaction, entrust = self.make_data(req.symbol, Exchange.BINANCE, datetime.now(), self.gateway_name)
 
@@ -191,6 +191,8 @@ class BinanceCDataWebsocketListener(WebsocketListener):
                 tick.best_bid_volume = tick.bid_volume_1
             tick.localtime = datetime.now()
             self.gateway.on_tick(copy(tick))
+        else: 
+            raise MarketException("Unrecognized channel from {}: packet content, \n{}".format(self.gateway_name, packet))
     
 
 class BinanceCTradeWebsocketListener(WebsocketListener):
