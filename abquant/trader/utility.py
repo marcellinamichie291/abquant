@@ -2,6 +2,7 @@ import re
 from typing import Tuple, Dict
 import logging
 from threading import Lock
+from decimal import Decimal
 
 from .common import Exchange
 
@@ -27,7 +28,7 @@ def check_ab_symbol(ab_symbol: str) -> bool:
 
 
 
-def extract_vt_symbol(ab_symbol: str) -> Tuple[str, Exchange]:
+def extract_ab_symbol(ab_symbol: str) -> Tuple[str, Exchange]:
     """
     :return: (symbol, exchange)
     """
@@ -35,7 +36,7 @@ def extract_vt_symbol(ab_symbol: str) -> Tuple[str, Exchange]:
     return symbol, Exchange(exchange_name)
 
 
-def generate_vt_symbol(symbol: str, exchange: Exchange) -> str:
+def generate_ab_symbol(symbol: str, exchange: Exchange) -> str:
     """
     return ab_symbol
     """
@@ -67,6 +68,12 @@ def get_file_logger(filename: str) -> logging.Logger:
     logger.addHandler(handler) 
     return logger
 
+
+def round_to(value: float, target: float) -> float:
+    value = Decimal(str(value))
+    target = Decimal(str(target))
+    rounded = float(int(round(value / target)) * target)
+    return rounded
 
 if __name__ == '__main__':
     ab_test = 'syx'

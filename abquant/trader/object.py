@@ -195,6 +195,18 @@ class CancelRequest:
 
 
 @dataclass
+class SubscribeMode:
+    """
+    订阅数据
+    """
+    depth: bool = True
+    tick_5: bool = True
+    best_tick: bool = True
+    entrust: bool = True
+    transaction: bool = True
+
+
+@dataclass
 class HistoryRequest:
     """
     获取交易所历史k线数据的请求，通常用于实盘策略参数的初始化， 和分钟级别回测数据的抓取。

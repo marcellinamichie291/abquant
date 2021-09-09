@@ -8,6 +8,7 @@ class Direction(Enum):
     """
     LONG = "多"
     SHORT = "空"
+    NET = "净"
 
 
 class Offset(Enum):
@@ -30,7 +31,7 @@ class Status(Enum):
     CANCELLED = "已撤销"
     REJECTED = "拒单"
     # TODO 
-    TIMEOUT = "未回报"
+    TIMEOUT = "超时未回报"
 
 class Product(Enum):
     """

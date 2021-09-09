@@ -29,7 +29,7 @@ class WebsocketListener(ABC):
 
 
         self.gateway = gateway
-        self.gateway_name = gateway.gateway_name
+        # self.gateway_name = gateway.gateway_name
 
         self.host = None
 
@@ -50,6 +50,11 @@ class WebsocketListener(ABC):
         # For debugging
         self._last_sent_text = None
         self._last_received_text = None
+
+
+    @property
+    def gateway_name(self):
+        return self.gateway.gateway_name
 
     def init(self,
              host: str,
@@ -121,7 +126,7 @@ class WebsocketListener(ABC):
             self._log('sent binary: %s', data)
 
     def _create_connection(self, *args, **kwargs):
-        #TODO maybe it is ok to disable  lock for thread-safe, it is required to combine run_ping with run.
+        #todoDone maybe it is ok to disable  lock for thread-safe, it is required to combine run_ping with run.
         return websocket.create_connection(*args, **kwargs)
 
     def _ensure_connection(self):
@@ -133,7 +138,9 @@ class WebsocketListener(ABC):
                     sslopt={"cert_reqs": ssl.CERT_NONE},
                     http_proxy_host=self.proxy_host,
                     http_proxy_port=self.proxy_port,
-                    header=self.header
+                    header=self.header,
+                    # the timeout is key to make sure that socket do not disconnect silently without exception
+                    timeout=None
                 )
                 triggered = True
         if triggered:
@@ -187,7 +194,9 @@ class WebsocketListener(ABC):
                     websocket.WebSocketBadStatusException,
                     socket.error
                 ):
+                    # TODO exception or not? I think log is at least necessary
                     self._disconnect()
+                    sleep(3)
 
                 # other internal exception raised in on_packet
                 except:  # noqa
@@ -225,12 +234,14 @@ class WebsocketListener(ABC):
             datetime=now,
             gateway_name=gateway,
         )
-        entrust = EntrustData(
-            symbol=symbol,
-            exchange=exchange,
-            datetime=now,
-            gateway_name=gateway,
-        )
+        # entrust = EntrustData(
+        #     symbol=symbol,
+        #     exchange=exchange,
+        #     datetime=now,
+        #     gateway_name=gateway,
+        # )
+        entrust = None
+        return tick, depth, transaction, entrust
 
 
     def _run_ping(self):
@@ -252,25 +263,22 @@ class WebsocketListener(ABC):
         if ws:
             ws.send("ping", websocket.ABNF.OPCODE_PING)
 
-    @staticmethod
     @abstractmethod
-    def on_connected():
+    def on_connected(self):
         """
         Callback when websocket is connected successfully.
         """
         pass
 
-    @staticmethod
     @abstractmethod
-    def on_disconnected():
+    def on_disconnected(self):
         """
         Callback when websocket connection is lost.
         """
         pass
 
-    @staticmethod
     @abstractmethod
-    def on_packet(packet: dict):
+    def on_packet(self, packet: dict):
         pass
 
     def on_error(self, exception_type: type, exception_value: Exception, tb):

@@ -8,5 +8,5 @@ class BinanceUBCGateway(BinanceCGateway):
         super().__init__(event_dispatcher)
         self.set_gateway_name("BINANCEUBC")
     
-    def ustd_based() -> bool:
+    def ustd_based(self) -> bool:
         return True

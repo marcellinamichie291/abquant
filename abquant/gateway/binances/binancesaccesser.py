@@ -203,7 +203,7 @@ class BinanceAccessor(RestfulAccessor):
             on_failed=self.on_send_order_failed
         )
 
-        return order.vt_orderid
+        return order.ab_orderid
 
     def cancel_order(self, req: CancelRequest):
         """"""

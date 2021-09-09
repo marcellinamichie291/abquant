@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
+from logging import INFO
 from abquant.event.event import EventType
 from typing import Iterable, Any, Set
 from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
 from abquant.event import EventDispatcher, Event
 from abquant.trader.common import Exchange
-from abquant.trader.object import AccountData, CancelRequest, ContractData, HistoryRequest, LogData, OrderRequest, PositionData
+from abquant.trader.object import AccountData, CancelRequest, ContractData, HistoryRequest, LogData, OrderRequest, PositionData, SubscribeMode, SubscribeRequest
 
 class Gateway(ABC):
     default_setting = {}
@@ -12,18 +13,21 @@ class Gateway(ABC):
     def __init__(self, event_dispatcher: EventDispatcher, gateway_name: str):
         self.event_dispatcher: EventDispatcher = event_dispatcher
         self.gateway_name: str = gateway_name
-
+        self.subscribe_mode = SubscribeMode()
 
     def set_gateway_name(self, gateway_name: str):
         self.gateway_name = gateway_name
+
+    def set_subscribe_mode(self, subscribe_mode: SubscribeMode):
+        self.subscribe_mode = subscribe_mode
     
     def on_event(self, type: str, data: Any = None) -> None:
         event = Event(type, data)
         self.event_dispatcher.put(event)
 
 
-    def write_log(self, msg: str) -> None:
-        log = LogData(msg=msg, gateway_name=self.gateway_name)
+    def write_log(self, msg: str, level = INFO) -> None:
+        log = LogData(msg=msg, gateway_name=self.gateway_name, level=level)
         self.on_log(log)
 
 
@@ -40,11 +44,18 @@ class Gateway(ABC):
         pass
 
     @abstractmethod
-    def subscribe(self, ab_symbol):
+    def subscribe(self, req: SubscribeRequest):
         pass
 
     @abstractmethod
-    def inser_order(self, order_request: OrderRequest) -> OrderData:
+    def start(self):
+        """
+        after start method called, the symbol subscribed by SubscribeRequest will start to receive.
+        """
+        pass
+
+    @abstractmethod
+    def send_order(self, order_request: OrderRequest) -> OrderData:
         pass
     
     @abstractmethod
@@ -69,7 +80,6 @@ class Gateway(ABC):
     def query_history(self, req: HistoryRequest) -> Iterable[BarData]:
         pass
 
-    
     def on_tick(self, tick: TickData) -> None:
         self.on_event(EventType.EVENT_TICK, tick)
     

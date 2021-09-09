@@ -1,3 +1,4 @@
+from logging import ERROR, WARNING
 import sys
 import traceback
 from datetime import datetime
@@ -88,7 +89,7 @@ class RestfulAccessor(ABC):
     def __init__(self, gateway: Gateway):
         """"""
         self.gateway = gateway
-        self.gateway_name = gateway.gateway_name
+        # self.gateway_name = gateway.gateway_name
 
         self.url_base: str = ""
         self._active: bool = False
@@ -97,7 +98,11 @@ class RestfulAccessor(ABC):
         self._pool: Pool = None
 
         self.proxies: dict = None
-
+    
+    @property
+    def gateway_name(self):
+        return self.gateway.gateway_name
+    
     def init(
         self,
         url_base: str,
@@ -191,15 +196,15 @@ class RestfulAccessor(ABC):
         return request
 
 
-    @abstractmethod
     def on_failed(self, status_code: int, request: Request) -> None:
         """
         http失败返回码的 callback.
         """
         #  TODO Event exception event
-        sys.stderr.write(str(request))
+        self.gateway.write_log(str(request), level=WARNING)
+        # sys.stderr.write(str(request))
+        
 
-    @abstractmethod
     def on_error(
         self,
         exception_type: type,
@@ -207,6 +212,10 @@ class RestfulAccessor(ABC):
         tb: TracebackType,
         request: Optional[Request],
     ) -> None:
+        self.gateway.write_log(
+            self.exception_detail(exception_type, exception_value, tb, request),
+            level=ERROR
+            )
         sys.stderr.write(
             self.exception_detail(exception_type, exception_value, tb, request)
         )

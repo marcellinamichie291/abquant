@@ -2,6 +2,7 @@
 from datetime import timedelta
 from enum import Enum
 from typing import Dict, Tuple
+
 from abquant.trader.common import Direction, Interval, OrderType, Status
 from abquant.trader.object import ContractData
 

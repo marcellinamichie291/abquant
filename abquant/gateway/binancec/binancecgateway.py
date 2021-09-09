@@ -26,7 +26,7 @@ class BinanceCGateway(Gateway):
         # self.market_listener =
     def __init__(self, event_dispatcher: EventDispatcher):
         """Constructor"""
-        # attention! call the set_gateway_name in teh derived class.
+        # attention! call the set_gateway_name in the derived class.
         super().__init__(event_dispatcher, "BINANCEC")
 
         self.market_listener = BinanceCDataWebsocketListener(self)
@@ -34,18 +34,20 @@ class BinanceCGateway(Gateway):
         self.rest_accessor = BinanceCAccessor(self)
 
     @abstractmethod 
-    def ustd_based() -> bool:
+    def ustd_based(self) -> bool:
         pass
 
     def connect(self, setting: dict) -> None:
         """"""
-        key = setting["key"]
-        secret = setting["secret"]
-        session_number = setting["session_number"]
-        server = setting["test_net"]
-        proxy_host = setting["proxy_host"]
-        proxy_port = setting["proxy_port"]
-
+        try:
+            key = setting["key"]
+            secret = setting["secret"]
+        except LookupError as e:
+            raise LookupError("the setting must contain field 'key' and field 'secret'.")
+        session_number = setting.get("session_number", self.default_setting["session_number"])
+        server = setting.get("test_net", self.default_setting["test_net"][1])
+        proxy_host = setting.get("proxy_host", self.default_setting["proxy_host"])
+        proxy_port = setting.get("proxy_port", self.default_setting["proxy_port"])
 
         self.rest_accessor.connect(self.ustd_based(), key, secret, session_number, server,
                               proxy_host, proxy_port)
@@ -57,6 +59,9 @@ class BinanceCGateway(Gateway):
         """"""
         self.market_listener.subscribe(req)
 
+    def start(self):
+        self.market_listener.start()
+
     def send_order(self, req: OrderRequest) -> str:
         """"""
         return self.rest_accessor.send_order(req)
@@ -65,8 +70,12 @@ class BinanceCGateway(Gateway):
         """"""
         self.rest_accessor.cancel_order(req)
 
+    def cancel_orders(self, reqs: Iterable[CancelRequest]) -> None:
+        return super().cancel_orders(reqs)
+
     def query_account(self) -> Iterable[AccountData]:
         """"""
+        raise NotImplementedError("do not use this method. Use ordermanager to get the updated account information instead.")
         accounts = self.trade_listener.accounts
         if accounts is not None:
             return accounts
@@ -77,6 +86,7 @@ class BinanceCGateway(Gateway):
 
     def query_position(self) -> Iterable[AccountData]:
         """"""
+        raise NotImplementedError("do not use this method. Use ordermanager to get the updated position information instead.")
         positions = self.trade_listener.positions
         if positions is not None:
             return positions
@@ -92,7 +102,6 @@ class BinanceCGateway(Gateway):
     def close(self) -> None:
         """"""
         self.rest_accessor.stop()
-
         self.trade_listener.stop()
         self.market_listener.stop()
 
