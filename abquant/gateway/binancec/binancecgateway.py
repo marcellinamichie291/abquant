@@ -39,12 +39,15 @@ class BinanceCGateway(Gateway):
 
     def connect(self, setting: dict) -> None:
         """"""
-        key = setting["key"]
-        secret = setting["secret"]
-        session_number = setting["session_number"]
-        server = setting["test_net"]
-        proxy_host = setting["proxy_host"]
-        proxy_port = setting["proxy_port"]
+        try:
+            key = setting["key"]
+            secret = setting["secret"]
+        except LookupError as e:
+            raise LookupError("the setting must contain field 'key' and field 'secret'.")
+        session_number = setting.get("session_number", self.default_setting["session_number"])
+        server = setting.get("test_net", self.default_setting["test_net"][1])
+        proxy_host = setting.get("proxy_host", self.default_setting["proxy_host"])
+        proxy_port = setting.get("proxy_port", self.default_setting["proxy_port"])
 
         self.rest_accessor.connect(self.ustd_based(), key, secret, session_number, server,
                               proxy_host, proxy_port)
