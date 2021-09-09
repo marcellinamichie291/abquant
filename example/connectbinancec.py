@@ -81,6 +81,7 @@ if __name__ == '__main__':
 
     # order_id: str = gateway.send_order(OrderRequest(symbol='XRPUSDT', exchange=Exchange.BINANCE, direction=Direction.SHORT, type=OrderType.LIMIT, volume=2, price=1.3, offset=Offset.OPEN))
     gateway.start()
+    print("start to receive data from exchange")
     time.sleep(10)
 
     # gateway.cancel_order(CancelRequest(order_id.split('.')[-1], symbol='XRPUSDT', exchange=Exchange.BINANCE))

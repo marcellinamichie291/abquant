@@ -193,13 +193,16 @@ class WebsocketListener(ABC):
                     websocket.WebSocketBadStatusException,
                     socket.error
                 ):
+                    # TODO exception or not? I think log is at least necessary
                     self._disconnect()
+                    sleep(3)
 
                 # other internal exception raised in on_packet
                 except:  # noqa
                     et, ev, tb = sys.exc_info()
                     self.on_error(et, ev, tb)
                     self._disconnect()
+                    sleep(3)
         except:  # noqa
             et, ev, tb = sys.exc_info()
             self.on_error(et, ev, tb)

@@ -5,7 +5,7 @@ from typing import Iterable, Any, Set
 from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
 from abquant.event import EventDispatcher, Event
 from abquant.trader.common import Exchange
-from abquant.trader.object import AccountData, CancelRequest, ContractData, HistoryRequest, LogData, OrderRequest, PositionData, SubscribeRequest
+from abquant.trader.object import AccountData, CancelRequest, ContractData, HistoryRequest, LogData, OrderRequest, PositionData, SubscribeMode, SubscribeRequest
 
 class Gateway(ABC):
     default_setting = {}
@@ -13,10 +13,13 @@ class Gateway(ABC):
     def __init__(self, event_dispatcher: EventDispatcher, gateway_name: str):
         self.event_dispatcher: EventDispatcher = event_dispatcher
         self.gateway_name: str = gateway_name
-
+        self.subscribe_mode = SubscribeMode()
 
     def set_gateway_name(self, gateway_name: str):
         self.gateway_name = gateway_name
+
+    def set_subscribe_mode(self, subscribe_mode: SubscribeMode):
+        self.subscribe_mode = subscribe_mode
     
     def on_event(self, type: str, data: Any = None) -> None:
         event = Event(type, data)
