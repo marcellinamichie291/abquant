@@ -1,6 +1,5 @@
-
-
 from logging import ERROR, WARNING
+import sys
 from typing import Iterable, List, Optional
 from threading import Lock
 import urllib.parse
@@ -8,15 +7,19 @@ import time
 import hmac
 import hashlib
 from datetime import datetime
+from requests.api import request
 from requests.exceptions import SSLError
 import uuid
+from requests.models import MissingSchema
 
 from . import DIRECTION_AB2BINANCEC, DIRECTION_BINANCEC2AB, D_REST_HOST, D_TESTNET_RESTT_HOST, D_TESTNET_WEBSOCKET_TRADE_HOST, D_WEBSOCKET_TRADE_HOST, F_REST_HOST, F_TESTNET_RESTT_HOST, F_TESTNET_WEBSOCKET_TRADE_HOST, F_WEBSOCKET_TRADE_HOST, INTERVAL_AB2BINANCEC, ORDERTYPE_AB2BINANCEC, ORDERTYPE_BINANCEC2AB, STATUS_BINANCEC2AB, TIMEDELTA_MAP, Security, symbol_contract_map
+from .binanceclistener import BinanceCTradeWebsocketListener
 from ..accessor import Request, RestfulAccessor
 from ..basegateway import Gateway
 from abquant.trader.msg import BarData, OrderData
 from abquant.trader.common import Direction, Exchange, Offset, OrderType, Product, Status
 from abquant.trader.object import AccountData, CancelRequest, ContractData, HistoryRequest, OrderRequest, PositionData
+
 
 class BinanceCAccessor(RestfulAccessor):
 
@@ -26,7 +29,7 @@ class BinanceCAccessor(RestfulAccessor):
         """"""
         super(BinanceCAccessor, self).__init__(gateway)
         # self.trade_ws: = self.trade_w
-        self.trade_listener = self.gateway.trade_listener
+        self.trade_listener: BinanceCTradeWebsocketListener = self.gateway.trade_listener
 
         self.key: str = ""
         self.secret: str = ""
@@ -40,7 +43,6 @@ class BinanceCAccessor(RestfulAccessor):
         self.order_count_lock: Lock = Lock()
         self.connect_time: int = 0
         self.usdt_base: bool = None
-
 
     def sign(self, request: Request) -> Request:
         security = request.data["security"]
@@ -226,7 +228,8 @@ class BinanceCAccessor(RestfulAccessor):
 
     def send_order(self, req: OrderRequest) -> str:
         """"""
-        orderid = self.ORDER_PREFIX + str(self.connect_time + self._new_order_id())
+        orderid = self.ORDER_PREFIX + \
+            str(self.connect_time + self._new_order_id())
         order = req.create_order_data(
             orderid,
             self.gateway_name
@@ -407,7 +410,7 @@ class BinanceCAccessor(RestfulAccessor):
                 direction=DIRECTION_BINANCEC2AB[d["side"]],
                 traded=float(d["executedQty"]),
                 status=STATUS_BINANCEC2AB.get(d["status"], None),
-                datetime = datetime.fromtimestamp(d["time"]/ 1000),
+                datetime=datetime.fromtimestamp(d["time"] / 1000),
                 gateway_name=self.gateway_name,
             )
             self.gateway.on_order(order)
@@ -518,7 +521,8 @@ class BinanceCAccessor(RestfulAccessor):
             # Add end time if specified
             if req.start:
                 start_time = int(datetime.timestamp(req.start))
-                params["startTime"] = start_time * 1000     # convert to millisecond
+                params["startTime"] = start_time * \
+                    1000     # convert to millisecond
 
             # Get response from server
             if self.usdt_base:
@@ -526,12 +530,17 @@ class BinanceCAccessor(RestfulAccessor):
             else:
                 path = "/dapi/v1/klines"
 
-            resp = self.request(
-                "GET",
-                path=path,
-                data={"security": Security.NONE},
-                params=params
-            )
+            try:
+                resp = self.request(
+                    "GET",
+                    path=path,
+                    data={"security": Security.NONE},
+                    params=params
+                )
+            except MissingSchema as e:
+                et, ev, tb = sys.exc_info()
+                self.on_error(et, ev, tb, req)
+                raise ConnectionError("call the gateway.connect method before trying to query history data. otherwaise UBC or BBC gateway is unknown.")
 
             # Break if request failed with other status code
             if resp.status_code // 100 != 2:
@@ -551,7 +560,7 @@ class BinanceCAccessor(RestfulAccessor):
                     bar = BarData(
                         symbol=req.symbol,
                         exchange=req.exchange,
-                        datetime = datetime.fromtimestamp(l[0]/ 1000),
+                        datetime=datetime.fromtimestamp(l[0] / 1000),
                         interval=req.interval,
                         volume=float(l[5]),
                         open_price=float(l[1]),
