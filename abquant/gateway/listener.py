@@ -87,6 +87,8 @@ class WebsocketListener(ABC):
 
         Please don't send packet untill on_connected fucntion is called.
         """
+        if not self.host:
+            raise ConnectionError("trying to start a websocketlistener in a gateway without subscribe at least one symbol at first")
 
         self._active = True
         self._worker_thread = Thread(target=self._run)
@@ -203,6 +205,7 @@ class WebsocketListener(ABC):
                     et, ev, tb = sys.exc_info()
                     self.on_error(et, ev, tb)
                     self._disconnect()
+                    sleep(1)
         except:  # noqa
             et, ev, tb = sys.exc_info()
             self.on_error(et, ev, tb)
