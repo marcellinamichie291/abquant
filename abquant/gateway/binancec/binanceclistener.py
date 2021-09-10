@@ -51,6 +51,7 @@ class BinanceCDataWebsocketListener(WebsocketListener):
         self.gateway.write_log("Websocket API连接断开")
 
     def subscribe(self, req: SubscribeRequest) -> None:
+        #TODO symbol_contract_map 分 BBC UBC
         if req.symbol not in symbol_contract_map:
             self.gateway.write_log(f"找不到该合约代码{req.symbol}", level=WARNING)
             return
