@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
-from logging import INFO
+from logging import INFO, WARNING
 from abquant.event.event import EventType
 from typing import Iterable, Any, Set
 from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
 from abquant.event import EventDispatcher, Event
-from abquant.trader.common import Exchange
+from abquant.trader.common import Exchange, OrderType
 from abquant.trader.object import AccountData, CancelRequest, ContractData, HistoryRequest, LogData, OrderRequest, PositionData, SubscribeMode, SubscribeRequest
 
 class Gateway(ABC):
@@ -56,7 +56,12 @@ class Gateway(ABC):
 
     @abstractmethod
     def send_order(self, order_request: OrderRequest) -> OrderData:
-        pass
+        """
+        orveride method should call this base method for orderequest check.
+        """
+        if order_request.type == OrderType.MARKET and order_request.price:
+            self.write_log("markert order sent with price, order: \n{}".format(order_request), level=WARNING)
+
     
     @abstractmethod
     def cancel_order(self, cancel_request: CancelRequest) -> None:

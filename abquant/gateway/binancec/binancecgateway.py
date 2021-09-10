@@ -64,6 +64,7 @@ class BinanceCGateway(Gateway):
 
     def send_order(self, req: OrderRequest) -> str:
         """"""
+        super(BinanceCGateway, self).send_order(req)
         return self.rest_accessor.send_order(req)
 
     def cancel_order(self, req: CancelRequest) -> Request:

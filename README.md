@@ -49,7 +49,7 @@ a:
 3.strategy，和gateway/账户是不同的概念。1个strategy 可以连接不同的gateway/账户. 而1个gateway/账户也可以同时运行多个strategy（在不同的进程上）。比如一个B本位策略+开空等量BTC永续的费率套利策略，就可以变成U本位策略。
 
 4.存在如下组合关系。1strategy- 1gateway/账户，1strategy- 多gateway/账户， 多stratey-多gateway/账户， 多strategy-1gateway/账户，
-5.加上 实盘与回测，就是一套api要支持8种情况。
+5.加上 实盘与回测，就是一套api要支持8种情况，无歧义的运行。
 
 6.先说strategy.get_postion。该功能可以直接get请求交易所获得某个gateway/账户的所有持仓。多gateway/账户的情况直接分别请求加总即可。 但多stratey的情况，不好处理。因为每个strategy是有自己的持仓的。清仓strategy1的所有持仓不需要清仓strategy2的持仓。因此strategy.get_postion 一定是每个strategy实例分别根据订单成交回报以及orderid各自维护一份position信息。实盘与回测同理。
 
@@ -60,4 +60,4 @@ a:
 但多strategy的回测就太trick了。支持多strategy的回测是 abquant的一个很核心的功能。多strategy的好处不言而喻，通过收益部相关性不高的多个策略拉平总收益，也是大数定律的很好应用。通常多strategy回测的实现，是逐个strategy模拟撮合完成后再对齐时间后计算综合下来的逐日收益。 这样的实现意味着要多次回放历史数据，且最后的综合计算也有不少trick的地方容易出错。原本abquant的架构使得多strateg的一遍回放，最后计算。使得1/多strategy的回测在abquant能够通用的支持。 
 但如果要支持在strategy中 相对于gateway/账户的get_balance的回测。一切就变负责了很多。
 
-8.技术库的软件工程问题就是这样。特殊化都很简单，相应的根据需求写一遍代码即可。 但要做到通用（意味着api的俭省易用），就是有着写伞兵问题难以解决。
+8.库的软件工程问题就是这样。特殊化都很简单，相应的根据需求写一遍代码即可。 但要做到通用（意味着api的俭省易用），就是有这些伞兵问题难以解决。api一旦提供，就必然会被乱用，因此不提供就是个相对不差的选择。
