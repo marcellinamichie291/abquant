@@ -6,7 +6,8 @@ from collections import defaultdict
 from abquant.trader.common import Interval, Direction, Offset
 from abquant.trader.msg import BarData, TickData, OrderData, TradeData, TransactionData, EntrustData, DepthData
 
-from .engine import StrategyEngine
+# TODO typechecking  and same thing in msg.py
+from .livestrategyrunner import StrategyEngine
 
 
 class StrategyTemplate(ABC):
@@ -123,7 +124,7 @@ class StrategyTemplate(ABC):
         pass
 
     @abstractmethod
-    def on_bar(self, bar: BarData) -> None:
+    def on_bars(self, bars: Dict[str, BarData]) -> None:
         """
         该方法比较特殊，在实盘中需通过BarGenerator，在on_tick中更新并回调。 
         在回测中，tick级别回测同理， 分钟bar级别回测则会被回测引擎自动调用。
@@ -163,7 +164,7 @@ class StrategyTemplate(ABC):
         """
         pass
 
-
+    @abstractmethod
     def update_trade(self, trade: TradeData) -> None:
         """
         个人交易单出现成交时的callback，默认的实现是用来管理该测略相关仓位。
@@ -175,6 +176,7 @@ class StrategyTemplate(ABC):
         else:
             self.pos[trade.ab_symbol] -= trade.volume
 
+    @abstractmethod
     def update_order(self, order: OrderData) -> None:
         """
         个人交易单出现成交时的callback，默认的实现是用来管理该策略的相关交易单单状态，尤其是尚处于活跃状态（可被动成交）的交易单。
@@ -278,7 +280,7 @@ class StrategyTemplate(ABC):
         for ab_orderid in list(self.active_orderids):
             self.cancel_order(ab_orderid)
         # TODO
-        # self.cancel_order(list(self.active_orderids))
+        # self.cancel_orders(list(self.active_orderids))
 
     def get_pos(self, ab_symbol: str) -> int:
         """"""
@@ -308,5 +310,6 @@ class StrategyTemplate(ABC):
         同步 策略内相关变量。通常用于记录仓位及参数信息，以便监控及复原。
         如果调用建议发生在update_trade时进行。 因为该回调会在仓位发生变更时发生。
         """
+        raise NotImplementedError("do not use for now.")
         if self.trading:
             self.strategy_engine.sync_strategy_data(self)
