@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from abquant.event.dispatcher import Event
 from copy import copy
 from typing import Dict, Set, List, TYPE_CHECKING
 from collections import defaultdict
@@ -156,11 +157,18 @@ class StrategyTemplate(ABC):
         pass
  
     
-    def on_exception(self, exception: Exception) -> None:
+    def on_exception(self, exception: Event) -> None:
 
         """
         TODO 初步的规划是提供两个交易所可能出现的异常类， OrderException， 以及MarketException，CongestionException.
         分别对应行情订阅异常，以及订单发送异常。
+        """
+        pass
+
+    def on_timer(self, ticker: Event) -> None:
+        """
+        根据 event dispatcher的 interval 决定， 默认1秒调用一次。
+        Event的  data 属性是 int， 代表event dispatcher的 interval。
         """
         pass
 

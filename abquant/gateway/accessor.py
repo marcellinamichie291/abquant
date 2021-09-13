@@ -212,6 +212,7 @@ class RestfulAccessor(ABC):
         tb: TracebackType,
         request: Optional[Request],
     ) -> None:
+        # TODO error
         self.gateway.write_log(
             self.exception_detail(exception_type, exception_value, tb, request),
             level=ERROR

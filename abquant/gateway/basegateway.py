@@ -15,6 +15,8 @@ class Gateway(ABC):
         self.gateway_name: str = gateway_name
         self.subscribe_mode = SubscribeMode()
 
+
+    # TODO property is better.
     def set_gateway_name(self, gateway_name: str):
         self.gateway_name = gateway_name
 
@@ -57,7 +59,7 @@ class Gateway(ABC):
     @abstractmethod
     def send_order(self, order_request: OrderRequest) -> OrderData:
         """
-        orveride method should call this base method for orderequest check.
+        orveride method should call this base method for orderequest check
         """
         if order_request.type == OrderType.MARKET and order_request.price:
             self.write_log("markert order sent with price, order: \n{}".format(order_request), level=WARNING)

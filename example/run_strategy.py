@@ -1,10 +1,9 @@
-
 from typing import Dict, List
 import argparse
 import time
 
 from abquant.strategytrading import StrategyTemplate, LiveStrategyRunner
-from abquant.event import EventDispatcher
+from abquant.event import EventDispatcher, Event
 from abquant.gateway import BinanceUBCGateway, BinanceBBCGateway
 
 from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
@@ -75,6 +74,10 @@ class TheStrategy(StrategyTemplate):
     def on_exception(self, transaction: Exception) -> None:
         pass
 
+    def on_timer(self, ticker: Event) -> None:
+        # 根据 event dispatcher的 interval 决定， 默认1秒调用一次。
+        pass
+
     def update_trade(self, trade: TradeData) -> None:
         super().update_trade(trade)
         self.write_log("pos update: {}, {}".format(
@@ -100,7 +103,7 @@ def main():
         "test_net": ["TESTNET", "REAL"][1],
     }
 
-    event_dispatcher = EventDispatcher()
+    event_dispatcher = EventDispatcher(interval=1)
     binance_ubc_gateway = BinanceUBCGateway(event_dispatcher)
     binance_ubc_gateway.connect(binance_setting)
     binance_bbc_gateway = BinanceBBCGateway(event_dispatcher)
@@ -114,7 +117,7 @@ def main():
         best_tick=True,
         # 订阅委托单（通常不支持） entrust
         entrust=False,
-        # 订阅交易数据 transaction
+        # 订阅交易数据 transaction, 自动生成 tick.
         transaction=True
     )
 

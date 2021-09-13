@@ -35,7 +35,7 @@ class BinanceCGateway(Gateway):
 
     @abstractmethod 
     def ustd_based(self) -> bool:
-        pass
+        raise NotImplementedError(" this class {} is not for trader use. Use BinanceUBCGateway or BinanceBBCGateway instead".format(self.__class__.__name__))
 
     def connect(self, setting: dict) -> None:
         """"""
