@@ -1,8 +1,10 @@
 from datetime import timedelta
 
 from enum import Enum
+from typing import Dict
 from abquant.trader.msg import Status, OrderType, Direction, Interval
-from .binanceaccesser import BinanceAccessor
+from abquant.trader.object import ContractData
+from .binancesaccesser import BinanceAccessor
 
 from .binancegateway import BinanceGateway
 
@@ -44,7 +46,7 @@ TIMEDELTA_MAP = {
 }
 
 
-symbol_name_map = {}
+symbol_contract_map: Dict[str, ContractData] = {}
 
 class Security(Enum):
     NONE = 0
