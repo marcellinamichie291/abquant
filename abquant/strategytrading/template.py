@@ -157,7 +157,7 @@ class StrategyTemplate(ABC):
         pass
  
     
-    def on_exception(self, exception: Event) -> None:
+    def on_exception(self, exception: Exception) -> None:
 
         """
         TODO 初步的规划是提供两个交易所可能出现的异常类， OrderException， 以及MarketException，CongestionException.
@@ -165,7 +165,7 @@ class StrategyTemplate(ABC):
         """
         pass
 
-    def on_timer(self, ticker: Event) -> None:
+    def on_timer(self, interval: int) -> None:
         """
         根据 event dispatcher的 interval 决定， 默认1秒调用一次。
         Event的  data 属性是 int， 代表event dispatcher的 interval。
