@@ -128,14 +128,14 @@ def main():
     strategy_runner = LiveStrategyRunner(event_dispatcher)
     strategy_runner.add_strategy(strategy_class=TheStrategy,
                                  strategy_name='the_strategy2',
-                                 ab_symbols=["BTCUSDT.BINANCEUBC",
-                                             "ETHUSDT.BINANCEUBC"],
+                                 ab_symbols=["BTCUSDT.BINANCE",
+                                             "ETHUSDT.BINANCE"],
                                  setting={"param1": 1, "param2": 2}
                                  )
     strategy_runner.add_strategy(strategy_class=TheStrategy,
                                  strategy_name='the_strategy2',
-                                 ab_symbols=["BTCUSD_PERP.BINANCEBBC",
-                                             "ETHUSD_PERP.BINANCEBBC"],
+                                 ab_symbols=["BTCUSD_PERP.BINANCE",
+                                             "ETHUSD_PERP.BINANCE"],
                                  setting={"param1": 3, "param2": 4}
                                  )
     strategy_runner.init_all_strategies()
