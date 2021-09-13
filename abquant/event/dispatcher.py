@@ -6,6 +6,7 @@ import time
 from typing import Any, Callable, List
 
 from .event import EventType
+from ..ordermanager import OrderManager
 from abquant.trader.exception import CongestionException
 
 
@@ -31,6 +32,7 @@ class EventDispatcher:
         self._timer: Thread = Thread(target=self._run_timer)
         self._handlers: defaultdict = defaultdict(list)
         self._general_handlers: List = []
+        self.order_manager = OrderManager(self)
 
         # TODO  warning. start before all handler registered may cause race condition in self._randlers
         self.start()

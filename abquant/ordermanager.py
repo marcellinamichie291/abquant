@@ -1,3 +1,4 @@
+from abquant.gateway.basegateway import Gateway
 from typing import Dict, Optional
 from abquant.trader.msg import EntrustData, TickData, DepthData, TransactionData, OrderData, TradeData
 from abquant.trader.object import PositionData, AccountData, ContractData
@@ -21,6 +22,9 @@ class OrderManager:
         self.contracts: Dict[str, ContractData] = {}
 
         self.active_orders: Dict[str, OrderData] = {}
+        self.gateways: Dict[str, Gateway] = {}
+
+        self.register_event()
 
 
     def register_event(self) -> None:
@@ -34,6 +38,7 @@ class OrderManager:
         self.event_dispatcher.register(EventType.EVENT_POSITION, self.process_position_event)
         self.event_dispatcher.register(EventType.EVENT_ACCOUNT, self.process_account_event)
         self.event_dispatcher.register(EventType.EVENT_CONTRACT, self.process_contract_event)
+        self.event_dispatcher.register(EventType.EVENT_GATEWAY, self.process_gateway_event)
 
 
     def process_tick_event(self, event: Event) -> None:
@@ -84,6 +89,10 @@ class OrderManager:
         """"""
         contract = event.data
         self.contracts[contract.ab_symbol] = contract
+
+    def process_gateway_event(self, event: Event) -> None:
+        gateway = event.data
+        self.gateways[gateway.gateway_name] = gateway
 
     def get_tick(self, ab_symbol: str) -> Optional[TickData]:
         return self.ticks.get(ab_symbol, None)

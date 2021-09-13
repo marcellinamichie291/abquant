@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
 from logging import INFO, WARNING
-from abquant.event.event import EventType
 from typing import Iterable, Any, Set
 from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
-from abquant.event import EventDispatcher, Event
+from abquant.event import EventDispatcher, Event, EventType
 from abquant.trader.common import Exchange, OrderType
 from abquant.trader.object import AccountData, CancelRequest, ContractData, HistoryRequest, LogData, OrderRequest, PositionData, SubscribeMode, SubscribeRequest
 
@@ -113,6 +112,9 @@ class Gateway(ABC):
 
     def on_contract(self, contract: ContractData) -> None:
         self.on_event(EventType.EVENT_CONTRACT, contract)
+
+    def on_gateway(self, gateway: "Gateway") -> None:
+        self.on_event(EventType.EVENT_GATEWAY, gateway)
         
     def on_log(self, log: LogData) -> None:
         self.on_event(EventType.EVENT_LOG, log)

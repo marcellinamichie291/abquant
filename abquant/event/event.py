@@ -14,3 +14,4 @@ class EventType(IntEnum):
     EVENT_CONTRACT = auto()
     EVENT_LOG = auto()
     EVENT_EXCEPTION = auto()
+    EVENT_GATEWAY = auto()

@@ -54,6 +54,7 @@ class BinanceCGateway(Gateway):
         self.market_listener.connect(self.ustd_based(), proxy_host, proxy_port, server)
 
         self.event_dispatcher.register(EventType.EVENT_TIMER, self.process_timer_event)
+        self.on_gateway(self)
 
     def subscribe(self, req: SubscribeRequest) -> None:
         """"""
