@@ -99,6 +99,7 @@ class StrategyTemplate(ABC):
     def on_init(self) -> None:
         """
         策略初始化的Callback 
+        如果需要历史数据做 策略预热，那么在此处调用self.load_bars(n)
         """
         pass
 
@@ -128,10 +129,13 @@ class StrategyTemplate(ABC):
         """
         该方法比较特殊，在实盘中需通过BarGenerator，在on_tick中更新并回调。 
         在回测中，tick级别回测同理， 分钟bar级别回测则会被回测引擎自动调用。
+        
+        如果在on_init中调用了 self.load_bars(n). 那么该方法会在回放过去n天的分钟bar数据中被不断调用， 
+        共计安时序调用 n * 24 * 60 次。
+        此时的策略实例并不在trading状态，因此并未开始交易，而是在做策略的计算预热。
         """
         pass
 
-    @abstractmethod
     def on_entrust(self, entrust: EntrustData) -> None:
         """
         委托单信息更新时的callback。通常用于重建orderbook.
@@ -154,6 +158,7 @@ class StrategyTemplate(ABC):
         """
         pass
 
+    @abstractmethod
     def on_exception(self, exception: Exception) -> None:
         """
         TODO 初步的规划是提供两个交易所可能出现的异常类， OrderException， 以及MarketException，CongestionException.
@@ -281,10 +286,9 @@ class StrategyTemplate(ABC):
         可以考虑在on_exception时调用。
         之后可以考虑根据sync_date函数 持久化的仓位信息。去交易所手动平仓。
         """
-        for ab_orderid in list(self.active_orderids):
-            self.cancel_order(ab_orderid)
-        # TODO
-        # self.cancel_orders(list(self.active_orderids))
+        # for ab_orderid in list(self.active_orderids):
+        #     self.cancel_order(ab_orderid)
+        self.cancel_orders(list(self.active_orderids))
 
     def get_pos(self, ab_symbol: str) -> int:
         """"""

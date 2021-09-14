@@ -51,7 +51,7 @@ class Gateway(ABC):
     @abstractmethod
     def start(self):
         """
-        after start method called, the symbol subscribed by SubscribeRequest will start to receive.
+        after start method called, the symbol subscribed by SubscribeRequest will start to receive. make sure every time start call, the market listener will reconnect.
         """
         pass
 

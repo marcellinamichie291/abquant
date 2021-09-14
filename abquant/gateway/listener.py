@@ -89,6 +89,10 @@ class WebsocketListener(ABC):
         """
         if not self.host:
             raise ConnectionError("trying to start a websocketlistener in a gateway without subscribe at least one symbol at first")
+            
+        if self._active:
+            self.stop() 
+            self.join()
 
         self._active = True
         self._worker_thread = Thread(target=self._run)
