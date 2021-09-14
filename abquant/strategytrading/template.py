@@ -4,7 +4,7 @@ from copy import copy
 from typing import Dict, Set, List, TYPE_CHECKING
 from collections import defaultdict
 
-from abquant.trader.common import Interval, Direction, Offset
+from abquant.trader.common import Interval, Direction, Offset, OrderType
 from abquant.trader.msg import BarData, TickData, OrderData, TradeData, TransactionData, EntrustData, DepthData
 
 # TODO typechecking  and same thing in msg.py
@@ -14,19 +14,18 @@ from .livestrategyrunner import StrategyEngine
 class StrategyTemplate(ABC):
     """"""
 
-
     parameters = []
     variables = []
 
     def __init__(
         self,
-        strategy_engine: StrategyEngine,
+        strategy_runner,
         strategy_name: str,
         ab_symbols: List[str],
         setting: dict,
     ):
         """"""
-        self.strategy_engine: StrategyEngine = strategy_engine
+        self.strategy_runner = strategy_runner
         self.strategy_name: str = strategy_name
         self.ab_symbols: List[str] = ab_symbols
 
@@ -132,7 +131,6 @@ class StrategyTemplate(ABC):
         """
         pass
 
-
     @abstractmethod
     def on_entrust(self, entrust: EntrustData) -> None:
         """
@@ -155,10 +153,8 @@ class StrategyTemplate(ABC):
         尽量不要实现，而是是经由on_tick， tickData中的trade_volume trade_price，以及timestamp实现，因为短期内回测不会支持。
         """
         pass
- 
-    
-    def on_exception(self, exception: Exception) -> None:
 
+    def on_exception(self, exception: Exception) -> None:
         """
         TODO 初步的规划是提供两个交易所可能出现的异常类， OrderException， 以及MarketException，CongestionException.
         分别对应行情订阅异常，以及订单发送异常。
@@ -202,7 +198,7 @@ class StrategyTemplate(ABC):
         注意事项：
         1. 有些交易所不存在Offset的概念。全部使用Offset.Open可行（如bitmex），但建议策略师依旧能够使用offset， 一方面，订单撮合存在时差，在高频做市策略里这是很有必要的保证空仓的机制，二来，回测时不会累计垃圾订单。
         2. 买卖会自动处理price tick的问题（最小可变价格），但依旧建议策略师编写师都做好价格round。尤其是做市类策略。
-        
+
         """
         return self.send_order(ab_symbol, Direction.LONG, Offset.OPEN, price, volume)
 
@@ -228,9 +224,10 @@ class StrategyTemplate(ABC):
         self,
         ab_symbol: str,
         direction: Direction,
-        offset: Offset,
         price: float,
-        volume: float
+        volume: float,
+        offset: Offset = Offset.OPEN,
+        order_type: OrderType = OrderType.MARKET
     ) -> List[str]:
         """
         下单， 
@@ -244,8 +241,8 @@ class StrategyTemplate(ABC):
 
         """
         if self.trading:
-            ab_orderids = self.strategy_engine.send_order(
-                self, ab_symbol, direction, offset, price, volume
+            ab_orderids = self.strategy_runner.send_order(
+                self, ab_symbol, direction, price, volume, offset, order_type
             )
 
             for ab_orderid in ab_orderids:
@@ -265,8 +262,7 @@ class StrategyTemplate(ABC):
 
         """
         if self.trading:
-            self.strategy_engine.cancel_order(self, ab_orderid)
-
+            self.strategy_runner.cancel_order(self, ab_orderid)
 
     def cancel_orders(self, ab_orderids: List[str]) -> None:
         """
@@ -277,8 +273,8 @@ class StrategyTemplate(ABC):
 
         """
         if self.trading:
-            self.strategy_engine.cancel_orders(self, ab_orderids)
-            
+            self.strategy_runner.cancel_orders(self, ab_orderids)
+
     def cancel_all(self) -> None:
         """
         撤销该策略所有订单。
@@ -305,13 +301,13 @@ class StrategyTemplate(ABC):
     def write_log(self, msg: str) -> None:
         """
         """
-        self.strategy_engine.write_log(msg, self)
+        self.strategy_runner.write_log(msg, self)
 
     def load_bars(self, days: int, interval: Interval = Interval.MINUTE) -> None:
         """
         加载过去一段时间的k线数据，通常回测，实盘皆可支持1分钟级，但存在部分交易所仅提供既往数天的分钟线。
         """
-        self.strategy_engine.load_bars(self, days, interval)
+        self.strategy_runner.load_bars(self, days, interval)
 
     def sync_data(self):
         """
@@ -320,4 +316,4 @@ class StrategyTemplate(ABC):
         """
         raise NotImplementedError("do not use for now.")
         if self.trading:
-            self.strategy_engine.sync_strategy_data(self)
+            self.strategy_runner.sync_strategy_data(self)

@@ -3,8 +3,9 @@ from typing import Dict, Optional
 from abquant.trader.msg import EntrustData, TickData, DepthData, TransactionData, OrderData, TradeData
 from abquant.trader.object import PositionData, AccountData, ContractData
 from abquant.event import Event
-from abquant.event import EventType 
+from abquant.event import EventType
 from abquant.event import EventDispatcher
+
 
 class OrderManager:
     def __init__(self, event_dispatcher: EventDispatcher):
@@ -26,20 +27,28 @@ class OrderManager:
 
         self.register_event()
 
-
     def register_event(self) -> None:
         """"""
-        self.event_dispatcher.register(EventType.EVENT_TICK, self.process_tick_event)
-        self.event_dispatcher.register(EventType.EVENT_DEPTH, self.process_depth_event)
-        self.event_dispatcher.register(EventType.EVENT_TRANSACTION, self.process_transaction_event)
-        self.event_dispatcher.register(EventType.EVENT_ENTRUST, self.process_entrust_event)
-        self.event_dispatcher.register(EventType.EVENT_ORDER, self.process_order_event)
-        self.event_dispatcher.register(EventType.EVENT_TRADE, self.process_trade_event)
-        self.event_dispatcher.register(EventType.EVENT_POSITION, self.process_position_event)
-        self.event_dispatcher.register(EventType.EVENT_ACCOUNT, self.process_account_event)
-        self.event_dispatcher.register(EventType.EVENT_CONTRACT, self.process_contract_event)
-        self.event_dispatcher.register(EventType.EVENT_GATEWAY, self.process_gateway_event)
-
+        self.event_dispatcher.register(
+            EventType.EVENT_TICK, self.process_tick_event)
+        self.event_dispatcher.register(
+            EventType.EVENT_DEPTH, self.process_depth_event)
+        self.event_dispatcher.register(
+            EventType.EVENT_TRANSACTION, self.process_transaction_event)
+        self.event_dispatcher.register(
+            EventType.EVENT_ENTRUST, self.process_entrust_event)
+        self.event_dispatcher.register(
+            EventType.EVENT_ORDER, self.process_order_event)
+        self.event_dispatcher.register(
+            EventType.EVENT_TRADE, self.process_trade_event)
+        self.event_dispatcher.register(
+            EventType.EVENT_POSITION, self.process_position_event)
+        self.event_dispatcher.register(
+            EventType.EVENT_ACCOUNT, self.process_account_event)
+        self.event_dispatcher.register(
+            EventType.EVENT_CONTRACT, self.process_contract_event)
+        self.event_dispatcher.register(
+            EventType.EVENT_GATEWAY, self.process_gateway_event)
 
     def process_tick_event(self, event: Event) -> None:
         """"""
@@ -102,10 +111,9 @@ class OrderManager:
 
     def get_transaction(self, ab_symbol: str) -> Optional[TransactionData]:
         return self.transactions.get(ab_symbol, None)
-    
+
     def get_entrust(self, ab_symbol: str) -> Optional[EntrustData]:
         return self.entrusts.get(ab_symbol, None)
-    
 
     def get_order(self, ab_orderid: str) -> Optional[OrderData]:
         return self.orders.get(ab_orderid, None)
@@ -122,5 +130,5 @@ class OrderManager:
     def get_contract(self, ab_symbol: str) -> Optional[ContractData]:
         return self.contracts.get(ab_symbol, None)
 
-
-
+    def get_gateway(self, gateway_name: str) -> Optional[Gateway]:
+        return self.gateways.get(gateway_name, None)
