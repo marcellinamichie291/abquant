@@ -131,4 +131,7 @@ class OrderManager:
         return self.contracts.get(ab_symbol, None)
 
     def get_gateway(self, gateway_name: str) -> Optional[Gateway]:
-        return self.gateways.get(gateway_name, None)
+        try:
+            self.gateways[gateway_name]
+        except KeyError as e:
+            raise LookupError("gateway {} not fould. make sure proper gateway called connect method first".format(gateway_name))
