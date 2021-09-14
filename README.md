@@ -61,3 +61,17 @@ a:
 但如果要支持在strategy中 相对于gateway/账户的get_balance的回测。一切就变负责了很多。
 
 8.库的软件工程问题就是这样。特殊化都很简单，相应的根据需求写一遍代码即可。 但要做到通用（意味着api的俭省易用），就是有这些伞兵问题难以解决。api一旦提供，就必然会被乱用，因此不提供就是个相对不差的选择。
+
+
+## q: 启动策略后 没有交易回报。
+a: 试通过
+```event_dispatcher.register(EventType.EVENT_LOG, lambda event: print(str('LOG: ') + str(event.data.time) + str(event.data))) ```
+打印所有LOG事件，如果任何交易gateway的连接务必出现以下7条log， 若有确实，则为gateway连接未成功， 在启动strategy之前请先sleep一段时间，等待异步io完成。
+
+LOG: 2021-09-14 15:32:17.404159LogData(gateway_name='BINANCEUBC', msg='REST API启动成功', level=20)
+LOG: 2021-09-14 15:32:18.150155LogData(gateway_name='BINANCEUBC', msg='账户资金查询成功', level=20)
+LOG: 2021-09-14 15:32:18.336595LogData(gateway_name='BINANCEUBC', msg='交易单信息查询成功', level=20)
+LOG: 2021-09-14 15:32:18.631362LogData(gateway_name='BINANCEUBC', msg='持仓信息查询成功', level=20)
+LOG: 2021-09-14 15:32:18.674333LogData(gateway_name='BINANCEUBC', msg='交易所支持合约信息查询成功', level=20)
+LOG: 2021-09-14 15:32:19.574005LogData(gateway_name='BINANCEUBC', msg='交易Websocket API连接成功', level=20)
+LOG: 2021-09-14 15:32:19.574005LogData(gateway_name='BINANCEUBC', msg='行情Websocket API', level=20)
