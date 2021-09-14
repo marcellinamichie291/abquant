@@ -3,6 +3,7 @@ from typing import Tuple, Dict
 import logging
 from threading import Lock
 from decimal import Decimal
+import math
 
 from .common import Exchange
 
@@ -73,6 +74,20 @@ def round_to(value: float, target: float) -> float:
     value = Decimal(str(value))
     target = Decimal(str(target))
     rounded = float(int(round(value / target)) * target)
+    return rounded
+
+
+
+def round_up(value: float, target: float) -> float:
+    value = Decimal(str(value))
+    target = Decimal(str(target))
+    rounded = float(int(math.ceil(value / target)) * target)
+    return rounded
+
+def round_down(value: float, target: float) -> float:
+    value = Decimal(str(value))
+    target = Decimal(str(target))
+    rounded = float(int(math.floor(value / target)) * target)
     return rounded
 
 if __name__ == '__main__':
