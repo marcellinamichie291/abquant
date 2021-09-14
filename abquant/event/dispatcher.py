@@ -6,7 +6,6 @@ import time
 from typing import Any, Callable, List
 
 from .event import EventType
-from ..ordermanager import OrderManager
 from abquant.trader.exception import CongestionException
 
 
@@ -24,6 +23,7 @@ HandlerType = Callable[[Event], None]
 class EventDispatcher:
 
     def __init__(self, event_threshold: int = 100, interval: int = 1):
+        from ..ordermanager import OrderManager
         self._interval: int = interval
         self._event_threshold = event_threshold
         self._queue: Queue = Queue()
