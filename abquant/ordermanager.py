@@ -134,4 +134,5 @@ class OrderManager:
         try:
             self.gateways[gateway_name]
         except KeyError as e:
-            raise LookupError("gateway {} not fould. make sure proper gateway called connect method first".format(gateway_name))
+            raise LookupError(
+                "gateway {} not fould. make sure proper gateway called connect method first".format(gateway_name))
