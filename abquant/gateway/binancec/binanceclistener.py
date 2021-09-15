@@ -48,7 +48,7 @@ class BinanceCDataWebsocketListener(WebsocketListener):
 
     def on_disconnected(self):
         """"""
-        self.gateway.write_log("Websocket API连接断开")
+        self.gateway.write_log("行情Websocket API连接断开")
 
     def subscribe(self, req: SubscribeRequest) -> None:
         #TODO symbol_contract_map 分 BBC UBC
@@ -118,10 +118,10 @@ class BinanceCDataWebsocketListener(WebsocketListener):
             tick.trade_price = 0
             tick.trade_volume = 0
 
-            tick.best_ask_price = data['a']
-            tick.best_ask_volume = data['A']
-            tick.best_bid_price = data['b']
-            tick.best_bid_volume = data['B']
+            tick.best_ask_price = float(data['a'])
+            tick.best_ask_volume = float(data['A'])
+            tick.best_bid_price = float(data['b'])
+            tick.best_bid_volume = float(data['B'])
             tick.localtime = datetime.now()
 
             self.gateway.on_tick(copy(tick))
@@ -131,10 +131,10 @@ class BinanceCDataWebsocketListener(WebsocketListener):
             if newest < transaction.datetime:
                 return 
             transaction.datetime = newest
-            transaction.volume = data['q']
-            transaction.price = data['p']
+            transaction.volume = float(data['q'])
+            transaction.price = float(data['p'])
             transaction.direction = Direction.SHORT if data['m'] else Direction.LONG
-            transaction.times = data['l'] - data['f']
+            transaction.times = int(data['l']) - int(data['f'])
             transaction.localtime = datetime.now()
 
             self.gateway.on_transaction(copy(transaction))
@@ -142,8 +142,8 @@ class BinanceCDataWebsocketListener(WebsocketListener):
             tick = self.ticks[symbol]
             if tick.datetime < newest:
                 tick.datetime = newest
-            tick.trade_price = data['p']
-            tick.trade_volume = data['q']
+            tick.trade_price = float(data['p'])
+            tick.trade_volume = float(data['q'])
             tick.localtime = datetime.now()
             self.gateway.on_tick(copy(tick))
 
@@ -155,13 +155,13 @@ class BinanceCDataWebsocketListener(WebsocketListener):
             depth.ask_prices = []
             depth.ask_volumes = []
             for p, v in data['a']:
-                depth.ask_volumes.append(v)
-                depth.ask_prices.append(p)
+                depth.ask_volumes.append(float(v))
+                depth.ask_prices.append(float(p))
             depth.bid_prices = []
             depth.bid_volumes = []
             for p, v in data['b']:
-                depth.bid_volumes.append(v)
-                depth.bid_prices.append(p)
+                depth.bid_volumes.append(float(v))
+                depth.bid_prices.append(float(p))
             depth.times = data['u'] - data['pu']
         
             self.gateway.on_depth(deepcopy(depth))

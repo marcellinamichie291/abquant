@@ -146,7 +146,7 @@ class WebsocketListener(ABC):
                     http_proxy_port=self.proxy_port,
                     header=self.header,
                     # the timeout is key to make sure that socket do not disconnect silently without exception
-                    timeout=None
+                    timeout=180
                 )
                 triggered = True
         if triggered:
@@ -201,8 +201,12 @@ class WebsocketListener(ABC):
                     socket.error
                 ):
                     # TODO exception or not? I think log is at least necessary
+                    
+                    et, ev, tb = sys.exc_info()
+                    # self.on_error(et, ev, tb)
+                    self.gateway.write_log(msg=self.exception_detail(et, ev, tb), level=logging.WARNING)
                     self._disconnect()
-                    sleep(3)
+                    sleep(1)
 
                 # other internal exception raised in on_packet
                 except:  # noqa
@@ -269,6 +273,9 @@ class WebsocketListener(ABC):
         ws = self._ws
         if ws:
             ws.send("ping", websocket.ABNF.OPCODE_PING)
+            ws.send("pong", websocket.ABNF.OPCODE_PONG)
+
+    print("Got a pong! No need to respond")
 
     @abstractmethod
     def on_connected(self):

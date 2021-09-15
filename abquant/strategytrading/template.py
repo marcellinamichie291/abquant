@@ -8,7 +8,7 @@ from abquant.trader.common import Interval, Direction, Offset, OrderType
 from abquant.trader.msg import BarData, TickData, OrderData, TradeData, TransactionData, EntrustData, DepthData
 
 # TODO typechecking  and same thing in msg.py
-from .livestrategyrunner import StrategyEngine
+
 
 
 class StrategyTemplate(ABC):
