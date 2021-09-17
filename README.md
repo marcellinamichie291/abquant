@@ -64,6 +64,7 @@ a:
 
 
 ## q: 启动策略后 没有交易回报。
+
 a: 试通过
 ```event_dispatcher.register(EventType.EVENT_LOG, lambda event: print(str('LOG: ') + str(event.data.time) + str(event.data))) ```
 打印所有LOG事件，如果任何交易gateway的连接务必出现以下7条log， 若有确实，则为gateway连接未成功， 在启动strategy之前请先sleep一段时间，等待异步io完成。
@@ -75,3 +76,8 @@ LOG: 2021-09-14 15:32:18.631362LogData(gateway_name='BINANCEUBC', msg='持仓信
 LOG: 2021-09-14 15:32:18.674333LogData(gateway_name='BINANCEUBC', msg='交易所支持合约信息查询成功', level=20)
 LOG: 2021-09-14 15:32:19.574005LogData(gateway_name='BINANCEUBC', msg='交易Websocket API连接成功', level=20)
 LOG: 2021-09-14 15:32:19.574005LogData(gateway_name='BINANCEUBC', msg='行情Websocket API', level=20)
+
+
+## q:  SSLError(e, request=request)\nrequests.exceptions.SSLError: HTTPSConnectionPool(host=xxx, port=xxx): Max retries exceeded with url xxx.
+
+a: 通常这意味着网络故障，极有可能来自于币所，也有可能来自于交易服务器的网络故障。 如果有代理服务器，有限考虑检查代理服务器网络故障。

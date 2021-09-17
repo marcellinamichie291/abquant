@@ -9,6 +9,7 @@ from threading import Lock, Thread
 from time import sleep
 from abc import ABC, abstractmethod, abstractstaticmethod
 from typing import Dict, Optional, Tuple
+from collections import deque
 
 import websocket
 
@@ -17,6 +18,7 @@ from abquant.trader.utility import get_file_logger
 from abquant.trader.msg import DepthData, EntrustData, TickData, TransactionData
 
 
+MAX_RECONNECT = 10
 class WebsocketListener(ABC):
     """
     
@@ -35,6 +37,7 @@ class WebsocketListener(ABC):
 
         self._ws_lock = Lock()
         self._ws = None
+        self._retry_queue = deque()
 
         self._worker_thread = None
         self._ping_thread = None
@@ -201,19 +204,15 @@ class WebsocketListener(ABC):
                     socket.error
                 ):
                     # TODO exception or not? I think log is at least necessary
-                    
-                    et, ev, tb = sys.exc_info()
-                    # self.on_error(et, ev, tb)
-                    self.gateway.write_log(msg=self.exception_detail(et, ev, tb), level=logging.WARNING)
                     self._disconnect()
-                    sleep(1)
+                    self._retry_limit()
 
                 # other internal exception raised in on_packet
                 except:  # noqa
                     et, ev, tb = sys.exc_info()
                     self.on_error(et, ev, tb)
                     self._disconnect()
-                    sleep(1)
+                    self._retry_limit()
         except:  # noqa
             et, ev, tb = sys.exc_info()
             self.on_error(et, ev, tb)
@@ -222,6 +221,17 @@ class WebsocketListener(ABC):
     @staticmethod
     def unpack_data(data: str) -> Dict:
         return json.loads(data)
+    
+    def _retry_limit(self):
+        retry_queue = self._retry_queue
+        retry_queue.append(datetime.now())
+        if len(retry_queue) > MAX_RECONNECT:
+            self.gateway.write_log("there are {} times reconnect with in {} seconds".format(len(retry_queue), MAX_RECONNECT), level=logging.WARNING)
+            # TODO error
+            et, ev, tb = sys.exc_info()
+            self.on_error(et, ev, tb)
+            sleep(self.ping_interval)
+
 
     @staticmethod
     def make_data(symbol: str, exchange: str, now: datetime, gateway: str) -> Tuple[TickData, DepthData, TransactionData, EntrustData]:
@@ -259,6 +269,7 @@ class WebsocketListener(ABC):
         while self._active:
             try:
                 self._ping()
+                self._retry_queue = deque()
             except:  # noqa
                 et, ev, tb = sys.exc_info()
                 self.on_error(et, ev, tb)
@@ -274,8 +285,6 @@ class WebsocketListener(ABC):
         if ws:
             ws.send("ping", websocket.ABNF.OPCODE_PING)
             ws.send("pong", websocket.ABNF.OPCODE_PONG)
-
-    print("Got a pong! No need to respond")
 
     @abstractmethod
     def on_connected(self):

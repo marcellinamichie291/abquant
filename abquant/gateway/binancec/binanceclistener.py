@@ -91,7 +91,7 @@ class BinanceCDataWebsocketListener(WebsocketListener):
             if not self.usdt_base:
                 url = D_TESTNET_WEBSOCKET_DATA_HOST + "/".join(channels)
 
-        self.init(url, self.proxy_host, self.proxy_port)
+        self.init(url, self.proxy_host, self.proxy_port, ping_interval=10)
 
         # self.start()
 
@@ -205,7 +205,7 @@ class BinanceCTradeWebsocketListener(WebsocketListener):
 
     def connect(self, url: str, proxy_host: str, proxy_port: int) -> None:
         """"""
-        self.init(url, proxy_host, proxy_port)
+        self.init(url, proxy_host, proxy_port, ping_interval=10)
         self.start()
 
     def on_connected(self) -> None:
