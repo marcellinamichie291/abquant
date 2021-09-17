@@ -10,7 +10,6 @@ from abquant.trader.msg import BarData, TickData, OrderData, TradeData, Transact
 # TODO typechecking  and same thing in msg.py
 
 
-
 class StrategyTemplate(ABC):
     """"""
 
@@ -129,7 +128,7 @@ class StrategyTemplate(ABC):
         """
         该方法比较特殊，在实盘中需通过BarGenerator，在on_tick中更新并回调。 
         在回测中，tick级别回测同理， 分钟bar级别回测则会被回测引擎自动调用。
-        
+
         如果在on_init中调用了 self.load_bars(n). 那么该方法会在回放过去n天的分钟bar数据中被不断调用， 
         共计安时序调用 n * 24 * 60 次。
         此时的策略实例并不在trading状态，因此并未开始交易，而是在做策略的计算预热。
@@ -197,7 +196,7 @@ class StrategyTemplate(ABC):
         if not order.is_active() and order.ab_orderid in self.active_orderids:
             self.active_orderids.remove(order.ab_orderid)
 
-    def buy(self, ab_symbol: str, price: float, volume: float) -> List[str]:
+    def buy(self, ab_symbol: str, price: float, volume: float, order_type: OrderType = OrderType.MARKET) -> List[str]:
         """
         开多。
         注意事项：
@@ -205,25 +204,25 @@ class StrategyTemplate(ABC):
         2. 买卖会自动处理price tick的问题（最小可变价格），但依旧建议策略师编写师都做好价格round。尤其是做市类策略。
 
         """
-        return self.send_order(ab_symbol, Direction.LONG, Offset.OPEN, price, volume)
+        return self.send_order(ab_symbol, Direction.LONG, price, volume, Offset.OPEN, order_type)
 
-    def sell(self, ab_symbol: str, price: float, volume: float) -> List[str]:
+    def sell(self, ab_symbol: str, price: float, volume: float, order_type: OrderType = OrderType.MARKET) -> List[str]:
         """
         平多
         """
-        return self.send_order(ab_symbol, Direction.SHORT, Offset.CLOSE, price, volume)
+        return self.send_order(ab_symbol, Direction.SHORT, price, volume, Offset.CLOSE, order_type)
 
-    def short(self, ab_symbol: str, price: float, volume: float) -> List[str]:
+    def short(self, ab_symbol: str, price: float, volume: float, order_type: OrderType = OrderType.MARKET) -> List[str]:
         """
         开空
         """
-        return self.send_order(ab_symbol, Direction.SHORT, Offset.OPEN, price, volume)
+        return self.send_order(ab_symbol, Direction.SHORT, price, volume,  Offset.OPEN, order_type)
 
-    def cover(self, ab_symbol: str, price: float, volume: float) -> List[str]:
+    def cover(self, ab_symbol: str, price: float, volume: float, order_type: OrderType = OrderType.MARKET) -> List[str]:
         """
         平空 
         """
-        return self.send_order(ab_symbol, Direction.LONG, Offset.CLOSE, price, volume)
+        return self.send_order(ab_symbol, Direction.LONG, price, volume, Offset.CLOSE, order_type)
 
     def send_order(
         self,
