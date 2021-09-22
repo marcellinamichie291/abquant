@@ -6,7 +6,8 @@ import argparse
 import time
 from pprint import pprint
 
-from abquant.trader.tool import BarAccumulater, BarGenerator
+# from abquant.trader.tool import BarAccumulater, BarGenerator
+from abquant.trader.tool import BarGenerator
 from abquant.trader.common import Exchange, OrderType
 from abquant.trader.utility import generate_ab_symbol, round_up
 from abquant.event.event import EventType
@@ -63,13 +64,13 @@ class TheStrategy(StrategyTemplate):
 
         super().__init__(strategy_engine, strategy_name, ab_symbols, setting)
         self.bgs: Dict[str, BarGenerator] = {}
-        self.bar_accumulator: BarAccumulater = None
+        # self.bar_accumulator: BarAccumulater = None
         self.last_tick_time = None
 
     def on_init(self):
         for ab_symbol in self.ab_symbols:
             self.bgs[ab_symbol] = BarGenerator(lambda bar: None, interval=5)
-        self.bar_accumulator = BarAccumulater(self.window, on_window_bars=self.on_window_bars)
+        # self.bar_accumulator = BarAccumulater(self.window, on_window_bars=self.on_window_bars)
 
         # init时 从交易所获取过去n 天的1 分钟k线。生成 60 * 24 个供 strategy.on_bars 调用的 bars: Dict[str, BarData], 字典的key是 ab_symbol, value是BarData.
         # 从交易所获取后，顺序调用on_bars 60 * 24 次，再返回。
@@ -106,7 +107,7 @@ class TheStrategy(StrategyTemplate):
             self.last_tick_time = tick.datetime
 
     def on_bars(self, bars: Dict[str, BarData]):
-        self.bar_accumulator.update_bars(bars)
+        # self.bar_accumulator.update_bars(bars)
         if self.trade_flag:
             self.write_log("BARS, timestamp:{}, thread: {}, last_time: {}".format(
             datetime.now(), threading.get_native_id(), self.last_tick_time))
@@ -169,7 +170,6 @@ class TheStrategy(StrategyTemplate):
 
     def on_timer(self, interval: int) -> None:
         # 根据 event dispatcher的 interval 决定， 默认1秒调用一次。
-        
         pass
 
     def update_trade(self, trade: TradeData) -> None:
@@ -236,6 +236,7 @@ def main():
     # this is subscribe all
     print("{} instrument symbol strategy0 subscribed: ".format(
         len(ab_symbols)), ab_symbols)
+    # strategy 订阅所有binance合约 的金融产品行情数据。 
     # strategy_runner.add_strategy(strategy_class=TheStrategy,
     #                              strategy_name='the_strategy0',
     #                              ab_symbols=ab_symbols,
@@ -262,15 +263,15 @@ def main():
                                  )
     strategy_runner.init_all_strategies()
 
-    # 策略 start之前 sleepyiduanshijian
-
-    time.sleep(5)
+    # 策略 start之前 sleepy一段时间， 此时strategy实例在init 状态，且有可能在请求历史数据并初始化。该操作较为耗时。
+    time.sleep(15)
     strategy_runner.start_all_strategies()
 
     import random
     while True:
         # renew strategy1 setting.
         time.sleep(5)
+        # edit_strategy 方法用于修改策略的 parameter。 random在这里就是一个示例。
         the_strategy1_setting = {"param1": 2,
                                  "param2": 2 * random.uniform(0, 1)}
         strategy_runner.edit_strategy(
