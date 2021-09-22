@@ -28,7 +28,7 @@ class BinanceCAccessor(RestfulAccessor):
     def __init__(self, gateway: Gateway):
         """"""
         super(BinanceCAccessor, self).__init__(gateway)
-        # self.trade_ws: = self.trade_w
+
         self.trade_listener: BinanceCTradeWebsocketListener = self.gateway.trade_listener
 
         self.key: str = ""

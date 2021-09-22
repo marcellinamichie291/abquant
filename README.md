@@ -23,6 +23,12 @@ pip install .
 ```
 # strategy example
 
+```
+# 一切交易员须知，所有的api用法都在这个样例里。使用abquant编写策略前，务必确认该样例里的每一行代码都能读懂。如果有余力，请进入abquant/strategytrading/template.py 并阅读所有注释。
+cd abquant/example
+python run_strategy.py -k "api-key" -s "api-secret" [-proxy_host  proxy例如127.0.0.1 -proxy_host proxy端口例如1087] 
+```
+
 策略样例将在 abquant/example 目录下。后续会逐步更新运行脚本。
 
 
@@ -49,7 +55,7 @@ a:
 3.strategy，和gateway/账户是不同的概念。1个strategy 可以连接不同的gateway/账户. 而1个gateway/账户也可以同时运行多个strategy（在不同的进程上）。比如一个B本位策略+开空等量BTC永续的费率套利策略，就可以变成U本位策略。
 
 4.存在如下组合关系。1strategy- 1gateway/账户，1strategy- 多gateway/账户， 多stratey-多gateway/账户， 多strategy-1gateway/账户，
-5.加上 实盘与回测，就是一套api要支持8种情况。
+5.加上 实盘与回测，就是一套api要支持8种情况，无歧义的运行。
 
 6.先说strategy.get_postion。该功能可以直接get请求交易所获得某个gateway/账户的所有持仓。多gateway/账户的情况直接分别请求加总即可。 但多stratey的情况，不好处理。因为每个strategy是有自己的持仓的。清仓strategy1的所有持仓不需要清仓strategy2的持仓。因此strategy.get_postion 一定是每个strategy实例分别根据订单成交回报以及orderid各自维护一份position信息。实盘与回测同理。
 
@@ -60,4 +66,24 @@ a:
 但多strategy的回测就太trick了。支持多strategy的回测是 abquant的一个很核心的功能。多strategy的好处不言而喻，通过收益部相关性不高的多个策略拉平总收益，也是大数定律的很好应用。通常多strategy回测的实现，是逐个strategy模拟撮合完成后再对齐时间后计算综合下来的逐日收益。 这样的实现意味着要多次回放历史数据，且最后的综合计算也有不少trick的地方容易出错。原本abquant的架构使得多strateg的一遍回放，最后计算。使得1/多strategy的回测在abquant能够通用的支持。 
 但如果要支持在strategy中 相对于gateway/账户的get_balance的回测。一切就变负责了很多。
 
-8.技术库的软件工程问题就是这样。特殊化都很简单，相应的根据需求写一遍代码即可。 但要做到通用（意味着api的俭省易用），就是有着写伞兵问题难以解决。
+8.库的软件工程问题就是这样。特殊化都很简单，相应的根据需求写一遍代码即可。 但要做到通用（意味着api的俭省易用），就是有这些伞兵问题难以解决。api一旦提供，就必然会被乱用，因此不提供就是个相对不差的选择。
+
+
+## q: 启动策略后 没有交易回报。
+
+a: 试通过
+```event_dispatcher.register(EventType.EVENT_LOG, lambda event: print(str('LOG: ') + str(event.data.time) + str(event.data))) ```
+打印所有LOG事件，如果任何交易gateway的连接务必出现以下7条log， 若有确实，则为gateway连接未成功， 在启动strategy之前请先sleep一段时间，等待异步io完成。
+
+LOG: 2021-09-14 15:32:17.404159LogData(gateway_name='BINANCEUBC', msg='REST API启动成功', level=20)
+LOG: 2021-09-14 15:32:18.150155LogData(gateway_name='BINANCEUBC', msg='账户资金查询成功', level=20)
+LOG: 2021-09-14 15:32:18.336595LogData(gateway_name='BINANCEUBC', msg='交易单信息查询成功', level=20)
+LOG: 2021-09-14 15:32:18.631362LogData(gateway_name='BINANCEUBC', msg='持仓信息查询成功', level=20)
+LOG: 2021-09-14 15:32:18.674333LogData(gateway_name='BINANCEUBC', msg='交易所支持合约信息查询成功', level=20)
+LOG: 2021-09-14 15:32:19.574005LogData(gateway_name='BINANCEUBC', msg='交易Websocket API连接成功', level=20)
+LOG: 2021-09-14 15:32:19.574005LogData(gateway_name='BINANCEUBC', msg='行情Websocket API', level=20)
+
+
+## q:  SSLError(e, request=request)\nrequests.exceptions.SSLError: HTTPSConnectionPool(host=xxx, port=xxx): Max retries exceeded with url xxx.
+
+a: 通常这意味着网络故障，极有可能来自于自身网络环境不佳，也有可能来自于交易服务器的网络故障。 如果有代理服务器，有限考虑检查代理服务器网络故障。一般该错误可能会出现在accessor对交易所的主动请求中发文生， 通常无需停止策略，等待网络波动结束，abquant会设法建立重连。同时这也意味着 每一个下单/撤单周期，的动作，需检车策略实例中的active_orderid 以及， pos。 不要相信每次下单撤单操作一定能够成功。上一个周期失败的动作，下一个周期继续完成。(下单由于网络原因失败，我会返回一个status为 rejected的订单回报，并调用update_order， 但撤单失败的回报，abquant并未实现, 作者个人也没想清楚是否应该提供, 目前倾向于不应当提供。)

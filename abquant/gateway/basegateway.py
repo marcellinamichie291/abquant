@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
-from logging import INFO
-from abquant.event.event import EventType
+from logging import INFO, WARNING
 from typing import Iterable, Any, Set
 from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
-from abquant.event import EventDispatcher, Event
-from abquant.trader.common import Exchange
+from abquant.event import EventDispatcher, Event, EventType
+from abquant.trader.common import Exchange, OrderType
 from abquant.trader.object import AccountData, CancelRequest, ContractData, HistoryRequest, LogData, OrderRequest, PositionData, SubscribeMode, SubscribeRequest
 
 class Gateway(ABC):
@@ -15,6 +14,8 @@ class Gateway(ABC):
         self.gateway_name: str = gateway_name
         self.subscribe_mode = SubscribeMode()
 
+
+    # TODO property is better.
     def set_gateway_name(self, gateway_name: str):
         self.gateway_name = gateway_name
 
@@ -50,13 +51,18 @@ class Gateway(ABC):
     @abstractmethod
     def start(self):
         """
-        after start method called, the symbol subscribed by SubscribeRequest will start to receive.
+        after start method called, the symbol subscribed by SubscribeRequest will start to receive. make sure every time start call, the market listener will reconnect.
         """
         pass
 
     @abstractmethod
     def send_order(self, order_request: OrderRequest) -> OrderData:
-        pass
+        """
+        orveride method should call this base method for orderequest check
+        """
+        if order_request.type == OrderType.MARKET and order_request.price:
+            self.write_log("markert order sent with price, order: \n{}".format(order_request), level=WARNING)
+
     
     @abstractmethod
     def cancel_order(self, cancel_request: CancelRequest) -> None:
@@ -106,6 +112,9 @@ class Gateway(ABC):
 
     def on_contract(self, contract: ContractData) -> None:
         self.on_event(EventType.EVENT_CONTRACT, contract)
+
+    def on_gateway(self, gateway: "Gateway") -> None:
+        self.on_event(EventType.EVENT_GATEWAY, gateway)
         
     def on_log(self, log: LogData) -> None:
         self.on_event(EventType.EVENT_LOG, log)
