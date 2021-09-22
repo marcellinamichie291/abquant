@@ -23,6 +23,12 @@ pip install .
 ```
 # strategy example
 
+```
+# 一切交易员须知，所有的api用法都在这个样例里。使用abquant编写策略前，务必确认该样例里的每一行代码都能读懂。如果有余力，请进入abquant/strategytrading/template.py 并阅读所有注释。
+cd abquant/example
+python run_strategy.py -k "api-key" -s "api-secret" [-proxy_host  proxy例如127.0.0.1 -proxy_host proxy端口例如1087] 
+```
+
 策略样例将在 abquant/example 目录下。后续会逐步更新运行脚本。
 
 
@@ -80,4 +86,4 @@ LOG: 2021-09-14 15:32:19.574005LogData(gateway_name='BINANCEUBC', msg='行情Web
 
 ## q:  SSLError(e, request=request)\nrequests.exceptions.SSLError: HTTPSConnectionPool(host=xxx, port=xxx): Max retries exceeded with url xxx.
 
-a: 通常这意味着网络故障，极有可能来自于币所，也有可能来自于交易服务器的网络故障。 如果有代理服务器，有限考虑检查代理服务器网络故障。
+a: 通常这意味着网络故障，极有可能来自于自身网络环境不佳，也有可能来自于交易服务器的网络故障。 如果有代理服务器，有限考虑检查代理服务器网络故障。一般该错误可能会出现在accessor对交易所的主动请求中发文生， 通常无需停止策略，等待网络波动结束，abquant会设法建立重连。同时这也意味着 每一个下单/撤单周期，的动作，需检车策略实例中的active_orderid 以及， pos。 不要相信每次下单撤单操作一定能够成功。上一个周期失败的动作，下一个周期继续完成。(下单由于网络原因失败，我会返回一个status为 rejected的订单回报，并调用update_order， 但撤单失败的回报，abquant并未实现, 作者个人也没想清楚是否应该提供, 目前倾向于不应当提供。)

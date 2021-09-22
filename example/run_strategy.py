@@ -112,6 +112,7 @@ class TheStrategy(StrategyTemplate):
             self.write_log("activate orders: {}".format(self.active_orderids))
             for ab_orderid in self.active_orderids:
                 self.cancel_order(ab_orderid)
+            
 
             # 平仓 
             for pos_ab_symbol, pos_volume in self.pos.items():
@@ -128,7 +129,7 @@ class TheStrategy(StrategyTemplate):
             u_per_trade = 10
             trade_instrument = self.ab_symbols[0]
             trade_instrument_min_volumn = 0.001
-            trade_price = bars[trade_instrument].close_price * (1 - 0.001)
+            trade_price = bars[trade_instrument].close_price * (1 - 0.01)
             # 不用太担心，abquant会在发送订单前，自动检查 金融产品的 price_tick, 因此，如果你不知道该产品的price_tick，或下单的仓位较大，不用担心，下一行代码 可以不使用round_up.该操作是为高频小仓位的策略，精确控制仓位存在的。
             trade_volume = round_up(u_per_trade / trade_price, target=trade_instrument_min_volumn)
             self.buy(self.ab_symbols[0], price=trade_price, volume=trade_volume, order_type=OrderType.LIMIT)
@@ -138,7 +139,7 @@ class TheStrategy(StrategyTemplate):
                 u_per_trade = 10
                 trade_instrument = self.ab_symbols[1]
                 trade_instrument_min_volumn = 0.001
-                trade_price = bars[trade_instrument].close_price  * (1 + 0.001)
+                trade_price = bars[trade_instrument].close_price  * (1 + 0.01)
                 # 不round， 则最小成交单位交由abquant处理。
                 trade_volume = u_per_trade / trade_price
                 self.short(self.ab_symbols[1], price=trade_price, volume=trade_volume, order_type=OrderType.LIMIT)
@@ -247,12 +248,12 @@ def main():
                                              "ETHUSD_PERP.BINANCE"],
                                  setting={"param1": 3, "param2": 4}
                                  )
-    # strategy_runner.add_strategy(strategy_class=TheStrategy,
-    #                              strategy_name='the_strategy3',
-    #                              ab_symbols=["XRPUSDT.BINANCE",
-    #                                          "ICPUSDT.BINANCE"],
-    #                              setting={"param1": 3, "param2": 4, "trade_flag": True}
-    #                              )
+    strategy_runner.add_strategy(strategy_class=TheStrategy,
+                                 strategy_name='the_strategy3',
+                                 ab_symbols=["XRPUSDT.BINANCE",
+                                             "ICPUSDT.BINANCE"],
+                                 setting={"param1": 3, "param2": 4, "trade_flag": True}
+                                 )
     strategy_runner.init_all_strategies()
 
     # 策略 start之前 sleepyiduanshijian
