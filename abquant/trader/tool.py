@@ -32,6 +32,7 @@ class BarAccumulater:
         for ab_symbol, bar in bars.items():
             if ab_symbol not in self.bars:
                 self.bars[ab_symbol] = bar
+                bar.interval = Interval.CUSTOM
             else:
                 accumulated_bar = self.bars[ab_symbol]
                 accumulated_bar.close_price = bar.close_price
