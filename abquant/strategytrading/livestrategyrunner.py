@@ -362,10 +362,10 @@ class LiveStrategyRunner(StrategyRunner):
         order_grouper = OrderGrouper()
         # ab_orderids = set(ab_orderids)
         for ab_orderid in ab_orderids:
-            order = self.order_manager.get_order(ab_orderid)
+            order = strategy.orders.get(ab_orderid, None)
             if not order:
                 self.write_log(
-                    f"撤单失败，找不到委托{order.ab_orderid}", strategy, level=WARNING)
+                    f"撤单失败，找不到交易单ab_orderid, {ab_orderid}, 通常来说，这意味着该orderid才刚发出，尚未获得交易所确认，或该order已成交或撤销。", strategy, level=WARNING)
             else:
                 order_grouper.add(order)
 
