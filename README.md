@@ -19,7 +19,7 @@ pip install -r requirement.txt
 ```
 git clone https://git.wecash.net/dct/abquant
 cd abquant
-pip install .
+python -m pip install .
 ```
 # strategy example, 样例参考及试运行
 
@@ -46,7 +46,10 @@ cd ~/mystrategy
 策略样例将在 abquant/example 目录下。后续会逐步更新运行脚本。
 
 # abquant 版本更新
-abquant版本遵循https://semver.org/原则。
+1. abquant版本遵循https://semver.org/原则。
+1. abquant 会尽可能遵从向后兼容的原则，从而使得交易员的strategy实现在新版本的abquant依旧可以运行。若出现向后不兼容的api，会提前两个minor version告知。
+1. abquant的新版本需要参考 ”abquant库安装(已支持)" 重新pip install
+1. 安装完成后请注意 python -m pip list, 确认abquant的版本已更新，如有异常情况，随时联系维护者。
 
 
 
