@@ -44,7 +44,7 @@ class BinanceCDataWebsocketListener(WebsocketListener):
 
     def on_connected(self) -> None:
         """"""
-        self.gateway.write_log("行情Websocket API")
+        self.gateway.write_log("行情Websocket API连接")
 
     def on_disconnected(self):
         """"""

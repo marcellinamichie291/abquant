@@ -63,8 +63,8 @@ class MyStrategy(StrategyTemplate):
             pass
 
         for ab_symbol in self.ab_symbols:
-            self.bgs[ab_symbol] = BarGenerator(self.on_5s_bar, interval=5)
-            self.bar_accumulator = BarAccumulater
+            self.bgs[ab_symbol] = BarGenerator(on_bar, interval=5)
+            self.bar_accumulator = BarAccumulater()
         self.load_bars(1)
 
 

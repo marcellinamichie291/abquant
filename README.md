@@ -19,17 +19,38 @@ pip install -r requirement.txt
 ```
 git clone https://git.wecash.net/dct/abquant
 cd abquant
-pip install .
+python -m pip install .
 ```
-# strategy example
+# strategy example, 样例参考及试运行
 
 ```
-# 一切交易员须知，所有的api用法都在这个样例里。使用abquant编写策略前，务必确认该样例里的每一行代码都能读懂。如果有余力，请进入abquant/strategytrading/template.py 并阅读所有注释。
+# 一切交易员须知，所有的api用法都在这个样例里。使用abquant编写策略前，务必确认该样例里的每一行代码都能读懂。
+# 如果有余力，请进入abquant/strategytrading/template.py 并阅读所有注释。
 cd abquant/example
 python run_strategy.py -k "api-key" -s "api-secret" [-proxy_host  proxy例如127.0.0.1 -proxy_host proxy端口例如1087] 
 ```
 
+# 新策略开发
+```
+# 新开一个目录，也可以是git repository.
+
+mkdir ~/mystrategy
+cp abquant/example/run_strategy.py ~/mystrategy
+cd ~/mystrategy
+# 修改 ~/mystrategy/run_strategy 中的 TheStrategy 类中的on_bars至自己策略逻辑。可参考 abquant/example/mystrategy.py
+
+# 修改 main() 函数中，合理的 调用add_strategy， 以及初始化所需gateway 调用gateway.connect 方法。
+# 实盘运行自己的策略，同 "strategy example, 样例参考及试运行"所述。
+```
+
 策略样例将在 abquant/example 目录下。后续会逐步更新运行脚本。
+
+# abquant 版本更新
+1. abquant版本遵循https://semver.org/原则。
+1. abquant 会尽可能遵从向后兼容的原则，从而使得交易员的strategy实现在新版本的abquant依旧可以运行。若出现向后不兼容的api，会提前两个minor version告知。
+1. abquant的新版本需要参考 ”abquant库安装(已支持)" 重新pip install
+1. 安装完成后请注意 python -m pip list, 确认abquant的版本已更新，如有异常情况，随时联系维护者。
+
 
 
 

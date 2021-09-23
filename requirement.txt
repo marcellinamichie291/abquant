@@ -2,4 +2,4 @@ numpy
 requests
 websocket-client
 pytz
-ta-lib
+#ta-lib

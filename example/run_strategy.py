@@ -1,13 +1,12 @@
-from abquant import trader
 from datetime import datetime
 import threading
 from typing import Dict, List
 import argparse
+from logging import getLevelName
 import time
 from pprint import pprint
 
-# from abquant.trader.tool import BarAccumulater, BarGenerator
-from abquant.trader.tool import BarGenerator
+from abquant.trader.tool import BarAccumulater, BarGenerator
 from abquant.trader.common import Exchange, OrderType
 from abquant.trader.utility import generate_ab_symbol, round_up
 from abquant.event.event import EventType
@@ -64,13 +63,15 @@ class TheStrategy(StrategyTemplate):
 
         super().__init__(strategy_engine, strategy_name, ab_symbols, setting)
         self.bgs: Dict[str, BarGenerator] = {}
-        # self.bar_accumulator: BarAccumulater = None
+        self.bar_accumulator: BarAccumulater = None
         self.last_tick_time = None
 
     def on_init(self):
         for ab_symbol in self.ab_symbols:
             self.bgs[ab_symbol] = BarGenerator(lambda bar: None, interval=5)
-        # self.bar_accumulator = BarAccumulater(self.window, on_window_bars=self.on_window_bars)
+        # 聚合 bars 生成 window_bars， 根据k线生成 比如window分钟k线的barData， 并且调用 on_window_bars 回调函数。
+        self.bar_accumulator = BarAccumulater(
+            window=self.window, on_window_bars=self.on_window_bars)
 
         # init时 从交易所获取过去n 天的1 分钟k线。生成 60 * 24 个供 strategy.on_bars 调用的 bars: Dict[str, BarData], 字典的key是 ab_symbol, value是BarData.
         # 从交易所获取后，顺序调用on_bars 60 * 24 次，再返回。
@@ -87,6 +88,7 @@ class TheStrategy(StrategyTemplate):
         self.write_log("策略停止")
 
     def on_tick(self, tick: TickData):
+        # 以下的代码是根据tick数据，生成 bars数据的代码。如果策略是分钟级，则不要做任何修改。
         if (
             self.last_tick_time and
             tick.datetime > self.last_tick_time and
@@ -96,7 +98,7 @@ class TheStrategy(StrategyTemplate):
             for ab_symbol, bg in self.bgs.items():
                 bars[ab_symbol] = bg.generate()
             # 生成新的k线数据后，主动调用 on_bars。
-            self.write_log("new minutes tick: {}".format(tick))
+            # self.write_log("new minutes tick: {}".format(tick))
             self.on_bars(bars)
 
         bg: BarGenerator = self.bgs[tick.ab_symbol]
@@ -107,26 +109,31 @@ class TheStrategy(StrategyTemplate):
             self.last_tick_time = tick.datetime
 
     def on_bars(self, bars: Dict[str, BarData]):
-        # self.bar_accumulator.update_bars(bars)
+        # 分钟级策略逻辑在这里实现， 注意策略里面不得出现任何 IO操作IO操作请使用strategyTemplate提供的接口。所有startegyTemplate提供的接口以下代码都有使用。 如 write_log, sell, buy, short, cover。
+
+        # 更新window_bar生成器， 方便生成 n分钟k线。
+        self.bar_accumulator.update_bars(bars)
+
         if self.trade_flag:
             self.write_log("BARS, timestamp:{}, thread: {}, last_time: {}".format(
-            datetime.now(), threading.get_native_id(), self.last_tick_time))
- 
+                datetime.now(), threading.get_native_id(), self.last_tick_time))
+
             self.write_log("activate orders: {}".format(self.active_orderids))
             for ab_orderid in self.active_orderids:
                 self.cancel_order(ab_orderid)
-            
 
-            # 平仓 
+            # 平仓  self.pos存储的是该策略实例维护的仓位。
             for pos_ab_symbol, pos_volume in self.pos.items():
                 if pos_volume == 0:
                     continue
                 elif pos_volume > 0:
                     # 平多
-                    self.sell(pos_ab_symbol, bars[pos_ab_symbol].close_price, abs(pos_volume), OrderType.MARKET)
+                    self.sell(pos_ab_symbol, bars[pos_ab_symbol].close_price, abs(
+                        pos_volume), OrderType.MARKET)
                 else:
                     # 平空
-                    self.cover(pos_ab_symbol, bars[pos_ab_symbol].close_price, abs(pos_volume), OrderType.MARKET)
+                    self.cover(pos_ab_symbol, bars[pos_ab_symbol].close_price, abs(
+                        pos_volume), OrderType.MARKET)
 
             # 开新仓
             u_per_trade = 10
@@ -134,24 +141,30 @@ class TheStrategy(StrategyTemplate):
             trade_instrument_min_volumn = 0.001
             trade_price = bars[trade_instrument].close_price * (1 - 0.01)
             # 不用太担心，abquant会在发送订单前，自动检查 金融产品的 price_tick, 因此，如果你不知道该产品的price_tick，或下单的仓位较大，不用担心，下一行代码 可以不使用round_up.该操作是为高频小仓位的策略，精确控制仓位存在的。
-            trade_volume = round_up(u_per_trade / trade_price, target=trade_instrument_min_volumn)
-            self.buy(self.ab_symbols[0], price=trade_price, volume=trade_volume, order_type=OrderType.LIMIT)
-            self.write_log(f"buy {self.ab_symbols[0]}, in price {trade_price}, with vol {trade_volume}")
+            trade_volume = round_up(
+                u_per_trade / trade_price, target=trade_instrument_min_volumn)
+            self.buy(self.ab_symbols[0], price=trade_price,
+                     volume=trade_volume, order_type=OrderType.LIMIT)
+            self.write_log(
+                f"buy {self.ab_symbols[0]}, in price {trade_price}, with vol {trade_volume}")
 
             if len(self.ab_symbols) >= 2:
                 u_per_trade = 10
                 trade_instrument = self.ab_symbols[1]
                 trade_instrument_min_volumn = 0.001
-                trade_price = bars[trade_instrument].close_price  * (1 + 0.01)
+                trade_price = bars[trade_instrument].close_price * (1 + 0.01)
                 # 不round， 则最小成交单位交由abquant处理。
                 trade_volume = u_per_trade / trade_price
-                self.short(self.ab_symbols[1], price=trade_price, volume=trade_volume, order_type=OrderType.LIMIT)
-            self.write_log(f"short {self.ab_symbols[1]}, in price {trade_price}, with vol {trade_volume}")
+                self.short(self.ab_symbols[1], price=trade_price,
+                           volume=trade_volume, order_type=OrderType.LIMIT)
+            self.write_log(
+                f"short {self.ab_symbols[1]}, in price {trade_price}, with vol {trade_volume}")
         # self.write_log(bars)
         # pprint({k:v for k, v in bars.items() if v is not None})
         # print("\n\n\n\n")
-    
+
     def on_window_bars(self, bars: Dict[str, BarData]):
+        # window分钟级策略在这里实现， 注意设置 window参数。方便
         self.write_log("WINDOW BAR: {}".format(bars))
 
     def on_entrust(self, entrust: EntrustData) -> None:
@@ -173,11 +186,13 @@ class TheStrategy(StrategyTemplate):
         pass
 
     def update_trade(self, trade: TradeData) -> None:
+        # 成交发生的回调。 可参考父类实现的注释。
         super().update_trade(trade)
         self.write_log("pos update: {} filled with {}. #trade details: {}".format(
             trade.ab_symbol, self.pos[trade.ab_symbol], trade))
 
     def update_order(self, order: OrderData) -> None:
+        # 订单状态改变发生的回调。
         super().update_order(order)
         self.write_log("order still active: {}".format(self.active_orderids))
         self.write_log("order {}, status: {}. #order detail: {}".format(
@@ -198,19 +213,27 @@ def main():
     }
 
     event_dispatcher = EventDispatcher(interval=1)
+
+    # 注册一下 log 事件的回调函数， 该函数决定了如何打log。
     event_dispatcher.register(EventType.EVENT_LOG, lambda event: print(
-        str('LOG: ') + str(event.data.time) + str(event.data)))
+        "LOG--{}. {}. gateway: {}; msg: {}".format(
+            getLevelName(event.data.level),
+            event.data.time,
+            event.data.gateway_name,
+            event.data.msg)
+    ))
     event_dispatcher.register(EventType.EVENT_ACCOUNT, lambda event: print(
         str('ACCOUNT: ') + str(event.data)))  # pass accessor,  trade_listerer not done
     # event_dispatcher.register(EventType.EVENT_CONTRACT, lambda event:  print(str('CONTRACT: ') + str(event.data))) # pass
     event_dispatcher.register(EventType.EVENT_POSITION, lambda event: print(
-        str('POSITION: ') + str(event.data))) 
+        str('POSITION: ') + str(event.data)))
 
     binance_ubc_gateway = BinanceUBCGateway(event_dispatcher)
     binance_ubc_gateway.connect(binance_setting)
     binance_bbc_gateway = BinanceBBCGateway(event_dispatcher)
     binance_bbc_gateway.connect(binance_setting)
 
+    # 等待连接成功。
     time.sleep(3)
     subscribe_mode = SubscribeMode(
         # 订阅 深度数据 depth. 除非重建orderbook，否则不开也罢。
@@ -236,7 +259,7 @@ def main():
     # this is subscribe all
     print("{} instrument symbol strategy0 subscribed: ".format(
         len(ab_symbols)), ab_symbols)
-    # strategy 订阅所有binance合约 的金融产品行情数据。 
+    # strategy 订阅所有binance合约 的金融产品行情数据。
     # strategy_runner.add_strategy(strategy_class=TheStrategy,
     #                              strategy_name='the_strategy0',
     #                              ab_symbols=ab_symbols,
@@ -258,13 +281,14 @@ def main():
                                  strategy_name='the_strategy3',
                                  ab_symbols=["XRPUSDT.BINANCE",
                                              "ICPUSDT.BINANCE"],
-                                # uncommnet for test trade operation.
-                                 setting={"param1": 3, "param2": 4, "trade_flag": True}
+                                 # uncommnet for test trade operation.
+                                 setting={"param1": 3, "param2": 4,
+                                          "trade_flag": True}
                                  )
     strategy_runner.init_all_strategies()
 
-    # 策略 start之前 sleepy一段时间， 此时strategy实例在init 状态，且有可能在请求历史数据并初始化。该操作较为耗时。
-    time.sleep(15)
+    # 策略 start之前 sleepy一段时间， 新的策略实例有可能订阅新的产品行情，这使得abquant需要做一次与交易所的重连操作。
+    time.sleep(5)
     strategy_runner.start_all_strategies()
 
     import random
@@ -279,10 +303,9 @@ def main():
         # renew strategy2 setting.
         the_strategy2_setting = {"param1": 4,
                                  "param2": 4 * random.uniform(0, 1),
-                                }
+                                 }
         strategy_runner.edit_strategy(
             strategy_name='the_strategy2', setting=the_strategy2_setting)
-
 
     # print([c.func.id for c in ast.walk(ast.parse(inspect.getsource(TheStrategy))) if isinstance(c, ast.Call)])
 if __name__ == '__main__':

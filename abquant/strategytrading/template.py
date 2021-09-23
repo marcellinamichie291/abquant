@@ -9,6 +9,7 @@ from abquant.trader.msg import BarData, TickData, OrderData, TradeData, Transact
 
 # TODO typechecking  and same thing in msg.py
 
+from .strategyrunner import StrategyRunner
 
 class StrategyTemplate(ABC):
     """"""
@@ -18,7 +19,7 @@ class StrategyTemplate(ABC):
 
     def __init__(
         self,
-        strategy_runner,
+        strategy_runner: StrategyRunner,
         strategy_name: str,
         ab_symbols: List[str],
         setting: dict,
