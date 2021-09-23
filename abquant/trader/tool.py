@@ -18,7 +18,7 @@ class BarAccumulater:
         for ab_symbol, bar in bars.items():
             if bar_time is None:
                 bar_time = bar.datetime
-            assert(bar_time == bar.datetime, "the BarData in bars has different timestamp.")
+            assert bar_time == bar.datetime, "the BarData in bars has different timestamp."
             bar_time = bar.datetime
 
 
