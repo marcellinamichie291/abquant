@@ -320,9 +320,9 @@ class BinanceCAccessor(RestfulAccessor):
             data=data
         )
 
-    def keep_user_stream(self) -> Request:
+    def keep_user_stream(self, interval) -> Request:
         """"""
-        self.keep_alive_count += 1
+        self.keep_alive_count += interval
         if self.keep_alive_count < 600:
             return
         self.keep_alive_count = 0
@@ -331,19 +331,15 @@ class BinanceCAccessor(RestfulAccessor):
             "security": Security.API_KEY
         }
 
-        params = {
-            "listenKey": self.user_stream_key
-        }
-
         if self.usdt_base:
             path = "/fapi/v1/listenKey"
         else:
             path = "/dapi/v1/listenKey"
         self.add_request(
-            method="PUT",
+            method="POST",
             path=path,
             callback=self.on_keep_user_stream,
-            params=params,
+            # params=params,
             data=data
         )
 
@@ -501,7 +497,9 @@ class BinanceCAccessor(RestfulAccessor):
 
     def on_keep_user_stream(self, data: dict, request: Request) -> None:
         """"""
-        pass
+        if self.user_stream_key != data["listenKey"]:
+            self.on_start_user_stream(data, request)
+        
 
     def query_history(self, req: HistoryRequest) -> Iterable[BarData]:
         """"""
