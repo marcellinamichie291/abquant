@@ -1,6 +1,5 @@
 import ast
 import inspect
-from abquant.trader.exception import MarketException
 from copy import Error
 from datetime import datetime, timedelta
 from types import TracebackType
@@ -13,6 +12,7 @@ from logging import ERROR, INFO, WARNING
 
 from abquant.ordermanager import OrderManager
 from abquant.trader.common import Direction, Interval, Offset, OrderType
+from abquant.trader.exception import MarketException
 from abquant.event import EventType, Event, EventDispatcher
 from abquant.trader.object import CancelRequest, ContractData, HistoryRequest, LogData, OrderRequest, PositionData, SubscribeRequest
 from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
