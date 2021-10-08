@@ -1,6 +1,5 @@
 
 
-from abquant.trader.exception import MarketException
 from logging import WARNING
 from abquant.gateway import accessor
 from abquant.trader.utility import round_to
@@ -11,6 +10,7 @@ from copy import copy, deepcopy
 from . import DIRECTION_BINANCEC2AB, D_TESTNET_WEBSOCKET_DATA_HOST, D_WEBSOCKET_DATA_HOST, F_TESTNET_WEBSOCKET_DATA_HOST, F_WEBSOCKET_DATA_HOST, ORDERTYPE_BINANCEC2AB, STATUS_BINANCEC2AB, symbol_contract_map
 from ..basegateway import Gateway
 from ..listener import WebsocketListener
+from abquant.trader.exception import MarketException
 from abquant.trader.common import Direction, Exchange
 from abquant.trader.object import AccountData, PositionData, SubscribeRequest
 from abquant.trader.msg import DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
