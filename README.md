@@ -17,7 +17,7 @@ pip install -r requirement.txt
 
 ## abquant库安装(已支持)
 ```
-git clone https://git.wecash.net/dct/abquant
+git clone https://git.wecash.net/dct/abquant.git
 cd abquant
 python -m pip install .
 ```
