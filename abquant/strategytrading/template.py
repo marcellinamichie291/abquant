@@ -31,7 +31,7 @@ class StrategyTemplate(ABC):
 
         self.inited: bool = False
         self.trading: bool = False
-        self.pos: Dict[str, int] = defaultdict(int)
+        self.pos: Dict[str, float] = defaultdict(int)
 
         self.orders: Dict[str, OrderData] = {}
         self.active_orderids: Set[str] = set()

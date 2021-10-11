@@ -17,7 +17,7 @@ from abquant.gateway import BinanceUBCGateway, BinanceBBCGateway
 from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
 from abquant.trader.object import SubscribeMode
 
-
+# 命令行参数的解析代码，交易员可以不用懂。
 def parse():
     parser = argparse.ArgumentParser()
     parser.add_argument('-k', '--key', type=str, required=True,
@@ -33,7 +33,10 @@ def parse():
     return args
 
 
+
+# 策略的实现，所有细节都需要明确。务必先看完.
 class TheStrategy(StrategyTemplate):
+    # 一下类属性/成员， 均由交易员自行决定并声明。
     param1 = None
     param2 = None
     trade_flag = False
@@ -41,6 +44,7 @@ class TheStrategy(StrategyTemplate):
     balance = 10000
     window = 2
 
+    # 声明可配置参数，本行之上是可配置参数的默认值。
     parameters = [
         "param1",
         "param2",
@@ -49,6 +53,7 @@ class TheStrategy(StrategyTemplate):
         "balance",
         "window"
     ]
+    # 声明未来可能出现的，可能需盘中纪录的可计算参数， 如需监控的因子值，以及各金融产品的仓位变化等等， 后续提供支持。
     variables = [
     ]
 
@@ -109,6 +114,7 @@ class TheStrategy(StrategyTemplate):
             self.last_tick_time = tick.datetime
 
     def on_bars(self, bars: Dict[str, BarData]):
+        # 生成出来的 bars，是所有订阅金融产品的 ab_symbol 与k线 数据的键值对。
         # 分钟级策略逻辑在这里实现， 注意策略里面不得出现任何 IO操作IO操作请使用strategyTemplate提供的接口。所有startegyTemplate提供的接口以下代码都有使用。 如 write_log, sell, buy, short, cover。
 
         # 更新window_bar生成器， 方便生成 n分钟k线。
@@ -254,9 +260,12 @@ def main():
 
     strategy_runner = LiveStrategyRunner(event_dispatcher)
     from abquant.gateway.binancec import symbol_contract_map
+    for k, v in symbol_contract_map.items():
+        print(v)
     ab_symbols = [generate_ab_symbol(
         symbol, exchange=Exchange.BINANCE) for symbol in symbol_contract_map.keys()]
     # this is subscribe all
+    time.sleep(5)
     print("{} instrument symbol strategy0 subscribed: ".format(
         len(ab_symbols)), ab_symbols)
     # strategy 订阅所有binance合约 的金融产品行情数据。

@@ -8,24 +8,25 @@ abquant 是内部用的纯python实现的专注于数字货币金融产品的量
 
 开发将在python3.8以及 类unix系统中进行，建议使用时保证环境的一致性。
 
-## python依赖库安装
 
-```
-#安装 talib，mac上可以brew install ta-lib， linux环境自行编译安装(截止v0.2.0 abquant暂时不需要talib，)
-pip install -r requirement.txt
-```
 
 ## abquant库安装(已支持)
 ```
-git clone https://git.wecash.net/dct/abquant
+git clone https://git.wecash.net/dct/abquant.git
 cd abquant
+
+# 依赖安装
+#安装 talib，mac上可以brew install ta-lib， linux环境自行编译安装(截止v0.2.0 abquant暂时不需要talib，)
+pip install -r requirement.txt
+
+# abquant安装
 python -m pip install .
 ```
 # strategy example, 样例参考及试运行
 
 ```
-# 一切交易员须知，所有的api用法都在这个样例里。使用abquant编写策略前，务必确认该样例里的每一行代码都能读懂。
-# 如果有余力，请进入abquant/strategytrading/template.py 并阅读所有注释。
+# 一切交易员须知，所有的api用法都在./example/run_strategy.py这个样例里。使用abquant编写策略前，务必确认该样例里的每一行代码都能读懂。
+# 如果有余力，请进入./abquant/strategytrading/template.py 并阅读所有注释。
 cd abquant/example
 python run_strategy.py -k "api-key" -s "api-secret" [-proxy_host  proxy例如127.0.0.1 -proxy_port proxy端口例如1087] 
 ```
