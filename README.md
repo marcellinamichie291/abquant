@@ -12,7 +12,7 @@ abquant 是内部用的纯python实现的专注于数字货币金融产品的量
 
 ## abquant库安装(已支持)
 ```
-git clone https://git.wecash.net/dct/abquant
+git clone https://git.wecash.net/dct/abquant.git
 cd abquant
 
 # 依赖安装
