@@ -33,7 +33,7 @@ class TickData(BaseData):
     '''
     symbol: str
     exchange: Exchange
-    # 有些币所的特点是，发生成交的数据包才会返回时间戳，因此该字段变动，即意味着发生了taker成交。
+    # 有些币所的特点是，发生成交的数据包才会返回时间戳，因此该字段变动，也有可能意味着发生了taker成交。
     datetime: datetime
 
 
@@ -208,9 +208,9 @@ class OrderData(BaseData):
     OrderData表示， 在某交易所所下交易单有状态改变。
     状态改变分别有： 
     SUBMITTING = "提交中" 交易单单刚提交后返回
-    NOTTRADED = "未成交"  limit order，提交到交易所，交易所挂单成功时返回
-    PARTTRADED = "部分成交" ， limit order 部分成交时返回。
-    ALLTRADED = "全部成交"  limiter order taker 全部成交时返回。
+    NOTTRADED = "未成交"  提交到交易所，交易所挂单成功时返回
+    PARTTRADED = "部分成交" ， 部分成交时返回。
+    ALLTRADED = "全部成交"  全部成交时返回
     CANCELLED = "已撤销"  cancelorder发出， 交易所成功撤销订单后，返回
     REJECTED = "拒单"  通常发生在spam ban， 交易单单价格超过合理值，交易单单量低于阈值等等情况
 
@@ -224,8 +224,9 @@ class OrderData(BaseData):
     # 开平仓， 存在部分交易所仅有净头寸 不存在开平仓的概念， 交易员可以不用在意该字段。
     offset: Offset = Offset.NONE
     price: float = 0
+    # 交易量
     volume: float = 0
-    # 已成交
+    # 已成交量
     traded: float = 0
     # 交易单状态
     status: Status = Status.SUBMITTING
