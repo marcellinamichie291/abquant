@@ -67,8 +67,6 @@ class BitmexGateway(Gateway):
         if not self.market_listener._active:
             raise ConnectionError("listener should be connected before start.")
 
-
-
     def subscribe(self, req: SubscribeRequest):
         """"""
         self.market_listener.subscribe(req)
@@ -80,7 +78,7 @@ class BitmexGateway(Gateway):
     def cancel_order(self, req: CancelRequest):
         """"""
         self.trade_accessor.cancel_order(req)
-    
+
     def cancel_orders(self, reqs: Iterable[CancelRequest]) -> None:
         return super().cancel_orders(reqs)
 
