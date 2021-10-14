@@ -130,6 +130,7 @@ class TransactionData(BaseData):
     # 部分交易所可能公示 交易双方的id。该字段在一些特殊的需重建orderbook的策略中可能有用。
     bid_no: int = 0 
     ask_no: int = 0
+    # 有些交易所直接提供聚合成交，即将多笔成交聚合显示, 成交价格为均价或 同一价格聚合。有些则完全为逐笔推送。
     times: int = 0
     # taker 成交的方向
     direction: Direction = None
@@ -187,12 +188,10 @@ class DepthData(BaseData):
     exchange: Exchange
     datetime: datetime
 
-    ask_volumes: List[float] = None
-    ask_prices: List[float] = None
-    bid_volumes: List[float] = None
-    bid_prices: List[float] = None
+    volume: float = 0
+    price: float = 0
+    direction: Direction = None
 
-    times: int = 0
     localtime: datetime = None
 
     def __post_init__(self):
