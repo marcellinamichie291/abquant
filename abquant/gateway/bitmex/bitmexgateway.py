@@ -4,7 +4,7 @@ from abquant.gateway.accessor import Request
 from abquant.event.dispatcher import Event
 from typing import Iterable
 from abquant.trader.msg import BarData
-from abquant.trader.object import AccountData, CancelRequest, HistoryRequest, OrderRequest, SubscribeRequest
+from abquant.trader.object import AccountData, CancelRequest, HistoryRequest, OrderRequest, SubscribeMode, SubscribeRequest
 from .bitmexaccessor import BitmexAccessor
 from .bitmexlistener import BitmexListener
 from abquant.event import EventDispatcher
@@ -33,6 +33,7 @@ class BitmexGateway(Gateway):
 
         self.trade_accessor = BitmexAccessor(self)
         self.market_listener = BitmexListener(self)
+        self.subscribe_mode = SubscribeMode(depth=False)
 
         event_dispatcher.register(
             EventType.EVENT_TIMER, self.process_timer_event)
@@ -59,10 +60,14 @@ class BitmexGateway(Gateway):
         # will push all account status on connected, including asset, position and orders while connecting.
         self.market_listener.connect(key, secret, server,
                                      proxy_host, proxy_port)
+        self.market_listener.start()
         self.on_gateway(self)
 
     def start(self):
-        self.market_listener.start()
+        if not self.market_listener._active:
+            raise ConnectionError("listener should be connected before start.")
+
+
 
     def subscribe(self, req: SubscribeRequest):
         """"""
@@ -75,6 +80,9 @@ class BitmexGateway(Gateway):
     def cancel_order(self, req: CancelRequest):
         """"""
         self.trade_accessor.cancel_order(req)
+    
+    def cancel_orders(self, reqs: Iterable[CancelRequest]) -> None:
+        return super().cancel_orders(reqs)
 
     def query_account(self):
         """"""
