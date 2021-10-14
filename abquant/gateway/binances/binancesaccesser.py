@@ -371,7 +371,7 @@ class BinanceAccessor(RestfulAccessor):
         self.keep_alive_count = 0
         url = WEBSOCKET_TRADE_HOST + self.user_stream_key
 
-        self.trade_ws_api.connect(url, self.proxy_host, self.proxy_port)
+        self.trade_listener.connect(url, self.proxy_host, self.proxy_port)
 
     def on_keep_user_stream(self, data, request):
         """"""

@@ -247,6 +247,7 @@ class BinanceCAccessor(RestfulAccessor):
             "side": DIRECTION_AB2BINANCEC[req.direction],
             "type": order_type,
             "price": float(req.price),
+            # TODO round
             "quantity": float(req.volume),
             "newClientOrderId": orderid,
             "timeInForce": time_condition

@@ -149,22 +149,21 @@ class BinanceCDataWebsocketListener(WebsocketListener):
 
         elif channel == 'depth@100ms':
             depth = self.depths[symbol]
+            depth.localtime = datetime.now()
             if newest < depth.datetime:
                 return
             depth.datetime = newest
-            depth.ask_prices = []
-            depth.ask_volumes = []
             for p, v in data['a']:
-                depth.ask_volumes.append(float(v))
-                depth.ask_prices.append(float(p))
-            depth.bid_prices = []
-            depth.bid_volumes = []
+                depth.volume = float(v)
+                depth.price = float(p)
+                depth.direction = Direction.SHORT
+                self.gateway.on_depth(copy(depth))
+
             for p, v in data['b']:
-                depth.bid_volumes.append(float(v))
-                depth.bid_prices.append(float(p))
-            depth.times = data['u'] - data['pu']
-        
-            self.gateway.on_depth(deepcopy(depth))
+                depth.volume = float(v)
+                depth.price = float(p)
+                depth.direction = Direction.LONG
+                self.gateway.on_depth(copy(depth))
         
         elif channel == 'depth5@100ms':
             tick = self.ticks[symbol]
@@ -202,6 +201,12 @@ class BinanceCTradeWebsocketListener(WebsocketListener):
     def __init__(self, gateway: Gateway):
         """"""
         super(BinanceCTradeWebsocketListener, self).__init__(gateway)
+
+        # TODO for now it is not implemented and no-use at all. property below is for self-contained reason, will be implemented in the future.
+        self.accounts = {}
+        self.orders = {}
+        self.positions = {}
+
 
     def connect(self, url: str, proxy_host: str, proxy_port: int) -> None:
         """"""
