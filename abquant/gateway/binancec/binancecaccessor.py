@@ -506,45 +506,44 @@ class BinanceCAccessor(RestfulAccessor):
         """"""
         history = []
         limit = 1500
-        end_time = int(datetime.timestamp(req.end))
+        if self.usdt_base:
+            start_time = int(datetime.timestamp(req.start))
+        else:
+            end_time = int(datetime.timestamp(req.end))
 
         while True:
             # Create query params
             params = {
                 "symbol": req.symbol,
                 "interval": INTERVAL_AB2BINANCEC[req.interval],
-                "limit": limit,
-                "endTime": end_time * 1000,         # convert to millisecond
+                "limit": limit
             }
 
-            # Add end time if specified
-            if req.start:
-                start_time = int(datetime.timestamp(req.start))
-                params["startTime"] = start_time * \
-                    1000     # convert to millisecond
-
-            # Get response from server
             if self.usdt_base:
+                params["startTime"] = start_time * 1000
                 path = "/fapi/v1/klines"
-            else:
-                path = "/dapi/v1/klines"
+                if req.end:
+                    end_time = int(datetime.timestamp(req.end))
+                    params["endTime"] = end_time * 1000     
 
-            try:
-                resp = self.request(
-                    "GET",
-                    path=path,
-                    data={"security": Security.NONE},
-                    params=params
-                )
-            except MissingSchema as e:
-                et, ev, tb = sys.exc_info()
-                self.on_error(et, ev, tb, req)
-                raise ConnectionError("call the gateway.connect method before trying to query history data. otherwaise UBC or BBC gateway is unknown.")
+            else:
+                params["endTime"] = end_time * 1000
+                path = "/dapi/v1/klines"
+                if req.start:
+                    start_time = int(datetime.timestamp(req.start))
+                    params["startTime"] = start_time * 1000    
+
+            resp = self.request(
+                "GET",
+                path=path,
+                data={"security": Security.NONE},
+                params=params
+            )
 
             # Break if request failed with other status code
             if resp.status_code // 100 != 2:
                 msg = f"获取历史数据失败，状态码：{resp.status_code}，信息：{resp.text}"
-                self.gateway.write_log(msg, level=WARNING)
+                self.gateway.write_log(msg)
                 break
             else:
                 data = resp.json()
@@ -570,10 +569,12 @@ class BinanceCAccessor(RestfulAccessor):
                     )
                     buf.append(bar)
 
-                history.extend(buf)
-
                 begin = buf[0].datetime
                 end = buf[-1].datetime
+
+                if not self.usdt_base:
+                    buf = list(reversed(buf))
+                history.extend(buf)
                 msg = f"获取历史数据成功，{req.symbol} - {req.interval.value}，{begin} - {end}"
                 self.gateway.write_log(msg)
 
@@ -582,7 +583,14 @@ class BinanceCAccessor(RestfulAccessor):
                     break
 
                 # Update start time
-                end_dt = begin - TIMEDELTA_MAP[req.interval]
-                end_time = int(datetime.timestamp(end_dt))
+                if self.usdt_base:
+                    start_dt = bar.datetime + TIMEDELTA_MAP[req.interval]
+                    start_time = int(datetime.timestamp(start_dt))
+                # Update end time
+                else:
+                    end_dt = begin - TIMEDELTA_MAP[req.interval]
+                    end_time = int(datetime.timestamp(end_dt))
 
+        if not self.usdt_base:
+            history = list(reversed(history))
         return history
