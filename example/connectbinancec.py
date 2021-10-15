@@ -1,4 +1,5 @@
-from datetime import datetime
+from dataclasses import dataclass
+from datetime import datetime, timedelta
 import sys
 from pathlib import Path
 import time
@@ -58,8 +59,8 @@ if __name__ == '__main__':
     #     str('TICK: ') + str(event.data)))
     # event_dispatcher.register(EventType.EVENT_DEPTH, lambda event: print(
     #     str('DEPTH: ') + str(event.data)))
-    event_dispatcher.register(EventType.EVENT_TRANSACTION, lambda event: print(
-        str('TRANSACTION: ') + str(event.data)))
+    # event_dispatcher.register(EventType.EVENT_TRANSACTION, lambda event: print(
+    #     str('TRANSACTION: ') + str(event.data)))
     # event_dispatcher.register(EventType.EVENT_ENTRUST, lambda event:  print(str('ENTRUST: ') + str(event.data)))
     # event_dispatcher.register_general(lambda event: print(str(event.type) +  str(event.data)))
 
@@ -100,27 +101,36 @@ if __name__ == '__main__':
             symbol=k, exchange=Exchange.BINANCE))
     # subscribe 各个产品后 要调用gateway.start 开始接受数据。该操作较为冗赘，有实现细节上的考虑。 实现strategy时，以上调用对交易员隐藏，由框架实现。
     gateway.start()
-    print("start to receive data from exchange")
+    # print("start to receive data from exchange")
 
-    # 下单撤单， 由框架异步执行。胆大的下单撤单吧。不必担心阻塞和 IO。
-    ab_order_id: str = gateway.send_order(OrderRequest(symbol='XRPUSDT', exchange=Exchange.BINANCE,
-                                          direction=Direction.LONG, type=OrderType.LIMIT, volume=7, price=1.09, offset=Offset.OPEN))
-    print('ab orderid', ab_order_id)
-    time.sleep(10)
-    order_id = ab_order_id.split('.')[-1]
-    print('orderid', order_id)
-    gateway.cancel_order(CancelRequest(
-        order_id, symbol='XRPUSDT', exchange=Exchange.BINANCE))
+    # # 下单撤单， 由框架异步执行。胆大的下单撤单吧。不必担心阻塞和 IO。
+    # ab_order_id: str = gateway.send_order(OrderRequest(symbol='XRPUSDT', exchange=Exchange.BINANCE,
+    #                                       direction=Direction.LONG, type=OrderType.LIMIT, volume=7, price=1.09, offset=Offset.OPEN))
+    # print('ab orderid', ab_order_id)
+    # time.sleep(10)
+    # order_id = ab_order_id.split('.')[-1]
+    # print('orderid', order_id)
+    # gateway.cancel_order(CancelRequest(
+    #     order_id, symbol='XRPUSDT', exchange=Exchange.BINANCE))
 
 
 
 
 
     #  查询历史 在初始化策略时 可以用到该功能。
+    end = datetime.now()
+    history = gateway.query_history(HistoryRequest(
+        symbol='BTCUSDT', exchange=Exchange.BINANCE,
+        start=end - timedelta(days=2),
+        end=end,
+        interval=Interval.MINUTE))
+    
+    print(history[1:3])
+
     history = gateway_.query_history(HistoryRequest(
         symbol='BTCUSD_PERP', exchange=Exchange.BINANCE,
-        start=datetime(year=2021, month=9, day=5, hour=0, minute=0),
-        end=datetime(year=2021, month=9, day=6, hour=0, minute=0),
+        start=end - timedelta(days=2),
+        end=end,
         interval=Interval.MINUTE))
     
     print(history[1:3])

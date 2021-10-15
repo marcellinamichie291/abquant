@@ -67,7 +67,7 @@ class ShowStrategy(StrategyTemplate):
         # 从交易所获取后，顺序调用on_bars 60 * 24 次，再返回。
         # 由于是strategy实例尚未 start，因此在on_bars中调用的下单请求，不会发送，同时处理回报的update_order/trade 方法也不会被调用。
         # 即load_bars 方法适用于 需要根据历史k线预热的策略。 比如计算3日均线。使用该方法，可以避免strategy实例，上线后预热3日后正式开始交易。
-        n = 1
+        n = 5
         self.load_bars(n)
         self.write_log("策略初始化")
 
@@ -210,7 +210,7 @@ def main():
                                  ab_symbols=ab_symbols_subscribed,
 
                                  # 60 分钟收益率
-                                 setting={"window": 60}
+                                 setting={"window": 60 * 24}
                                  )
     strategy_runner.init_all_strategies()
 
