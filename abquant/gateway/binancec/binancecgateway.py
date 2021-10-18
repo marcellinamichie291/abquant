@@ -22,8 +22,8 @@ class BinanceCGateway(Gateway):
         "test_net": ["TESTNET", "REAL"],
     }
     exchanges = [Exchange.BINANCE]
-        
-        # self.market_listener =
+
+    # self.market_listener =
     def __init__(self, event_dispatcher: EventDispatcher):
         """Constructor"""
         # attention! call the set_gateway_name in the derived class.
@@ -33,9 +33,10 @@ class BinanceCGateway(Gateway):
         self.trade_listener = BinanceCTradeWebsocketListener(self)
         self.rest_accessor = BinanceCAccessor(self)
 
-    @abstractmethod 
+    @abstractmethod
     def ustd_based(self) -> bool:
-        pass
+        raise NotImplementedError(
+            " this class {} is not for trader use. Use BinanceUBCGateway or BinanceBBCGateway instead".format(self.__class__.__name__))
 
     def connect(self, setting: dict) -> None:
         """"""
@@ -43,17 +44,24 @@ class BinanceCGateway(Gateway):
             key = setting["key"]
             secret = setting["secret"]
         except LookupError as e:
-            raise LookupError("the setting must contain field 'key' and field 'secret'.")
-        session_number = setting.get("session_number", self.default_setting["session_number"])
+            raise LookupError(
+                "the setting must contain field 'key' and field 'secret'.")
+        session_number = setting.get(
+            "session_number", self.default_setting["session_number"])
         server = setting.get("test_net", self.default_setting["test_net"][1])
-        proxy_host = setting.get("proxy_host", self.default_setting["proxy_host"])
-        proxy_port = setting.get("proxy_port", self.default_setting["proxy_port"])
+        proxy_host = setting.get(
+            "proxy_host", self.default_setting["proxy_host"])
+        proxy_port = setting.get(
+            "proxy_port", self.default_setting["proxy_port"])
 
         self.rest_accessor.connect(self.ustd_based(), key, secret, session_number, server,
-                              proxy_host, proxy_port)
-        self.market_listener.connect(self.ustd_based(), proxy_host, proxy_port, server)
+                                   proxy_host, proxy_port)
+        self.market_listener.connect(
+            self.ustd_based(), proxy_host, proxy_port, server)
 
-        self.event_dispatcher.register(EventType.EVENT_TIMER, self.process_timer_event)
+        self.event_dispatcher.register(
+            EventType.EVENT_TIMER, self.process_timer_event)
+        self.on_gateway(self)
 
     def subscribe(self, req: SubscribeRequest) -> None:
         """"""
@@ -64,6 +72,7 @@ class BinanceCGateway(Gateway):
 
     def send_order(self, req: OrderRequest) -> str:
         """"""
+        super(BinanceCGateway, self).send_order(req)
         return self.rest_accessor.send_order(req)
 
     def cancel_order(self, req: CancelRequest) -> Request:
@@ -75,27 +84,31 @@ class BinanceCGateway(Gateway):
 
     def query_account(self) -> Iterable[AccountData]:
         """"""
-        raise NotImplementedError("do not use this method. Use ordermanager to get the updated account information instead.")
+        raise NotImplementedError(
+            "do not use this method. Use ordermanager to get the updated account information instead.")
         accounts = self.trade_listener.accounts
         if accounts is not None:
             return accounts
         accounts = self.rest_accessor.accounts
         if accounts is None:
-            raise LookupError("please call the conect method of gateway first and block for a while due to the reason of the async io")
+            raise LookupError(
+                "please call the conect method of gateway first and block for a while due to the reason of the async io")
         return accounts
 
     def query_position(self) -> Iterable[AccountData]:
         """"""
-        raise NotImplementedError("do not use this method. Use ordermanager to get the updated position information instead.")
+        raise NotImplementedError(
+            "do not use this method. Use ordermanager to get the updated position information instead.")
         positions = self.trade_listener.positions
         if positions is not None:
             return positions
         positions = self.rest_accessor.positions
-        if positions is  None:
-            raise LookupError("please call the conect method of gateway first and block for a while due to the reason of the async io")
+        if positions is None:
+            raise LookupError(
+                "please call the conect method of gateway first and block for a while due to the reason of the async io")
         return positions
 
-    def query_history(self, req: HistoryRequest) ->Iterable[BarData]:
+    def query_history(self, req: HistoryRequest) -> Iterable[BarData]:
         """"""
         return self.rest_accessor.query_history(req)
 
@@ -107,4 +120,4 @@ class BinanceCGateway(Gateway):
 
     def process_timer_event(self, event: Event) -> None:
         """"""
-        self.rest_accessor.keep_user_stream()
+        self.rest_accessor.keep_user_stream(event.data)

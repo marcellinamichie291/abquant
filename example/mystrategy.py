@@ -1,12 +1,10 @@
-
-
 from typing import List, Dict
 from datetime import datetime
 
 import numpy as np
 
-from abquant.strategytrading import StrategyTemplate, StrategyEngine
-from abquant.trader.utility import BarGenerator # 后续实现， 并给出样例。
+from abquant.strategytrading import StrategyTemplate, LiveStrategyRunner
+from abquant.trader.tool import BarGenerator,  BarAccumulater # 后续实现， 并给出样例。
 from abquant.trader.common import Direction
 from abquant.trader.msg import TickData, BarData, TradeData, OrderData, EntrustData, TransactionData, DepthData
 
@@ -34,7 +32,7 @@ class MyStrategy(StrategyTemplate):
     ]
     def __init__(
         self,
-        strategy_engine: StrategyEngine,
+        strategy_engine,
         strategy_name: str,
         ab_symbols: List[str],
         setting: dict
@@ -65,8 +63,8 @@ class MyStrategy(StrategyTemplate):
             pass
 
         for ab_symbol in self.ab_symbols:
-            self.targets[ab_symbol] = 0
-            self.bgs[ab_symbol] = BarGenerator(self.on_5s_bar, interval=5)
+            self.bgs[ab_symbol] = BarGenerator(on_bar, interval=5)
+            self.bar_accumulator = BarAccumulater()
         self.load_bars(1)
 
 

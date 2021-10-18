@@ -1,6 +1,5 @@
 
 
-from abquant.trader.exception import MarketException
 from logging import WARNING
 from abquant.gateway import accessor
 from abquant.trader.utility import round_to
@@ -11,6 +10,7 @@ from copy import copy, deepcopy
 from . import DIRECTION_BINANCEC2AB, D_TESTNET_WEBSOCKET_DATA_HOST, D_WEBSOCKET_DATA_HOST, F_TESTNET_WEBSOCKET_DATA_HOST, F_WEBSOCKET_DATA_HOST, ORDERTYPE_BINANCEC2AB, STATUS_BINANCEC2AB, symbol_contract_map
 from ..basegateway import Gateway
 from ..listener import WebsocketListener
+from abquant.trader.exception import MarketException
 from abquant.trader.common import Direction, Exchange
 from abquant.trader.object import AccountData, PositionData, SubscribeRequest
 from abquant.trader.msg import DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
@@ -44,13 +44,14 @@ class BinanceCDataWebsocketListener(WebsocketListener):
 
     def on_connected(self) -> None:
         """"""
-        self.gateway.write_log("行情Websocket API")
+        self.gateway.write_log("行情Websocket API连接")
 
     def on_disconnected(self):
         """"""
-        self.gateway.write_log("Websocket API连接断开")
+        self.gateway.write_log("行情Websocket API连接断开")
 
     def subscribe(self, req: SubscribeRequest) -> None:
+        #TODO symbol_contract_map 分 BBC UBC
         if req.symbol not in symbol_contract_map:
             self.gateway.write_log(f"找不到该合约代码{req.symbol}", level=WARNING)
             return
@@ -90,7 +91,7 @@ class BinanceCDataWebsocketListener(WebsocketListener):
             if not self.usdt_base:
                 url = D_TESTNET_WEBSOCKET_DATA_HOST + "/".join(channels)
 
-        self.init(url, self.proxy_host, self.proxy_port)
+        self.init(url, self.proxy_host, self.proxy_port, ping_interval=10)
 
         # self.start()
 
@@ -117,10 +118,10 @@ class BinanceCDataWebsocketListener(WebsocketListener):
             tick.trade_price = 0
             tick.trade_volume = 0
 
-            tick.best_ask_price = data['a']
-            tick.best_ask_volume = data['A']
-            tick.best_bid_price = data['b']
-            tick.best_bid_volume = data['B']
+            tick.best_ask_price = float(data['a'])
+            tick.best_ask_volume = float(data['A'])
+            tick.best_bid_price = float(data['b'])
+            tick.best_bid_volume = float(data['B'])
             tick.localtime = datetime.now()
 
             self.gateway.on_tick(copy(tick))
@@ -130,10 +131,10 @@ class BinanceCDataWebsocketListener(WebsocketListener):
             if newest < transaction.datetime:
                 return 
             transaction.datetime = newest
-            transaction.volume = data['q']
-            transaction.price = data['p']
+            transaction.volume = float(data['q'])
+            transaction.price = float(data['p'])
             transaction.direction = Direction.SHORT if data['m'] else Direction.LONG
-            transaction.times = data['l'] - data['f']
+            transaction.times = int(data['l']) - int(data['f'])
             transaction.localtime = datetime.now()
 
             self.gateway.on_transaction(copy(transaction))
@@ -141,29 +142,28 @@ class BinanceCDataWebsocketListener(WebsocketListener):
             tick = self.ticks[symbol]
             if tick.datetime < newest:
                 tick.datetime = newest
-            tick.trade_price = data['p']
-            tick.trade_volume = data['q']
+            tick.trade_price = float(data['p'])
+            tick.trade_volume = float(data['q'])
             tick.localtime = datetime.now()
             self.gateway.on_tick(copy(tick))
 
         elif channel == 'depth@100ms':
             depth = self.depths[symbol]
+            depth.localtime = datetime.now()
             if newest < depth.datetime:
                 return
             depth.datetime = newest
-            depth.ask_prices = []
-            depth.ask_volumes = []
             for p, v in data['a']:
-                depth.ask_volumes.append(v)
-                depth.ask_prices.append(p)
-            depth.bid_prices = []
-            depth.bid_volumes = []
+                depth.volume = float(v)
+                depth.price = float(p)
+                depth.direction = Direction.SHORT
+                self.gateway.on_depth(copy(depth))
+
             for p, v in data['b']:
-                depth.bid_volumes.append(v)
-                depth.bid_prices.append(p)
-            depth.times = data['u'] - data['pu']
-        
-            self.gateway.on_depth(deepcopy(depth))
+                depth.volume = float(v)
+                depth.price = float(p)
+                depth.direction = Direction.LONG
+                self.gateway.on_depth(copy(depth))
         
         elif channel == 'depth5@100ms':
             tick = self.ticks[symbol]
@@ -202,9 +202,15 @@ class BinanceCTradeWebsocketListener(WebsocketListener):
         """"""
         super(BinanceCTradeWebsocketListener, self).__init__(gateway)
 
+        # TODO for now it is not implemented and no-use at all. property below is for self-contained reason, will be implemented in the future.
+        self.accounts = {}
+        self.orders = {}
+        self.positions = {}
+
+
     def connect(self, url: str, proxy_host: str, proxy_port: int) -> None:
         """"""
-        self.init(url, proxy_host, proxy_port)
+        self.init(url, proxy_host, proxy_port, ping_interval=10)
         self.start()
 
     def on_connected(self) -> None:

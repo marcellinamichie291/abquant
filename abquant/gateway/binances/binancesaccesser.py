@@ -8,7 +8,7 @@ from datetime import datetime
 from requests import Request
 from requests.exceptions import SSLError
 
-from . import DIRECTION_AB2BINANCE, DIRECTION_BINANCE2AB, INTERVAL_AB2BINANCE, ORDERTYPE_AB2BINANCE, ORDERTYPE_BINANCE2AB, STATUS_BINANCE2AB, Security, REST_HOST, TIMEDELTA_MAP, WEBSOCKET_TRADE_HOST, symbol_name_map
+from . import DIRECTION_AB2BINANCE, DIRECTION_BINANCE2AB, INTERVAL_AB2BINANCE, ORDERTYPE_AB2BINANCE, ORDERTYPE_BINANCE2AB, STATUS_BINANCE2AB, Security, REST_HOST, TIMEDELTA_MAP, WEBSOCKET_TRADE_HOST, symbol_contract_map
 from abquant.gateway.accessor import RestfulAccessor
 from abquant.gateway.basegateway import Gateway
 from abquant.trader.common import Exchange, Product, Status
@@ -331,7 +331,7 @@ class BinanceAccessor(RestfulAccessor):
             )
             self.gateway.on_contract(contract)
 
-            symbol_name_map[contract.symbol] = contract.name
+            symbol_contract_map[contract.symbol] = contract
 
         self.gateway.write_log("合约信息查询成功")
 
@@ -371,7 +371,7 @@ class BinanceAccessor(RestfulAccessor):
         self.keep_alive_count = 0
         url = WEBSOCKET_TRADE_HOST + self.user_stream_key
 
-        self.trade_ws_api.connect(url, self.proxy_host, self.proxy_port)
+        self.trade_listener.connect(url, self.proxy_host, self.proxy_port)
 
     def on_keep_user_stream(self, data, request):
         """"""

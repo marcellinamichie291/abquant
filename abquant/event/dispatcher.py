@@ -23,6 +23,7 @@ HandlerType = Callable[[Event], None]
 class EventDispatcher:
 
     def __init__(self, event_threshold: int = 100, interval: int = 1):
+        from ..ordermanager import OrderManager
         self._interval: int = interval
         self._event_threshold = event_threshold
         self._queue: Queue = Queue()
@@ -31,7 +32,7 @@ class EventDispatcher:
         self._timer: Thread = Thread(target=self._run_timer)
         self._handlers: defaultdict = defaultdict(list)
         self._general_handlers: List = []
-
+        self.order_manager = OrderManager(self)
 
         # TODO  warning. start before all handler registered may cause race condition in self._randlers
         self.start()
@@ -54,7 +55,7 @@ class EventDispatcher:
     def _run_timer(self) -> None:
         while self._active:
             time.sleep(self._interval)
-            event = Event(type= EventType.EVENT_TIMER)
+            event = Event(type=EventType.EVENT_TIMER, data=self._interval)
             self.put(event)
             self.check_event_congestion()
 
@@ -99,5 +100,3 @@ class EventDispatcher:
             self._queue.put(Event(type=EventType.EVENT_EXCEPTION, data=CongestionException(
                 threshold=self._event_threshold, congested_event=congested_event)))
             # TODO log here. at least warning level
-
-            
