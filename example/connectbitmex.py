@@ -56,12 +56,12 @@ if __name__ == '__main__':
         str('ORDER: ') + str(event.data)))
     event_dispatcher.register(EventType.EVENT_TRADE, lambda event: print(
         str('TRADE: ') + str(event.data)))
-    # event_dispatcher.register(EventType.EVENT_TICK, lambda event: print(
-    #     str('TICK: ') + str(event.data)))
+    event_dispatcher.register(EventType.EVENT_TICK, lambda event: print(
+        str('TICK: ') + str(event.data)))
     event_dispatcher.register(EventType.EVENT_DEPTH, lambda event: print(
         str('DEPTH: ') + str(event.data)))
-    # event_dispatcher.register(EventType.EVENT_TRANSACTION, lambda event: print(
-    #     str('TRANSACTION: ') + str(event.data)))
+    event_dispatcher.register(EventType.EVENT_TRANSACTION, lambda event: print(
+        str('TRANSACTION: ') + str(event.data)))
     # event_dispatcher.register(EventType.EVENT_ENTRUST, lambda event:  print(str('ENTRUST: ') + str(event.data)))
     # event_dispatcher.register_general(lambda event: print(str(event.type) +  str(event.data)))
 
@@ -119,7 +119,7 @@ if __name__ == '__main__':
     #  查询历史 在初始化策略时 可以用到该功能。
     history = gateway.query_history(HistoryRequest(
         symbol='XBTUSD', exchange=Exchange.BINANCE,
-        start=datetime(year=2021, month=9, day=5, hour=0, minute=0),
+        start=datetime(year=2021, month=9, day=3, hour=1, minute=2),
         end=datetime(year=2021, month=9, day=6, hour=0, minute=0),
         interval=Interval.MINUTE))
     
