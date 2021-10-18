@@ -532,24 +532,27 @@ class BinanceCAccessor(RestfulAccessor):
                 if req.start:
                     start_time = int(datetime.timestamp(req.start))
                     params["startTime"] = start_time * 1000    
-
-            resp = self.request(
-                "GET",
-                path=path,
-                data={"security": Security.NONE},
-                params=params
-            )
-
+            try:
+                resp = self.request(
+                    "GET",
+                    path=path,
+                    data={"security": Security.NONE},
+                    params=params
+                )
+            except MissingSchema as e: 
+                et, ev, tb = sys.exc_info()
+                self.on_error(et, ev, tb, req)
+                raise ConnectionError("call the gateway.connect method before trying to query history data. otherwaise UBC or BBC gateway is unknown.")
             # Break if request failed with other status code
             if resp.status_code // 100 != 2:
                 msg = f"获取历史数据失败，状态码：{resp.status_code}，信息：{resp.text}"
-                self.gateway.write_log(msg)
+                self.gateway.write_log(msg, level=ERROR)
                 break
             else:
                 data = resp.json()
                 if not data:
                     msg = f"获取历史数据为空，开始时间：{start_time}"
-                    self.gateway.write_log(msg)
+                    self.gateway.write_log(msg, level=WARNING)
                     break
 
                 buf = []
