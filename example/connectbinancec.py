@@ -46,7 +46,7 @@ if __name__ == '__main__':
     # event_dispatcher.register(EventType.EVENT_TIMER, lambda event:  print(str('TIMER: ') + str(event.data))) #pass
     event_dispatcher.register(EventType.EVENT_ACCOUNT, lambda event: print(
         str('ACCOUNT: ') + str(event.data)))  # pass accessor,  trade_listerer not done
-    # event_dispatcher.register(EventType.EVENT_CONTRACT, lambda event:  print(str('CONTRACT: ') + str(event.data))) # pass
+    event_dispatcher.register(EventType.EVENT_CONTRACT, lambda event:  print(str('CONTRACT: ') + str(event.data))) # pass
     event_dispatcher.register(EventType.EVENT_POSITION, lambda event: print(
         str('POSITION: ') + str(event.data)))  # pass accessor, trade_listerer not done
     event_dispatcher.register(EventType.EVENT_EXCEPTION, lambda event: print(
