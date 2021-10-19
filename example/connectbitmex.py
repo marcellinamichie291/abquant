@@ -47,7 +47,7 @@ if __name__ == '__main__':
     # event_dispatcher.register(EventType.EVENT_TIMER, lambda event:  print(str('TIMER: ') + str(event.data))) #pass
     event_dispatcher.register(EventType.EVENT_ACCOUNT, lambda event: print(
         str('ACCOUNT: ') + str(event.data)))  # pass accessor,  trade_listerer not done
-    # event_dispatcher.register(EventType.EVENT_CONTRACT, lambda event:  print(str('CONTRACT: ') + str(event.data))) # pass
+    event_dispatcher.register(EventType.EVENT_CONTRACT, lambda event:  print(str('CONTRACT: ') + str(event.data))) # pass
     event_dispatcher.register(EventType.EVENT_POSITION, lambda event: print(
         str('POSITION: ') + str(event.data)))  # pass accessor, trade_listerer not done
     event_dispatcher.register(EventType.EVENT_EXCEPTION, lambda event: print(
@@ -58,8 +58,8 @@ if __name__ == '__main__':
         str('TRADE: ') + str(event.data)))
     # event_dispatcher.register(EventType.EVENT_TICK, lambda event: print(
     #     str('TICK: ') + str(event.data)))
-    event_dispatcher.register(EventType.EVENT_DEPTH, lambda event: print(
-        str('DEPTH: ') + str(event.data)))
+    # event_dispatcher.register(EventType.EVENT_DEPTH, lambda event: print(
+    #     str('DEPTH: ') + str(event.data)))
     # event_dispatcher.register(EventType.EVENT_TRANSACTION, lambda event: print(
     #     str('TRANSACTION: ') + str(event.data)))
     # event_dispatcher.register(EventType.EVENT_ENTRUST, lambda event:  print(str('ENTRUST: ') + str(event.data)))
@@ -119,7 +119,7 @@ if __name__ == '__main__':
     #  查询历史 在初始化策略时 可以用到该功能。
     history = gateway.query_history(HistoryRequest(
         symbol='XBTUSD', exchange=Exchange.BINANCE,
-        start=datetime(year=2021, month=9, day=5, hour=0, minute=0),
+        start=datetime(year=2021, month=9, day=3, hour=1, minute=2),
         end=datetime(year=2021, month=9, day=6, hour=0, minute=0),
         interval=Interval.MINUTE))
     

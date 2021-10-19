@@ -439,6 +439,7 @@ class BinanceCAccessor(RestfulAccessor):
                 product=Product.FUTURES,
                 net_position=True,
                 history_data=True,
+                on_board=datetime.fromtimestamp(d["onboardDate"] / 1000),
                 gateway_name=self.gateway_name,
             )
             self.gateway.on_contract(contract)
