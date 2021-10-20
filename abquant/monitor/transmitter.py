@@ -6,34 +6,44 @@ import requests
 
 import websocket
 
-from . import LOGIN_URL, WS_URL
+# from . import LOGIN_URL, WS_URL
+LOGIN_URL = "https://dct-test001.wecash.net/dct-business-api/login"
+WS_URL = "ws://dct-test001.wecash.net/dct-business-api/ws/business?access_token="
 
 
 class Transmitter:
 
     client = None
+    username = None
+    password = None
 
-    def __init__(self):
-        pass
+    def __init__(self, setting: dict):
+        if setting is None:
+            return
+        self.username = setting.get("username", None)
+        self.password = setting.get("password", None)
+        # self.init_ws(username, password)
 
-    def init_ws(self, username, password):
+    def init_ws(self):
         if self.client is not None:
             return self.client
         payload = {}
         headers = {
             'Content-Type': 'application/json; charset=UTF-8'
         }
-        if username is None or password is None:
+        if self.username is None or self.password is None:
             return
-        login_url = LOGIN_URL + "?userName=" + username + "&password=" + password
+        login_url = LOGIN_URL + "?userName=" + self.username + "&password=" + self.password
+        #access_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzY3MDU3MjgsImlkIjoxMCwidXNlck5hbWUiOiJ5YXFpYW5nIn0.TRZPoUiJqAwk6j68Sv_h4GVnKRkdoMTCddumSLCzVpc"
+        access_token = None
         try:
             response = requests.request("GET", login_url, headers=headers, data=payload)
-            jn = json.load(response)
+            jn = json.loads(response.text)
+            access_token = jn.get("data").get("access_token")
         except Exception:
             return
 
-        access_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzY3MDU3MjgsImlkIjoxMCwidXNlck5hbWUiOiJ5YXFpYW5nIn0.TRZPoUiJqAwk6j68Sv_h4GVnKRkdoMTCddumSLCzVpc"
-        websocket.enableTrace(True)
+        websocket.enableTrace(False)
         ws = websocket.WebSocketApp(WS_URL + access_token, on_message=self.on_message, on_error=self.on_error,
                                     on_close=self.on_close, on_open=self.on_open,
                                     on_ping=self.on_ping, on_pong=self.on_pong)

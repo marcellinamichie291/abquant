@@ -24,6 +24,10 @@ def parse():
                         help='api key')
     parser.add_argument('-s', '--secret', type=str, required=True,
                         help='secret')
+    parser.add_argument('-n', '--username', type=str, required=True,
+                        help='username')
+    parser.add_argument('-w', '--password', type=str, required=True,
+                        help='password')
     parser.add_argument('-u', '--proxy_host', type=str,
                         # default='127.0.0.1',
                         help='proxy host')
@@ -218,6 +222,11 @@ def main():
         "test_net": ["TESTNET", "REAL"][1],
     }
 
+    common_setting = {
+        "username": args.username,
+        "password": args.password,
+    }
+
     event_dispatcher = EventDispatcher(interval=1)
 
     # 注册一下 log 事件的回调函数， 该函数决定了如何打log。
@@ -300,7 +309,8 @@ def main():
     time.sleep(5)
     strategy_runner.start_all_strategies()
 
-    Monitor.init_monitor()
+    # Monitor.init_monitor(common_setting)
+    monitor = Monitor(common_setting)
 
     import random
     while True:

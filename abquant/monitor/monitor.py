@@ -14,16 +14,17 @@ class Monitor(ABC):
     aqueue = None
     wsc = None
 
-    def __init__(self):
-        Monitor.init_monitor()
+    def __init__(self, setting: dict):
+        self.init_monitor(setting)
+        print("Monitor启动")
 
-    @staticmethod
-    def init_monitor(self):
+    # @staticmethod
+    def init_monitor(self, setting: dict):
         if self.aqueue is None:
             aq = AsyncQueue()
             aqueue = aq.queue
         if self.wsc is None:
-            txmt = Transmitter()
+            txmt = Transmitter(setting)
             self.wsc = txmt.init_ws()
 
     def login(self, setting: Dict):
