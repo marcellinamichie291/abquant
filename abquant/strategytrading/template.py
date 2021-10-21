@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from logging import INFO
 from abquant.event.dispatcher import Event
 from copy import copy
 from typing import Dict, Set, List, TYPE_CHECKING
@@ -302,10 +303,10 @@ class StrategyTemplate(ABC):
         """"""
         return list(self.active_orderids)
 
-    def write_log(self, msg: str) -> None:
+    def write_log(self, msg: str, level=INFO) -> None:
         """
         """
-        self.strategy_runner.write_log(msg, self)
+        self.strategy_runner.write_log(msg, self, level)
 
     def load_bars(self, days: int, interval: Interval = Interval.MINUTE) -> None:
         """

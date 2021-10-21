@@ -14,10 +14,10 @@ from abquant.trader.object import ContractData
 from abquant.trader.common import Direction, Interval, OrderType, Status
 
 REST_HOST = "https://www.bitmex.com/api/v1"
-WEBSOCKET_HOST = "wss://www.bitmex.com/realtime"
+WEBSOCKET_HOST = "wss://ws.bitmex.com/realtime"
 
 TESTNET_REST_HOST = "https://testnet.bitmex.com/api/v1"
-TESTNET_WEBSOCKET_HOST = "wss://testnet.bitmex.com/realtime"
+TESTNET_WEBSOCKET_HOST = "wss://ws.testnet.bitmex.com/realtime"
 
 STATUS_BITMEX2AB = {
     "New": Status.NOTTRADED,

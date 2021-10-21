@@ -1,6 +1,6 @@
 .vscode/
 # Byte-compiled / optimized / DLL files
-example_my/*
+example_my/
 __pycache__/
 *.py[cod]
 *$py.class
