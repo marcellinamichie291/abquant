@@ -13,7 +13,7 @@ from abquant.event.event import EventType
 from abquant.strategytrading import StrategyTemplate, LiveStrategyRunner
 from abquant.event import EventDispatcher, Event
 from abquant.gateway import BinanceUBCGateway, BinanceBBCGateway
-from abquant.monitor import Monitor
+
 from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
 from abquant.trader.object import SubscribeMode
 
@@ -24,10 +24,6 @@ def parse():
                         help='api key')
     parser.add_argument('-s', '--secret', type=str, required=True,
                         help='secret')
-    parser.add_argument('-n', '--username', type=str, required=True,
-                        help='username')
-    parser.add_argument('-w', '--password', type=str, required=True,
-                        help='password')
     parser.add_argument('-u', '--proxy_host', type=str,
                         # default='127.0.0.1',
                         help='proxy host')
@@ -222,11 +218,6 @@ def main():
         "test_net": ["TESTNET", "REAL"][1],
     }
 
-    common_setting = {
-        "username": args.username,
-        "password": args.password,
-    }
-
     event_dispatcher = EventDispatcher(interval=1)
 
     # 注册一下 log 事件的回调函数， 该函数决定了如何打log。
@@ -289,29 +280,25 @@ def main():
                                              "ETHUSDT.BINANCE"],
                                  setting={"param1": 1, "param2": 2}
                                  )
-    # strategy_runner.add_strategy(strategy_class=TheStrategy,
-    #                              strategy_name='the_strategy2',
-    #                              ab_symbols=["BTCUSD_PERP.BINANCE",
-    #                                          "ETHUSD_PERP.BINANCE"],
-    #                              setting={"param1": 3, "param2": 4}
-    #                              )
-    # strategy_runner.add_strategy(strategy_class=TheStrategy,
-    #                              strategy_name='the_strategy3',
-    #                              ab_symbols=["XRPUSDT.BINANCE",
-    #                                          "ICPUSDT.BINANCE"],
-    #                              # uncommnet for test trade operation.
-    #                              setting={"param1": 3, "param2": 4,
-    #                                       "trade_flag": True}
-    #                              )
+    strategy_runner.add_strategy(strategy_class=TheStrategy,
+                                 strategy_name='the_strategy2',
+                                 ab_symbols=["BTCUSD_PERP.BINANCE",
+                                             "ETHUSD_PERP.BINANCE"],
+                                 setting={"param1": 3, "param2": 4}
+                                 )
+    strategy_runner.add_strategy(strategy_class=TheStrategy,
+                                 strategy_name='the_strategy3',
+                                 ab_symbols=["XRPUSDT.BINANCE",
+                                             "ICPUSDT.BINANCE"],
+                                 # uncommnet for test trade operation.
+                                 setting={"param1": 3, "param2": 4,
+                                          "trade_flag": True}
+                                 )
     strategy_runner.init_all_strategies()
 
     # 策略 start之前 sleepy一段时间， 新的策略实例有可能订阅新的产品行情，这使得abquant需要做一次与交易所的重连操作。
     time.sleep(5)
     strategy_runner.start_all_strategies()
-
-    # Monitor.init_monitor(common_setting)
-    monitor = Monitor(common_setting)
-    print("Monitor init")
 
     import random
     while True:
@@ -323,11 +310,11 @@ def main():
         strategy_runner.edit_strategy(
             strategy_name='the_strategy1', setting=the_strategy1_setting)
         # renew strategy2 setting.
-        # the_strategy2_setting = {"param1": 4,
-        #                          "param2": 4 * random.uniform(0, 1),
-        #                          }
-        # strategy_runner.edit_strategy(
-        #     strategy_name='the_strategy2', setting=the_strategy2_setting)
+        the_strategy2_setting = {"param1": 4,
+                                 "param2": 4 * random.uniform(0, 1),
+                                 }
+        strategy_runner.edit_strategy(
+            strategy_name='the_strategy2', setting=the_strategy2_setting)
 
     # print([c.func.id for c in ast.walk(ast.parse(inspect.getsource(TheStrategy))) if isinstance(c, ast.Call)])
 if __name__ == '__main__':
