@@ -34,6 +34,7 @@ class Transmitter:
             'Content-Type': 'application/json; charset=UTF-8'
         }
         if self.username is None or self.password is None:
+            print("监控：初始化：用户名或密码不存在")
             return
         login_url = LOGIN_URL + "?userName=" + self.username + "&password=" + self.password
         access_token = None
@@ -41,6 +42,7 @@ class Transmitter:
             response = requests.request("GET", login_url, headers=headers, data=payload)
             jn = json.loads(response.text)
             access_token = jn.get("data").get("access_token")
+            print(access_token)
         except Exception:
             return
 
@@ -50,6 +52,7 @@ class Transmitter:
                                     on_ping=self.on_ping, on_pong=self.on_pong)
         # ws.run_forever(ping_interval=30, ping_timeout=5)
         self._pp_thread = Thread(target=self.run_forever)
+        print("start ping/pong thread")
         time.sleep(1)
 
         return self.client

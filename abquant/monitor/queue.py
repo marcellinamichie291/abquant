@@ -9,13 +9,13 @@ import json
 MAX_QUEUE_SIZE = 1000
 
 
-class AsyncQueue(threading.Thread):
+class AsyncQueue:
 
     queue = None
 
     def __init__(self):
-        threading.Thread.__init__(self)
-        self.threadID = time.time()
+        # threading.Thread.__init__(self)
+        # self.threadID = time.time()
         self.name = "asyncqueue"
         self.counter = 0
         # if self.queue is None:
@@ -38,7 +38,7 @@ class AsyncQueue(threading.Thread):
             self.queue = asyncio.Queue(maxsize=MAX_QUEUE_SIZE)
         self.queue.put_nowait(data)
 
-    async def consumer(self):
+    async def consumer(self, wsc):
         self.init_queue(1000)
         print("监控：队列初始化完成")
         await self.producer()
@@ -73,7 +73,7 @@ class AsyncQueue(threading.Thread):
         # con = asyncio.create_task(self.consumer())
         # await con
 
-    def run(self):
+    def run(self, wsc):
         asyncio.run(self.consumer())
         print("async run")
         time.sleep(3)

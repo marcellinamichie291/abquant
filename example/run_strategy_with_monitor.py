@@ -312,6 +312,8 @@ def main():
     # Monitor.init_monitor(common_setting)
     monitor = Monitor(common_setting)
     print("Monitor init")
+    monitor.start()
+    print("Monitor start")
 
     import random
     while True:
