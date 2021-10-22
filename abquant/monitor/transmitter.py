@@ -74,7 +74,6 @@ class Transmitter:
         #ws._send_ping()
         print("ping")
 
-
     def on_pong(ws, pongMsg):
         print("pong")
 

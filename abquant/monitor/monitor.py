@@ -1,9 +1,10 @@
 from abc import ABC
 from typing import Dict
 import json
+import time
 import logging
 
-from .aqueue import AsyncQueue
+from .queue import AsyncQueue
 from .transmitter import Transmitter
 
 pong_count = 0
@@ -22,7 +23,11 @@ class Monitor(ABC):
     def init_monitor(self, setting: dict):
         if self.aqueue is None:
             aq = AsyncQueue()
-            aqueue = aq.queue
+            self.aqueue = aq.queue
+            aq.start()
+            print("after thread")
+            time.sleep(10)
+            aq.put(json.loads("{\"a\":1, \"b\": \"bb\"}"))
         if self.wsc is None:
             txmt = Transmitter(setting)
             self.wsc = txmt.init_ws()
