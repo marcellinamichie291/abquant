@@ -12,10 +12,10 @@ MAX_PONG_COUNT = 5
 
 
 class Monitor(ABC):
-    aqueue = None
-    wsc = None
 
     def __init__(self, setting: dict):
+        self.aqueue = None
+        self.wsc = None
         self.init_monitor(setting)
         print("Monitor启动")
 
@@ -30,7 +30,7 @@ class Monitor(ABC):
             aq.put(json.loads("{\"a\":1, \"b\": \"bb\"}"))
         if self.wsc is None:
             txmt = Transmitter(setting)
-            self.wsc = txmt.init_ws()
+            self.wsc = txmt.connect_ws()
 
     def login(self, setting: Dict):
         pass

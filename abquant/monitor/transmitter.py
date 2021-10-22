@@ -1,7 +1,7 @@
 
 import time
 import json
-import _thread
+from threading import Thread
 import requests
 
 import websocket
@@ -9,6 +9,7 @@ import websocket
 # from . import LOGIN_URL, WS_URL
 LOGIN_URL = "https://dct-test001.wecash.net/dct-business-api/login"
 WS_URL = "ws://dct-test001.wecash.net/dct-business-api/ws/business?access_token="
+MAX_CONNECT_RETRY = 5
 
 
 class Transmitter:
@@ -22,9 +23,10 @@ class Transmitter:
             return
         self.username = setting.get("username", None)
         self.password = setting.get("password", None)
+        self._pp_thread = None # underlying ping/pong thread
         # self.init_ws(username, password)
 
-    def init_ws(self):
+    def connect_ws(self):
         if self.client is not None:
             return self.client
         payload = {}
@@ -34,7 +36,6 @@ class Transmitter:
         if self.username is None or self.password is None:
             return
         login_url = LOGIN_URL + "?userName=" + self.username + "&password=" + self.password
-        #access_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzY3MDU3MjgsImlkIjoxMCwidXNlck5hbWUiOiJ5YXFpYW5nIn0.TRZPoUiJqAwk6j68Sv_h4GVnKRkdoMTCddumSLCzVpc"
         access_token = None
         try:
             response = requests.request("GET", login_url, headers=headers, data=payload)
@@ -48,45 +49,53 @@ class Transmitter:
                                     on_close=self.on_close, on_open=self.on_open,
                                     on_ping=self.on_ping, on_pong=self.on_pong)
         # ws.run_forever(ping_interval=30, ping_timeout=5)
-        _thread.start_new_thread(self.run_forever, (ws,))
+        self._pp_thread = Thread(target=self.run_forever)
         time.sleep(1)
 
         return self.client
 
+    def run_forever(self):
+        if self.client is None:
+            print("no client to run ping pong thread")
+            return
+        self.client.run_forever(ping_interval=10, ping_timeout=5)
+
+    def send(self, data):
+        if self.client is None:
+            print("Error: websocket client not found")
+        self.client.send(data)
+
+    @staticmethod
     def on_message(self, ws, msg):
         print(msg)
 
+    @staticmethod
     def on_error(self, ws, error):
         print(error)
 
+    @staticmethod
     def on_open(self, ws):
-        global wsClient
-        wsClient = ws
         self.client = ws
         print("open")
 
-
-    def on_close(ws, close_status_code, close_msg):
+    @staticmethod
+    def on_close(self, close_status_code, close_msg):
         print("close")
+        self.client = None
+        i = 1
+        while i <= MAX_CONNECT_RETRY:
+            time.sleep(i)
+            self.client = self.connect_ws()
+            if self.client is not None:
+                break
+            i += 1
+        print(f"Reconnect after {i} retries")
 
-
-    def on_ping(ws, pingMsg):
-        #ws._send_ping()
+    @staticmethod
+    def on_ping(self, pingMsg):
+        # ws._send_ping()
         print("ping")
 
-    def on_pong(ws, pongMsg):
+    @staticmethod
+    def on_pong(self, pongMsg):
         print("pong")
-
-    def run_forever(ws):
-        ws.run_forever(ping_interval=10, ping_timeout=5)
-
-
-
-if __name__ == "__main__":
-    #global wsClient
-    for i in range(10):
-        wsClient.send(f'client message {i}')
-        print(f'client message {i}')
-        value = wsClient.recv()
-        print(value)
-        time.sleep(1)
