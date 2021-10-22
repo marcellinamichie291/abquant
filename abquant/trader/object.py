@@ -76,6 +76,7 @@ class ContractData(BaseData):
     stop_supported: bool = False    # whether server supports stop order
     net_position: bool = False      # whether gateway uses net position volume
     history_data: bool = False      # whether gateway provides bar history data
+    on_board: datetime = None
 
     option_strike: float = 0
     option_underlying: str = ""     # ab_symbol of underlying contract

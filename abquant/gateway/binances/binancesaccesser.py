@@ -5,6 +5,7 @@ import time
 import hmac
 import hashlib
 from datetime import datetime
+import uuid
 from requests import Request
 from requests.exceptions import SSLError
 
@@ -20,6 +21,7 @@ class BinanceAccessor(RestfulAccessor):
     """
     BINANCE REST API
     """
+    ORDER_PREFIX = str(hex(uuid.getnode()))
 
     def __init__(self, gateway: Gateway):
         """"""
@@ -170,7 +172,7 @@ class BinanceAccessor(RestfulAccessor):
 
     def send_order(self, req: OrderRequest):
         """"""
-        orderid = "NKD8FYX4-" + str(self.connect_time + self._new_order_id())
+        orderid = self.ORDER_PREFIX + str(self.connect_time + self._new_order_id())
         order = req.create_order_data(
             orderid,
             self.gateway_name
@@ -371,7 +373,7 @@ class BinanceAccessor(RestfulAccessor):
         self.keep_alive_count = 0
         url = WEBSOCKET_TRADE_HOST + self.user_stream_key
 
-        self.trade_ws_api.connect(url, self.proxy_host, self.proxy_port)
+        self.trade_listener.connect(url, self.proxy_host, self.proxy_port)
 
     def on_keep_user_stream(self, data, request):
         """"""
