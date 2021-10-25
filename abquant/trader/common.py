@@ -73,6 +73,7 @@ class Exchange(Enum):
     DERIBIT = "DERIBIT"
     GATEIO = "GATEIO"
     BITSTAMP = "BITSTAMP"
+    DYDX = "DYDX"
 
 
 

@@ -17,6 +17,7 @@ import ctypes
 from typing import Tuple, Optional
 from ecdsa.rfc6979 import generate_k
 import hashlib
+from enum import Enum
 
 
 def _to_quantums_helper(human_amount, asset, ctx):
@@ -352,6 +353,10 @@ def order_to_sign(hash_number, private_key_hex):
     r, s = py_sign(hash_number, int(private_key_hex, 16))
     return int_to_hex_32(r) + int_to_hex_32(s)
 
+class Security(Enum):
+    """鉴权类型"""
+    PUBLIC: int = 0
+    PRIVATE: int = 1
 
 DECIMAL_CONTEXT_ROUND_DOWN = decimal.Context(rounding=decimal.ROUND_DOWN)
 DECIMAL_CONTEXT_ROUND_UP = decimal.Context(rounding=decimal.ROUND_UP)
