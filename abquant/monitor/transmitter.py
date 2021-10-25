@@ -57,6 +57,9 @@ class Transmitter:
 
         return self.client
 
+    def stop(self):
+        pass
+
     def run_forever(self):
         if self.client is None:
             print("no client to run ping pong thread")

@@ -40,12 +40,13 @@ class Monitor(ABC):
                 self._consumer_thread.start()
                 print("after thread")
                 time.sleep(10)
-                self.put(json.loads("{\"a\":1, \"b\": \"bb\"}"))
+                self.send(json.loads("{\"a\":1, \"b\": \"bb\"}"))
         except Exception as e:
             print("Error: {}", e)
 
     def stop(self):
         pass
+        # self._consumer_thread.setDaemon()
 
     def init_queue(self, qsize=MAX_QUEUE_SIZE):
         if self.queue is None:
@@ -59,7 +60,13 @@ class Monitor(ABC):
             await asyncio.sleep(random.randint(0, 2))
             print(f"Put {i}")
 
-    def put(self, data: json):
+    def send(self, data: json):
+        if self.queue is None:
+            self.queue = asyncio.Queue(maxsize=MAX_QUEUE_SIZE)
+        print(f"Send {data}")
+        self.queue.put_nowait(data)
+
+    def put1(self, data: json):
         if self.queue is None:
             self.queue = asyncio.Queue(maxsize=MAX_QUEUE_SIZE)
         self.queue.put_nowait(data)
@@ -97,19 +104,6 @@ class Monitor(ABC):
         # loop = asyncio.get_running_loop()
         # ptr = _thread.start_new_thread(asyncio.run(self.run()), ())
         # print(ptr)
-
-    def login(self, setting: Dict):
-        pass
-
-    def send(self, info: str):
-        pass
-
-    def send(self, info: json):
-
-        pass
-
-    def send2(self, info: str):
-        pass
 
     def push_info(self, info: Dict):
         info_json = json.dumps(info)
