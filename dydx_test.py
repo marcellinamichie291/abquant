@@ -54,8 +54,8 @@ class Monitor(StrategyTemplate):
     def on_tick(self, tick: TickData):
         # 以下的代码是根据tick数据，生成 bars数据的代码。如果策略是分钟级，则不要做任何修改。
         # self.last_price[tick.symbol] = tick.trade_price
-        print(tick)
-
+        # print(tick)
+        pass
         # ETH_price = self.last_price.get("ETHUSDT",0)
         # BTC_price = self.last_price.get("BTCUSDT",0)
 
@@ -114,15 +114,14 @@ class Monitor(StrategyTemplate):
 
 def main():
     dydx_setting = {
-        # 价格监控不需要apikey
-        "key": "5567916d-fbd1-60f3-e9c5-14d4edab1ed6",
-        "secret": "ZstmbMZ96eLf48s0PjfgS2QyzTmYIOgH4dkumuET",
-        "passphrase": "3zZ9_PV7NahNuCXF80FF",
-        "stark_private_key": "0745212ac8e57da9bef4ca5c059f7644042955039ffaa2a2ad70aa8542fe87c3",
+        "key": "0ec5b370-74d1-be64-a578-b7bb085ac937",
+        "secret": "NLrG3Kuyspe0jt45gENM6UmWGLdSrwj88P-5UPrz",
+        "passphrase": "rOkw33sCBiTQhE5PX_GR",
+        "stark_private_key": "01a65d7c5fccd96786b0a42ba38df41f58383fcdace4be8581487b61739cc559",
         "proxy_host": "",
         "proxy_port": 0,
-        "test_net": ["TESTNET", "REAL"][0],
-        "limitFee": 0,
+        "test_net": ["TESTNET", "REAL"][1],
+        "limitFee": 0.001, # makerFeeRate: 0.00050 or takerFeeRate: takerFeeRate: 0.00100
         "accountNumber": 0
     }
     event_dispatcher = EventDispatcher(interval=1)

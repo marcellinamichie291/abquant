@@ -67,7 +67,7 @@ class DydxGateway(Gateway):
         "proxy_host": "",
         "proxy_port": 0,
         "test_net": ["TESTNET", "REAL"],
-        "limitFee": 0,
+        "limitFee": 0.0005, # makerFeeRate: 0.00050 or takerFeeRate: takerFeeRate: 0.00100
         "accountNumber": 0
     }
     exchanges: Exchange = [Exchange.DYDX]
@@ -81,7 +81,7 @@ class DydxGateway(Gateway):
         self.market_listener = DydxWebsocketListener(self)
         self.rest_accessor = DydxAccessor(self)
 
-        self.posid: str = ""
+        self.posid: str = "1"
         self.id: str = ""
         self.count: int = 0
         self.sys_local_map: Dict[str, str] = {}
@@ -172,7 +172,7 @@ class DydxWebsocketListener(WebsocketListener):
     """
     def __init__(self, gateway: DydxGateway):
         super(DydxWebsocketListener,self).__init__(gateway)
-
+        self.ping_interval = 30
         self.gateway = gateway
         self.gateway.set_gateway_name(gateway.gateway_name)
 
@@ -197,9 +197,10 @@ class DydxWebsocketListener(WebsocketListener):
 
         for req in list(self.subscribed.values()):
             self.subscribe(req)
+        print("#### after on_connected")
     
     def on_disconnected(self):
-        self.gateway.write_log("交易Websocket API断开")
+        self.gateway.write_log("Websocket API断开")
 
     def subscribe_topic(self) -> None:
         """订阅委托、资金和持仓推送"""
@@ -262,6 +263,13 @@ class DydxWebsocketListener(WebsocketListener):
             "id": symbol
         }
         self.send_packet(req)
+
+        # 
+        # req: dict = {
+        #     "type": "subscribe",
+        #     "channel": "v3_markets"
+        # }
+        # self.send_packet(req)
 
     def on_packet(self, packet: dict) -> None:
         """推送数据回报"""
@@ -364,6 +372,7 @@ class OrderBook():
 
     def on_message(self, d: dict) -> None:
         """Websocket订单簿更新推送"""
+        # print("@@@OrderBook",d)
         type: str = d["type"]
         channel: str = d["channel"]
         dt: datetime = datetime.now(UTC_TZ)
@@ -398,7 +407,8 @@ class OrderBook():
             history: list[BarData] = self.gateway.query_history(req)
             self.open_price = history[0].open_price
         tick.localtime = datetime.now()
-
+        tick.trade_price = d[0]["price"]
+        tick.trade_volume = d[0]["size"]
         self.gateway.on_tick(copy(tick))
 
     def on_update(self, d: dict, dt) -> None:
@@ -764,7 +774,8 @@ class DydxAccessor(RestfulAccessor):
 
     def on_send_order(self, data: dict, request: Request) -> None:
         """委托下单回报"""
-        pass
+        print("##### order_back",data)
+        # pass
 
     def on_send_order_error(
         self, exception_type: type, exception_value: Exception, tb, request: Request

@@ -60,19 +60,20 @@ class Monitor(StrategyTemplate):
 
     def on_tick(self, tick: TickData):
         # 以下的代码是根据tick数据，生成 bars数据的代码。如果策略是分钟级，则不要做任何修改。
-        self.last_price[tick.symbol] = tick.trade_price
+        pass
+        # self.last_price[tick.symbol] = tick.trade_price
 
-        ETH_price = self.last_price.get("ETHUSDT",0)
-        BTC_price = self.last_price.get("BTCUSDT",0)
+        # ETH_price = self.last_price.get("ETHUSDT",0)
+        # BTC_price = self.last_price.get("BTCUSDT",0)
 
-        if ETH_price and BTC_price :
-            rate = ETH_price / BTC_price
-            print("eth/btc: ", rate, datetime.now())
+        # if ETH_price and BTC_price :
+        #     rate = ETH_price / BTC_price
+        #     print("eth/btc: ", rate, datetime.now())
 
-            if rate < 0.0603 and time.time() - self.last_send_lark_time > 30:
-                self.last_send_lark_time = time.time()
-                print("eth/btc: ", rate, self.last_send_lark_time)
-                send_lark(f"eth/btc: {rate}")
+        #     if rate < 0.0603 and time.time() - self.last_send_lark_time > 30:
+        #         self.last_send_lark_time = time.time()
+        #         print("eth/btc: ", rate, self.last_send_lark_time)
+        #         send_lark(f"eth/btc: {rate}")
 
 
     def on_bars(self, bars: Dict[str, BarData]):
@@ -93,7 +94,7 @@ class Monitor(StrategyTemplate):
         pass
 
     def on_depth(self, depth: DepthData) -> None:
-        # print(self.strategy_name, depth.ab_symbol, depth.ask_prices)
+        print(self.strategy_name, depth.ab_symbol, depth.ask_prices)
         pass
 
     def on_exception(self, exception: Exception) -> None:
@@ -124,7 +125,7 @@ def main():
         # "127.0.0.1" str类型
         "proxy_host": "127.0.0.1",
         # 1087 int类型
-        "proxy_port": 7890,
+        "proxy_port": 58591,
         "test_net": ["TESTNET", "REAL"][1],
     }
     event_dispatcher = EventDispatcher(interval=1)
