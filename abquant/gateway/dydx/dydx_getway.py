@@ -1,5 +1,4 @@
 from datetime import datetime
-from abc import abstractmethod
 from typing import Dict, List
 import base64
 import pytz
@@ -12,7 +11,7 @@ from requests.exceptions import SSLError
 from abquant.event.event import EventType
 from abquant.gateway.accessor import Request
 from abquant.event.dispatcher import Event
-from abquant.trader.msg import BarData, TickData, TradeData
+from abquant.trader.msg import BarData, TickData, TradeData, DepthData
 from abquant.trader.object import (
     OrderData, 
     AccountData, 
@@ -52,6 +51,9 @@ from . import (
 
 from .dydx_util import *
 
+# test 
+# from dydx3.modules.private import Private
+
 # 账户信息全局缓存字典
 api_key_credentials_map: Dict[str, str] = {}
 
@@ -64,6 +66,7 @@ class DydxGateway(Gateway):
         "secret": "",
         "passphrase": "",
         "stark_private_key": "",
+        # "walletAddress": "",
         "proxy_host": "",
         "proxy_port": 0,
         "test_net": ["TESTNET", "REAL"],
@@ -76,7 +79,6 @@ class DydxGateway(Gateway):
     def __init__(self, event_dispatcher: EventDispatcher, gateway_name="DYDX"):
         super().__init__(event_dispatcher, gateway_name)
         self.set_gateway_name(gateway_name)
-        print("@@@DydxGateway__init__ self.gateway_name",self.gateway_name)
 
         self.market_listener = DydxWebsocketListener(self)
         self.rest_accessor = DydxAccessor(self)
@@ -96,6 +98,7 @@ class DydxGateway(Gateway):
         api_key_credentials_map["secret"] = setting["secret"]
         api_key_credentials_map["passphrase"] = setting["passphrase"]
         api_key_credentials_map["stark_private_key"] = setting["stark_private_key"]
+        # self.id = setting["walletAddress"]
         server: str = setting["test_net"]
         proxy_host: str = setting["proxy_host"]
         proxy_port: int = setting["proxy_port"]
@@ -196,6 +199,7 @@ class DydxWebsocketListener(WebsocketListener):
         self.subscribe_topic()
 
         for req in list(self.subscribed.values()):
+            print("#### on_connected req",req)
             self.subscribe(req)
         print("#### after on_connected")
     
@@ -317,6 +321,7 @@ class DydxWebsocketListener(WebsocketListener):
             self.gateway.on_order(order)
 
         if packet["type"] == "subscribed":
+            print("&&^&& linstener on_packet ", packet["contents"]["account"])
             self.gateway.posid = packet["contents"]["account"]["positionId"]
             self.gateway.id = packet["id"]
             self.gateway.init_query()
@@ -359,6 +364,14 @@ class OrderBook():
             symbol=symbol,
             exchange=exchange,
             # name=symbol_contract_map[symbol].name,
+            datetime=datetime.now(UTC_TZ),
+            gateway_name=gateway.gateway_name,
+        )
+
+        # 创建DEPTH
+        self.depth: DepthData = DepthData(
+            symbol=symbol,
+            exchange=exchange,
             datetime=datetime.now(UTC_TZ),
             gateway_name=gateway.gateway_name,
         )
@@ -444,6 +457,8 @@ class OrderBook():
                     self.bids[price] = bid_volume
 
         self.generate_tick(dt)
+        self.generate_depth(dt)
+
 
     def on_snapshot(self, asks, bids, dt: datetime) -> None:
         """盘口推送回报"""
@@ -460,6 +475,7 @@ class OrderBook():
             self.bids[float(price)] = float(volume)
 
         self.generate_tick(dt)
+        self.generate_depth(dt)
 
     def generate_tick(self, dt: datetime) -> None:
         """合成tick"""
@@ -487,7 +503,33 @@ class OrderBook():
         tick.localtime = datetime.now()
         self.gateway.on_tick(copy(tick))
 
+    def generate_depth(self, dt: datetime) -> None:
+        """合成depth"""
+        depth = self.depth
+        depth.localtime = datetime.now()
 
+
+        bids_keys: list = self.bids.keys()
+        bids_keys: list = sorted(bids_keys, reverse=True)
+
+        for i in range(min(20, len(bids_keys))):
+            price: float = float(bids_keys[i])
+            volume: float = float(self.bids[bids_keys[i]])
+            setattr(depth, f"bid_price_{i + 1}", price)
+            setattr(depth, f"bid_volume_{i + 1}", volume)
+
+        asks_keys: list = self.asks.keys()
+        asks_keys: list = sorted(asks_keys)
+
+        for i in range(min(20, len(asks_keys))):
+            price: float = float(asks_keys[i])
+            volume: float = float(self.asks[asks_keys[i]])
+            setattr(depth, f"ask_price_{i + 1}", price)
+            setattr(depth, f"ask_volume_{i + 1}", volume)
+
+        depth.datetime = dt
+        depth.localtime = datetime.now()
+        self.gateway.on_depth(copy(depth))
 
 
 class DydxAccessor(RestfulAccessor):
@@ -619,6 +661,28 @@ class DydxAccessor(RestfulAccessor):
         )
 
         signature: str = order_to_sign(hash_namber, api_key_credentials_map["stark_private_key"])
+        # 和官方版本对比签名
+
+        # print("!!!!!old_sign",signature)
+        # p = Private(host=REST_HOST, network_id=3, stark_private_key="", default_address="", api_key_credentials=api_key_credentials_map)
+
+        # print(p.create_order(
+        #     position_id="1",
+        #     market="BTC-USD",
+        #     side="BUY",
+        #     order_type="LIMIT",
+        #     post_only=False,
+        #     size="0.1",
+        #     price="60000",
+        #     limit_fee="0.001",
+        #     time_in_force="GTT",
+        #     client_id=orderid,
+        #     expiration_epoch_seconds=expiration_epoch_seconds
+
+        # ))
+
+        
+
 
         # 生成委托请求
         data: dict = {

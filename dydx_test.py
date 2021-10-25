@@ -87,8 +87,8 @@ class Monitor(StrategyTemplate):
         pass
 
     def on_depth(self, depth: DepthData) -> None:
-        # print(self.strategy_name, depth.ab_symbol, depth.ask_prices)
-        pass
+        print(self.strategy_name, depth.ab_symbol, depth.ask_prices)
+        # pass
 
     def on_exception(self, exception: Exception) -> None:
         print("EXCEPTION" + str(exception))
@@ -132,6 +132,8 @@ def main():
             event.data.gateway_name,
             event.data.msg)
     ))
+    event_dispatcher.register(EventType.EVENT_DEPTH, lambda event: print(
+        str('DEPTH: ') + str(event.data)))   
 
 
     dydx_gateway = DydxGateway(event_dispatcher)
