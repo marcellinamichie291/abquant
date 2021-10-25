@@ -31,7 +31,7 @@ if __name__ == '__main__':
     binance_setting = {
         "key": args.key,
         "secret": args.secret,
-        "session_number": 3,
+        "session_number": 20,
         # "127.0.0.1" str类型
         "proxy_host": args.proxy_host if args.proxy_host else "",
         # 1087 int类型
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     # event_dispatcher.register(EventType.EVENT_TIMER, lambda event:  print(str('TIMER: ') + str(event.data))) #pass
     event_dispatcher.register(EventType.EVENT_ACCOUNT, lambda event: print(
         str('ACCOUNT: ') + str(event.data)))  # pass accessor,  trade_listerer not done
-    # event_dispatcher.register(EventType.EVENT_CONTRACT, lambda event:  print(str('CONTRACT: ') + str(event.data))) # pass
+    event_dispatcher.register(EventType.EVENT_CONTRACT, lambda event:  print(str('CONTRACT: ') + str(event.data))) # pass
     event_dispatcher.register(EventType.EVENT_POSITION, lambda event: print(
         str('POSITION: ') + str(event.data)))  # pass accessor, trade_listerer not done
     event_dispatcher.register(EventType.EVENT_EXCEPTION, lambda event: print(
@@ -101,17 +101,18 @@ if __name__ == '__main__':
             symbol=k, exchange=Exchange.BINANCE))
     # subscribe 各个产品后 要调用gateway.start 开始接受数据。该操作较为冗赘，有实现细节上的考虑。 实现strategy时，以上调用对交易员隐藏，由框架实现。
     gateway.start()
-    # print("start to receive data from exchange")
+    print("start to receive data from exchange")
 
-    # # 下单撤单， 由框架异步执行。胆大的下单撤单吧。不必担心阻塞和 IO。
-    # ab_order_id: str = gateway.send_order(OrderRequest(symbol='XRPUSDT', exchange=Exchange.BINANCE,
-    #                                       direction=Direction.LONG, type=OrderType.LIMIT, volume=7, price=1.09, offset=Offset.OPEN))
-    # print('ab orderid', ab_order_id)
-    # time.sleep(10)
-    # order_id = ab_order_id.split('.')[-1]
-    # print('orderid', order_id)
-    # gateway.cancel_order(CancelRequest(
-    #     order_id, symbol='XRPUSDT', exchange=Exchange.BINANCE))
+    # 下单撤单， 由框架异步执行。胆大的下单撤单吧。不必担心阻塞和 IO。
+    for i in range(2):
+        ab_order_id: str = gateway.send_order(OrderRequest(symbol='XRPUSDT', exchange=Exchange.BINANCE,
+                                            direction=Direction.LONG, type=OrderType.LIMIT, volume=7, price=1.09, offset=Offset.OPEN))
+        print('ab orderid', ab_order_id)
+        # time.sleep(0.03)
+        order_id = ab_order_id.split('.')[-1]
+        print('orderid', order_id)
+        gateway.cancel_order(CancelRequest(
+            order_id, symbol='XRPUSDT', exchange=Exchange.BINANCE))
 
 
 

@@ -133,9 +133,11 @@ class BitmexAccessor(RestfulAccessor):
 
         # Only add price for limit order.
         if req.type == OrderType.LIMIT:
-            price_tick = symbol_contract_map[req.symbol].pricetick
+            contract = symbol_contract_map.get(req.symbol)
+            if contract:
+                price_tick = contract.pricetick
             
-            data["price"] = round_to(req.price, price_tick)
+                data["price"] = round_to(req.price, price_tick)
 
         # stop ? TODO
         if req.offset == Offset.CLOSE:
@@ -309,7 +311,7 @@ class BitmexAccessor(RestfulAccessor):
             return
         headers = request.response.headers
 
-        self.rate_limit_remaining = int(headers["x-ratelimit-remaining"])
+        self.rate_limit_remaining = int(headers.get("x-ratelimit-remaining", 60))
 
         self.rate_limit_sleep = int(headers.get("Retry-After", 0))
         if self.rate_limit_sleep:

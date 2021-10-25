@@ -1,17 +1,19 @@
+from dataclasses import dataclass
 from typing import Callable, Dict, Optional, Type, Union
 
 from abquant.trader.common import Interval
 from abquant.trader.msg import BarData, TickData, TransactionData
+from abquant.trader.utility import extract_ab_symbol
 
 
 class BarAccumulater:
     def __init__(self, window: int, on_window_bars: Callable[[Dict[str, BarData]], None]):
         self.window = window
         self.on_window = on_window_bars
-        self.bars: Dict[str, BarData]= {}
+        self.bars: Dict[str, BarData] = {}
 
         self._update_times = 0
-    
+
     @staticmethod
     def check_datatime(bars: Dict[str, BarData]):
         bar_time = None
@@ -21,30 +23,43 @@ class BarAccumulater:
             assert bar_time == bar.datetime, "the BarData in bars has different timestamp."
             bar_time = bar.datetime
 
-
     def update_bars(self, bars: Dict[str, BarData]):
         """
         not thread-safe
-        
+
         """
         self.check_datatime(bars)
         self._update_times += 1
         for ab_symbol, bar in bars.items():
             if ab_symbol not in self.bars:
+                bar = BarData(gateway_name="GENERATED",
+                              symbol=bar.symbol,
+                              exchange=extract_ab_symbol(bar.ab_symbol)[1],
+                              datetime=bar.datetime,
+                              interval=Interval.CUSTOM,
+                              volume=bar.volume,
+                              open_price=bar.open_price,
+                              high_price=bar.high_price,
+                              low_price=bar.low_price,
+                              close_price=bar.close_price
+                              )
                 self.bars[ab_symbol] = bar
-                bar.interval = Interval.CUSTOM
             else:
                 accumulated_bar = self.bars[ab_symbol]
                 accumulated_bar.close_price = bar.close_price
-                accumulated_bar.high_price = max(bar.high_price, accumulated_bar.high_price)
-                accumulated_bar.low_price = min(bar.low_price, accumulated_bar.low_price)
+                accumulated_bar.high_price = max(
+                    bar.high_price, accumulated_bar.high_price)
+                accumulated_bar.low_price = min(
+                    bar.low_price, accumulated_bar.low_price)
                 accumulated_bar.volume += bar.volume
-    
+
         if self._update_times >= self.window:
             self.on_window(self.bars)
-            self.bars = {}
+            # here is a garbage collection thing....
+            # self.bars = {}
+            self.bars.clear()
             self._update_times = 0
-        
+
 
 class BarGenerator:
     """
