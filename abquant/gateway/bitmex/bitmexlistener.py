@@ -239,7 +239,9 @@ class BitmexListener(WebsocketListener):
         symbol = d["symbol"]
         tick = self.ticks.get(symbol, None)
         subscribe_mode = self.gateway.subscribe_mode
-        if not tick or not subscribe_mode.tick_5 or not subscribe_mode.best_tick:
+        if not tick:
+            return
+        if (not subscribe_mode.tick_5) and (not subscribe_mode.best_tick):
             return
 
         tick.trade_price = 0
@@ -256,15 +258,16 @@ class BitmexListener(WebsocketListener):
             tick.best_ask_volume = volume
             tick.best_ask_price = price
 
-        for n, buf in enumerate(d["bids"][:5]):
-            price, volume = buf
-            tick.__setattr__("bid_price_%s" % (n + 1), price)
-            tick.__setattr__("bid_volume_%s" % (n + 1), volume)
+        if subscribe_mode.tick_5:
+            for n, buf in enumerate(d["bids"][:5]):
+                price, volume = buf
+                tick.__setattr__("bid_price_%s" % (n + 1), price)
+                tick.__setattr__("bid_volume_%s" % (n + 1), volume)
 
-        for n, buf in enumerate(d["asks"][:5]):
-            price, volume = buf
-            tick.__setattr__("ask_price_%s" % (n + 1), price)
-            tick.__setattr__("ask_volume_%s" % (n + 1), volume)
+            for n, buf in enumerate(d["asks"][:5]):
+                price, volume = buf
+                tick.__setattr__("ask_price_%s" % (n + 1), price)
+                tick.__setattr__("ask_volume_%s" % (n + 1), volume)
 
         self.gateway.on_tick(copy(tick))
 
