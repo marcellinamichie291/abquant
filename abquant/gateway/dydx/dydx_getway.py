@@ -420,8 +420,8 @@ class OrderBook():
             history: list[BarData] = self.gateway.query_history(req)
             self.open_price = history[0].open_price
         tick.localtime = datetime.now()
-        tick.trade_price = d[0]["price"]
-        tick.trade_volume = d[0]["size"]
+        tick.trade_price = float(d[0]["price"])
+        tick.trade_volume = float(d[0]["size"])
         self.gateway.on_tick(copy(tick))
 
     def on_update(self, d: dict, dt) -> None:
@@ -455,9 +455,22 @@ class OrderBook():
             else:
                 if bid_volume > 0:
                     self.bids[price] = bid_volume
+        
+        if len(d["asks"]) > 0:
+            self.depth.volume = float(d["asks"][0][0])
+            self.depth.price = float(d["asks"][0][1])
+            self.depth.direction = Direction.SHORT
+        if len(d["bids"]) > 0:
+            self.depth.volume = float(d["bids"][0][0])
+            self.depth.price = float(d["bids"][0][1])
+            self.depth.direction = Direction.LONG
 
+        depth = self.depth
+        depth.localtime = datetime.now()
+        depth.datetime = dt
+        self.gateway.on_depth(copy(depth))
         self.generate_tick(dt)
-        self.generate_depth(dt)
+        # self.generate_depth(dt)
 
 
     def on_snapshot(self, asks, bids, dt: datetime) -> None:
@@ -508,24 +521,9 @@ class OrderBook():
         depth = self.depth
         depth.localtime = datetime.now()
 
-
+        # print("&&&&&&&&self.bids",self.bids)
         bids_keys: list = self.bids.keys()
         bids_keys: list = sorted(bids_keys, reverse=True)
-
-        for i in range(min(20, len(bids_keys))):
-            price: float = float(bids_keys[i])
-            volume: float = float(self.bids[bids_keys[i]])
-            setattr(depth, f"bid_price_{i + 1}", price)
-            setattr(depth, f"bid_volume_{i + 1}", volume)
-
-        asks_keys: list = self.asks.keys()
-        asks_keys: list = sorted(asks_keys)
-
-        for i in range(min(20, len(asks_keys))):
-            price: float = float(asks_keys[i])
-            volume: float = float(self.asks[asks_keys[i]])
-            setattr(depth, f"ask_price_{i + 1}", price)
-            setattr(depth, f"ask_volume_{i + 1}", volume)
 
         depth.datetime = dt
         depth.localtime = datetime.now()
