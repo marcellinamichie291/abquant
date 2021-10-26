@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 from typing import Dict, List
 import base64
 import pytz
@@ -30,6 +31,7 @@ from abquant.event import EventDispatcher
 from abquant.trader.common import Exchange, Interval
 
 from abquant.gateway.basegateway import Gateway
+from example.connectbinancec import parse
 from ..listener import WebsocketListener
 from ..accessor import Request, RestfulAccessor
 
@@ -727,8 +729,12 @@ class DydxAccessor(RestfulAccessor):
         }
 
         params: dict = {
-            "resolution": INTERVAL_AB2DYDX[req.interval]
+            "resolution": INTERVAL_AB2DYDX[req.interval],
         }
+        if req.start:
+            params["fromISO"] = generate_datetime_iso(req.start)
+        if req.end:
+            params["toISO"] = generate_datetime_iso(req.end)
 
         resp = self.request(
             method="GET",
@@ -877,6 +883,11 @@ def generate_now_iso() -> str:
         '%Y-%m-%dT%H:%M:%S.%f',
     )[:-3] + 'Z'
 
+def generate_datetime_iso(dt: datetime) -> str:
+    """datetime生成ISO时间"""
+    return dt.strftime(
+        '%Y-%m-%dT%H:%M:%S.%f',
+    )[:-3] + 'Z'
 
 def epoch_seconds_to_iso(epoch: float) -> str:
     """时间格式转换"""
