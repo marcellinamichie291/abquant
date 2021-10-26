@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import numpy as np
 from typing import Callable, Dict, Optional, Type, Union
 
 from abquant.trader.common import Interval
@@ -82,12 +83,12 @@ class BarGenerator:
         self.bar: BarData = None
         self.on_bar: Callable = on_bar
 
-        self.interval: Interval = interval
-        self.interval_count: int = 0
+        # self.interval: Interval = interval
+        # self.interval_count: int = 0
 
-        self.window: int = window
-        self.window_bar: BarData = None
-        self.on_window_bar: Callable = on_window_bar
+        # self.window: int = window
+        # self.window_bar: BarData = None
+        # self.on_window_bar: Callable = on_window_bar
 
         self.last_tick: TickData = None
         self.last_bar: BarData = None
@@ -180,5 +181,74 @@ class BarGenerator:
 
 
 class ArrayCache:
-    def __init__(self, size: int):
-        pass
+    def __init__(self, size: int = 100):
+        """Constructor"""
+        self.count: int = 0
+        self.size: int = size
+        self.inited: bool = False
+
+        self.open_array: np.ndarray = np.zeros(size)
+        self.high_array: np.ndarray = np.zeros(size)
+        self.low_array: np.ndarray = np.zeros(size)
+        self.close_array: np.ndarray = np.zeros(size)
+        self.volume_array: np.ndarray = np.zeros(size)
+        self.open_interest_array: np.ndarray = np.zeros(size)
+
+    def update_bar(self, bar: BarData) -> None:
+        self.count += 1
+        if not self.inited and self.count >= self.size:
+            self.inited = True
+
+        self.open_array[:-1] = self.open_array[1:]
+        self.high_array[:-1] = self.high_array[1:]
+        self.low_array[:-1] = self.low_array[1:]
+        self.close_array[:-1] = self.close_array[1:]
+        self.volume_array[:-1] = self.volume_array[1:]
+
+        self.open_array[-1] = bar.open_price
+        self.high_array[-1] = bar.high_price
+        self.low_array[-1] = bar.low_price
+        self.close_array[-1] = bar.close_price
+        self.volume_array[-1] = bar.volume
+
+    @property
+    def open(self) -> np.ndarray:
+        return self.open_array
+
+    @property
+    def high(self) -> np.ndarray:
+        return self.high_array
+
+    @property
+    def low(self) -> np.ndarray:
+        return self.low_array
+
+    @property
+    def close(self) -> np.ndarray:
+        return self.close_array
+
+    @property
+    def volume(self) -> np.ndarray:
+        return self.volume_array
+    
+    @staticmethod
+    def pct_change(self, arr: np.ndarray, shift: int):
+        shifted_arr = np.roll(arr, shift)
+        pct_arr = arr / shifted_arr
+        pct_arr[:shift] = np.NAN
+        return pct_arr
+
+    def open_pct(self, shift=1):
+        return self.pct_change(self.open_array, shift)
+
+    def high_pct(self, shift=1):
+        return self.pct_change(self.high_array, shift)
+
+    def low_pct(self, shift=1):
+        return self.pct_change(self.low_array, shift)
+    
+    def close_pct(self, shift=1):
+        return self.pct_change(self.close_array, shift)
+    
+    def volumn_pct(self, shift=1):
+        return self.pct_change(self.volume_array, shift)

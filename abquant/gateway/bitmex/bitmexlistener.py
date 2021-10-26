@@ -86,6 +86,7 @@ class BitmexListener(WebsocketListener):
             self.ticks[symbol] = tick
         if subscribe_mode.transaction:
             self.transactions[symbol] = transaction
+            self.ticks[symbol] = tick
         if subscribe_mode.depth and symbol not in self.depths:
             self.depths[symbol] = depth
             # WARNING, when strategy need orderbook rebuilding, make sure what happen when reconnection.
