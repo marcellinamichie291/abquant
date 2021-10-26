@@ -51,8 +51,8 @@ from . import (
 
 from .dydx_util import *
 
-# test 
-# from dydx3.modules.private import Private
+# test 和官方客户端对比
+from dydx3.modules.private import Private
 
 # 账户信息全局缓存字典
 api_key_credentials_map: Dict[str, str] = {}
@@ -470,7 +470,6 @@ class OrderBook():
         depth.datetime = dt
         self.gateway.on_depth(copy(depth))
         self.generate_tick(dt)
-        # self.generate_depth(dt)
 
 
     def on_snapshot(self, asks, bids, dt: datetime) -> None:
@@ -488,7 +487,6 @@ class OrderBook():
             self.bids[float(price)] = float(volume)
 
         self.generate_tick(dt)
-        self.generate_depth(dt)
 
     def generate_tick(self, dt: datetime) -> None:
         """合成tick"""
@@ -516,18 +514,6 @@ class OrderBook():
         tick.localtime = datetime.now()
         self.gateway.on_tick(copy(tick))
 
-    def generate_depth(self, dt: datetime) -> None:
-        """合成depth"""
-        depth = self.depth
-        depth.localtime = datetime.now()
-
-        # print("&&&&&&&&self.bids",self.bids)
-        bids_keys: list = self.bids.keys()
-        bids_keys: list = sorted(bids_keys, reverse=True)
-
-        depth.datetime = dt
-        depth.localtime = datetime.now()
-        self.gateway.on_depth(copy(depth))
 
 
 class DydxAccessor(RestfulAccessor):
@@ -541,6 +527,7 @@ class DydxAccessor(RestfulAccessor):
         self.gateway: DydxGateway = gateway
         self.gateway.set_gateway_name(gateway.gateway_name)
         self.order_count: int = 0
+        self.position_id = ""
 
 
     def sign(self, request: Request) -> Request:
@@ -648,7 +635,7 @@ class DydxAccessor(RestfulAccessor):
 
         hash_namber: int = generate_hash_number(
             server=self.server,
-            position_id=self.gateway.posid,
+            position_id=self.position_id,
             client_id=orderid,
             market=req.symbol,
             side=DIRECTION_AB2DYDX[req.direction],
@@ -662,10 +649,10 @@ class DydxAccessor(RestfulAccessor):
         # 和官方版本对比签名
 
         # print("!!!!!old_sign",signature)
-        # p = Private(host=REST_HOST, network_id=3, stark_private_key="", default_address="", api_key_credentials=api_key_credentials_map)
+        # p = Private(host=REST_HOST, network_id=1, stark_private_key="", default_address="", api_key_credentials=api_key_credentials_map)
 
         # print(p.create_order(
-        #     position_id="1",
+        #     position_id=self.position_id,
         #     market="BTC-USD",
         #     side="BUY",
         #     order_type="LIMIT",
@@ -808,7 +795,9 @@ class DydxAccessor(RestfulAccessor):
 
     def on_query_account(self, data: dict, request: Request) -> None:
         """资金查询回报"""
+        # print("$$$$$$$query_account",data)
         d: dict = data["accounts"][0]
+        self.position_id = d["positionId"]
         balance: float = float(d["equity"])
         available: float = float(d["freeCollateral"])
         account: AccountData = AccountData(
@@ -836,7 +825,7 @@ class DydxAccessor(RestfulAccessor):
 
     def on_send_order(self, data: dict, request: Request) -> None:
         """委托下单回报"""
-        print("##### order_back",data)
+        print("##### order_back",data, request)
         # pass
 
     def on_send_order_error(
@@ -861,7 +850,9 @@ class DydxAccessor(RestfulAccessor):
 
     def on_cancel_order(self, data: dict, request: Request) -> None:
         """委托撤单回报"""
-        pass
+        print("##### cancel_order_back",data, request)
+
+        # pass
 
     def on_cancel_failed(self, status_code: str, request: Request) -> None:
         """撤单回报函数报错回报"""
