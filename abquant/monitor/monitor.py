@@ -7,7 +7,7 @@ import logging
 from threading import Thread
 import asyncio
 
-from .queue import AsyncQueue
+# from .queue import AsyncQueue
 from .transmitter import Transmitter
 
 pong_count = 0
@@ -19,7 +19,7 @@ class Monitor(ABC):
 
     def __init__(self, setting: dict):
         self.queue = None
-        self.wsc = None
+        self.txmt: Transmitter = None
         self._consumer_thread = None
         self.setting = setting
         # self.init_monitor(setting)
@@ -31,11 +31,13 @@ class Monitor(ABC):
             print("Error: no setting, exit")
             return
         try:
-            if self.wsc is None:
-                txmt = Transmitter(self.setting)
-                self.wsc = txmt.connect_ws()
+            if self.txmt is None:
+                self.txmt = Transmitter(self.setting)
+                self.txmt.connect_ws()
+                time.sleep(10)
+                self.txmt.client.send("ttttttttttttttttt")
             if self.queue is None:
-                self.init_queue()
+                # self.init_queue()
                 self._consumer_thread = Thread(target=self.run())
                 self._consumer_thread.start()
                 print("after thread")
@@ -63,13 +65,8 @@ class Monitor(ABC):
     def send(self, data: json):
         if self.queue is None:
             self.queue = asyncio.Queue(maxsize=MAX_QUEUE_SIZE)
-        print(f"Send {data}")
         self.queue.put_nowait(data)
-
-    def put1(self, data: json):
-        if self.queue is None:
-            self.queue = asyncio.Queue(maxsize=MAX_QUEUE_SIZE)
-        self.queue.put_nowait(data)
+        print(f"Send: put to queue: {data}  {self.queue.qsize()}")
 
     async def consumer(self):
         self.init_queue(MAX_QUEUE_SIZE)
@@ -79,7 +76,7 @@ class Monitor(ABC):
         if self.queue is None:
             print("Error: queue is none.")
             return
-        if self.wsc is None:
+        if self.txmt is None or self.txmt.client is None:
             print("Error: ws client is none.")
             return
         while True:
@@ -88,16 +85,17 @@ class Monitor(ABC):
                 print(f'当前队列有：{size} 个元素')
                 data = await self.queue.get()
                 print(f'拿出元素：{data}')
-                self.wsc.send(data)
+
+                await self.txmt.client.send(str(data))
                 size = self.queue.qsize()
                 print(f'然后队列有：{size} 个元素')
             except Exception as e:
-                print('Error: sleep 1 sec')
+                print('Error: ', e)
                 await asyncio.sleep(1)
 
     def run(self):
-        asyncio.run(self.consumer())
         print("async run")
+        asyncio.run(self.consumer())
         time.sleep(3)
         print("... run over")
 
