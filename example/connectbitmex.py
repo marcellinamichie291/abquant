@@ -56,12 +56,12 @@ if __name__ == '__main__':
         str('ORDER: ') + str(event.data)))
     event_dispatcher.register(EventType.EVENT_TRADE, lambda event: print(
         str('TRADE: ') + str(event.data)))
-    # event_dispatcher.register(EventType.EVENT_TICK, lambda event: print(
-    #     str('TICK: ') + str(event.data)))
+    event_dispatcher.register(EventType.EVENT_TICK, lambda event: print(
+        str('TICK: ') + str(event.data)))
     # event_dispatcher.register(EventType.EVENT_DEPTH, lambda event: print(
     #     str('DEPTH: ') + str(event.data)))
-    # event_dispatcher.register(EventType.EVENT_TRANSACTION, lambda event: print(
-    #     str('TRANSACTION: ') + str(event.data)))
+    event_dispatcher.register(EventType.EVENT_TRANSACTION, lambda event: print(
+        str('TRANSACTION: ') + str(event.data)))
     # event_dispatcher.register(EventType.EVENT_ENTRUST, lambda event:  print(str('ENTRUST: ') + str(event.data)))
     # event_dispatcher.register_general(lambda event: print(str(event.type) +  str(event.data)))
 
