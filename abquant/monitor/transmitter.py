@@ -68,7 +68,7 @@ class Transmitter:
         if self.client is None:
             print("no client to run ping pong thread")
             return
-        self.client.run_forever(ping_interval=10, ping_timeout=5)
+        self.client.run_forever(ping_interval=30, ping_timeout=5)
 
     def send(self, data):
         if self.client is None:

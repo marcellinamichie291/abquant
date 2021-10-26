@@ -85,8 +85,8 @@ class Monitor(ABC):
                 print(f'当前队列有：{size} 个元素')
                 data = await self.queue.get()
                 print(f'拿出元素：{data}')
-
-                await self.txmt.client.send(str(data))
+                # await self.txmt.client.send(str(data))
+                self.txmt.client.send(str(data))
                 size = self.queue.qsize()
                 print(f'然后队列有：{size} 个元素')
             except Exception as e:
