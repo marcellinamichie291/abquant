@@ -6,6 +6,7 @@ import random
 import logging
 from threading import Thread
 import asyncio
+from queue import Empty, Queue
 
 # from .queue import AsyncQueue
 from .transmitter import Transmitter
@@ -13,13 +14,12 @@ from .transmitter import Transmitter
 pong_count = 0
 MAX_PONG_COUNT = 5
 MAX_QUEUE_SIZE = 1000
-MAX_BUFFER_SIZE = 1000
 
 
 class Monitor(Thread):
     queue = None
     txmt: Transmitter = None
-    _consumer_thread = None
+    # _consumer_thread = None
     setting = None
     buffer = None
 
@@ -27,6 +27,7 @@ class Monitor(Thread):
         Thread.__init__(self)
         self.setting = setting
         self.buffer = []
+        self.queue: Queue = Queue(maxsize=MAX_QUEUE_SIZE)
         # self.init_monitor(setting)
 
     # @staticmethod
@@ -45,12 +46,14 @@ class Monitor(Thread):
             # self._consumer_thread = Thread(target=self.run1())
             # self._consumer_thread = Thread(target=asyncio.run(self.consumer()))
             # self._consumer_thread.start()
-            print("as: self run consumer")
-            asyncio.run(self.consumer())
+            print("qu: self run consumer")
+            # asyncio.run(self.consumer())
+            self.consumer()
+            # ------ 后面的不执行 ------
             # time.sleep(3)
             # print("... run over")
             # self.run1()
-            print("as: after asyncio run")
+            print("qu: after asyncio run")
             time.sleep(10)
             self.send(json.loads("{\"a\":1, \"b\": \"bb\"}"))
             # else:
@@ -58,53 +61,56 @@ class Monitor(Thread):
         except Exception as e:
             print("Error: {}", e)
 
-    def stop(self):
-        pass
-        # self._consumer_thread.setDaemon()
+    # def stop(self):
+    #     pass
+    #     # self._consumer_thread.setDaemon()
 
-    def init_queue(self, qsize=MAX_QUEUE_SIZE):
-        if self.queue is None:
-            self.queue = asyncio.Queue(maxsize=qsize)
+    # def init_queue(self, qsize=MAX_QUEUE_SIZE):
+    #     if self.queue is None:
+    #         self.queue = asyncio.Queue(maxsize=qsize)
 
-    async def producer(self):
-        if self.queue is None:
-            self.queue = asyncio.Queue(maxsize=MAX_QUEUE_SIZE)
-        for i in range(3):
-            await self.queue.put(i)
-            await asyncio.sleep(random.randint(0, 2))
-            print(f"Put {i}")
+    # async def producer(self):
+    #     if self.queue is None:
+    #         self.queue = asyncio.Queue(maxsize=MAX_QUEUE_SIZE)
+    #     for i in range(3):
+    #         await self.queue.put(i)
+    #         await asyncio.sleep(random.randint(0, 2))
+    #         print(f"Put {i}")
 
     def send(self, data: json):
-        if self.queue is None:
-            # self.queue = asyncio.Queue(maxsize=MAX_QUEUE_SIZE)
-            if len(self.buffer) < MAX_BUFFER_SIZE:
-                self.buffer.append(data)
-                return
-            else:
-                print("Error: as: async buffer is full")
-                return
-        if len(self.buffer) > 0:
-            for buf in self.buffer:
-                if self.queue.qsize() >= MAX_QUEUE_SIZE - 1:
-                    print("Error: as: async queue is full")
-                    return
-                else:
-                    self.queue.put_nowait(buf)
-                    print(f"as: send: buffer to queue: {data}  {self.queue.qsize()}")
-            self.buffer.clear()
-        if self.queue.qsize() >= MAX_QUEUE_SIZE - 1:
-            print("Error: as: async queue is full")
+        # if self.queue is None:
+        #     # self.queue = asyncio.Queue(maxsize=MAX_QUEUE_SIZE)
+        #     if len(self.buffer) < MAX_BUFFER_SIZE:
+        #         self.buffer.append(data)
+        #         return
+        #     else:
+        #         print("Error: qu: async buffer is full")
+        #         return
+        # if len(self.buffer) > 0:
+        #     for buf in self.buffer:
+        #         if self.queue.qsize() >= MAX_QUEUE_SIZE - 1:
+        #             print("Error: qu: async queue is full")
+        #             return
+        #         else:
+        #             self.queue.put_nowait(buf)
+        #             print(f"qu: send: buffer to queue: {data}  {self.queue.qsize()}")
+        #     self.buffer.clear()
+        if self.queue.full():
+            print("Error: qu: queue is full")
             return
         self.queue.put_nowait(data)
-        print(f"as: send: put to queue: {data}  {self.queue.qsize()}")
+        print(f"qu: send: put to queue: {data}  {self.queue.qsize()}")
 
-    async def consumer(self):
-        self.init_queue(MAX_QUEUE_SIZE)
-        print("监控：队列初始化完成")
-        await self.producer()
+    def consumer(self):
+        # self.init_queue(MAX_QUEUE_SIZE)
+        # print("监控：队列初始化完成")
+        # await self.producer()
+        self.queue.put(1)
+        self.queue.put('2')
+        self.queue.put("{\"c\":3}")
         print("监控：示例数据填充完成")
         if self.queue is None:
-            print("Error: as: queue is none.")
+            print("Error: qu: queue is none.")
             return
         if self.txmt is None or self.txmt.client is None:
             print("Error: tx: ws client is none.")
@@ -112,26 +118,31 @@ class Monitor(Thread):
         while True:
             try:
                 size = self.queue.qsize()
-                print(f'as: 当前队列有：{size} 个元素')
-                data = await self.queue.get()
-                print(f'as: 拿出元素：{data}')
+                print(f'qu: 当前队列有：{size} 个元素')
+                # data = await self.queue.get()
+                data = self.queue.get(timeout=1)
+                print(f'qu: 拿出元素：{data}, 发送...')
                 # await self.txmt.client.send(str(data))
                 self.txmt.client.send(str(data))
                 size = self.queue.qsize()
-                print(f'as: 然后队列有：{size} 个元素')
+                print(f'qu: 然后队列有：{size} 个元素')
+            except Empty:
+                print('empty queue')
+                continue
             except Exception as e:
-                print('Error: as: ', e)
-                await asyncio.sleep(1)
+                print('Error: qu: ', e)
+                continue
+                # await asyncio.sleep(1)
 
-    def run1(self):
-        print("as: async run")
-        asyncio.run(self.consumer())
-        time.sleep(3)
-        print("as: ... run over")
-
-        # loop = asyncio.get_running_loop()
-        # ptr = _thread.start_new_thread(asyncio.run(self.run()), ())
-        # print(ptr)
+    # def run1(self):
+    #     print("qu: async run")
+    #     asyncio.run(self.consumer())
+    #     time.sleep(3)
+    #     print("qu: ... run over")
+    #
+    #     # loop = asyncio.get_running_loop()
+    #     # ptr = _thread.start_new_thread(asyncio.run(self.run()), ())
+    #     # print(ptr)
 
     def push_info(self, info: Dict):
         info_json = json.dumps(info)
