@@ -232,7 +232,7 @@ class ArrayCache:
         return self.volume_array
     
     @staticmethod
-    def pct_change(self, arr: np.ndarray, shift: int):
+    def pct_change(arr: np.ndarray, shift: int):
         shifted_arr = np.roll(arr, shift)
         pct_arr = arr / shifted_arr
         pct_arr[:shift] = np.NAN
