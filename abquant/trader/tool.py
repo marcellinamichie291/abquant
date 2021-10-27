@@ -234,7 +234,7 @@ class ArrayCache:
     @staticmethod
     def pct_change(arr: np.ndarray, shift: int):
         shifted_arr = np.roll(arr, shift)
-        pct_arr = arr / shifted_arr
+        pct_arr = arr / shifted_arr - 1
         pct_arr[:shift] = np.NAN
         return pct_arr
 
