@@ -13,20 +13,24 @@ from .transmitter import Transmitter
 pong_count = 0
 MAX_PONG_COUNT = 5
 MAX_QUEUE_SIZE = 1000
+MAX_BUFFER_SIZE = 1000
 
 
-class Monitor(ABC):
+class Monitor(Thread):
+    queue = None
+    txmt: Transmitter = None
+    _consumer_thread = None
+    setting = None
+    buffer = None
 
     def __init__(self, setting: dict):
-        self.queue = None
-        self.txmt: Transmitter = None
-        self._consumer_thread = None
+        Thread.__init__(self)
         self.setting = setting
+        self.buffer = []
         # self.init_monitor(setting)
-        # print("Monitor启动")
 
     # @staticmethod
-    def start(self):
+    def run(self):
         if self.setting is None:
             print("Error: no setting, exit")
             return
@@ -36,13 +40,21 @@ class Monitor(ABC):
                 self.txmt.connect_ws()
                 time.sleep(10)
                 self.txmt.client.send("ttttttttttttttttt")
-            if self.queue is None:
-                # self.init_queue()
-                self._consumer_thread = Thread(target=self.run())
-                self._consumer_thread.start()
-                print("after thread")
-                time.sleep(10)
-                self.send(json.loads("{\"a\":1, \"b\": \"bb\"}"))
+            # if self.queue is None:
+            # self.init_queue()
+            # self._consumer_thread = Thread(target=self.run1())
+            # self._consumer_thread = Thread(target=asyncio.run(self.consumer()))
+            # self._consumer_thread.start()
+            print("as: self run consumer")
+            asyncio.run(self.consumer())
+            # time.sleep(3)
+            # print("... run over")
+            # self.run1()
+            print("as: after asyncio run")
+            time.sleep(10)
+            self.send(json.loads("{\"a\":1, \"b\": \"bb\"}"))
+            # else:
+            #     print(f'What? queue exist: {self.queue}')
         except Exception as e:
             print("Error: {}", e)
 
@@ -57,16 +69,34 @@ class Monitor(ABC):
     async def producer(self):
         if self.queue is None:
             self.queue = asyncio.Queue(maxsize=MAX_QUEUE_SIZE)
-        for i in range(5):
+        for i in range(3):
             await self.queue.put(i)
             await asyncio.sleep(random.randint(0, 2))
             print(f"Put {i}")
 
     def send(self, data: json):
         if self.queue is None:
-            self.queue = asyncio.Queue(maxsize=MAX_QUEUE_SIZE)
+            # self.queue = asyncio.Queue(maxsize=MAX_QUEUE_SIZE)
+            if len(self.buffer) < MAX_BUFFER_SIZE:
+                self.buffer.append(data)
+                return
+            else:
+                print("Error: as: async buffer is full")
+                return
+        if len(self.buffer) > 0:
+            for buf in self.buffer:
+                if self.queue.qsize() >= MAX_QUEUE_SIZE - 1:
+                    print("Error: as: async queue is full")
+                    return
+                else:
+                    self.queue.put_nowait(buf)
+                    print(f"as: send: buffer to queue: {data}  {self.queue.qsize()}")
+            self.buffer.clear()
+        if self.queue.qsize() >= MAX_QUEUE_SIZE - 1:
+            print("Error: as: async queue is full")
+            return
         self.queue.put_nowait(data)
-        print(f"Send: put to queue: {data}  {self.queue.qsize()}")
+        print(f"as: send: put to queue: {data}  {self.queue.qsize()}")
 
     async def consumer(self):
         self.init_queue(MAX_QUEUE_SIZE)
@@ -74,30 +104,30 @@ class Monitor(ABC):
         await self.producer()
         print("监控：示例数据填充完成")
         if self.queue is None:
-            print("Error: queue is none.")
+            print("Error: as: queue is none.")
             return
         if self.txmt is None or self.txmt.client is None:
-            print("Error: ws client is none.")
+            print("Error: tx: ws client is none.")
             return
         while True:
             try:
                 size = self.queue.qsize()
-                print(f'当前队列有：{size} 个元素')
+                print(f'as: 当前队列有：{size} 个元素')
                 data = await self.queue.get()
-                print(f'拿出元素：{data}')
+                print(f'as: 拿出元素：{data}')
                 # await self.txmt.client.send(str(data))
                 self.txmt.client.send(str(data))
                 size = self.queue.qsize()
-                print(f'然后队列有：{size} 个元素')
+                print(f'as: 然后队列有：{size} 个元素')
             except Exception as e:
-                print('Error: ', e)
+                print('Error: as: ', e)
                 await asyncio.sleep(1)
 
-    def run(self):
-        print("async run")
+    def run1(self):
+        print("as: async run")
         asyncio.run(self.consumer())
         time.sleep(3)
-        print("... run over")
+        print("as: ... run over")
 
         # loop = asyncio.get_running_loop()
         # ptr = _thread.start_new_thread(asyncio.run(self.run()), ())

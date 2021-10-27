@@ -318,6 +318,7 @@ def main():
     import random
     while True:
         # renew strategy1 setting.
+        print('cycling ..')
         time.sleep(5)
         # edit_strategy 方法用于修改策略的 parameter。 random在这里就是一个示例。
         the_strategy1_setting = {"param1": 2,
@@ -333,6 +334,8 @@ def main():
         monitor.send(the_strategy1_setting)
 
     # print([c.func.id for c in ast.walk(ast.parse(inspect.getsource(TheStrategy))) if isinstance(c, ast.Call)])
+
+
 if __name__ == '__main__':
     main()
     # test()

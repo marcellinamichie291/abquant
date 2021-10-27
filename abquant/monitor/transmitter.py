@@ -55,7 +55,7 @@ class Transmitter:
         # ws.run_forever(ping_interval=30, ping_timeout=5)
         self._pp_thread = Thread(target=self.run_forever, args=(ws,))
         self._pp_thread.start()
-        print("start ping/pong thread")
+        print("tx: start ping/pong thread")
         time.sleep(1)
 
         return ws
@@ -64,15 +64,15 @@ class Transmitter:
         pass
 
     def run_forever(self, ws):
-        print("run forever")
+        print("tx: run forever\n")
         if self.client is None:
-            print("no client to run ping pong thread")
+            print("Error: tx: no client to run ping pong thread")
             return
         self.client.run_forever(ping_interval=30, ping_timeout=5)
 
     def send(self, data):
         if self.client is None:
-            print("Error: websocket client not found")
+            print("Error: tx: websocket client not found")
         self.client.send(data)
 
     def on_message(self, ws, msg):
@@ -83,10 +83,10 @@ class Transmitter:
 
     def on_open(self, ws):
         self.client = ws
-        print("open")
+        print("tx: open")
 
     def on_close(self, close_status_code, close_msg):
-        print("close")
+        print("tx: close")
         self.client = None
         i = 1
         while i <= MAX_CONNECT_RETRY:
@@ -95,14 +95,14 @@ class Transmitter:
             if self.client is not None:
                 break
             i += 1
-        print(f"Reconnect after {i} retries")
+        print(f"tx: Reconnect after {i} retries")
 
     def on_ping(self, pingMsg, ex):
         # ws._send_ping()
-        print("ping")
+        print("tx: ping")
 
     def on_pong(self, pongMsg, ex):
-        print("pong")
+        print("tx: pong")
 
 
 if __name__ == '__main__':
