@@ -18,6 +18,74 @@ from typing import Tuple, Optional
 from ecdsa.rfc6979 import generate_k
 import hashlib
 from enum import Enum
+from datetime import datetime
+import pytz
+import json
+import hmac
+import base64
+from typing import Dict
+
+
+# 账户信息全局缓存字典
+api_key_credentials_map: Dict[str, str] = {}
+
+
+# UTC时区
+UTC_TZ = pytz.utc
+
+def generate_datetime(timestamp: str) -> datetime:
+    """生成时间"""
+    dt: datetime = datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S.%fZ')
+    dt: datetime = UTC_TZ.localize(dt)
+    return dt
+
+
+def generate_now_iso() -> str:
+    """生成ISO时间"""
+    return datetime.utcnow().strftime(
+        '%Y-%m-%dT%H:%M:%S.%f',
+    )[:-3] + 'Z'
+
+def generate_datetime_iso(dt: datetime) -> str:
+    """datetime生成ISO时间"""
+    return dt.strftime(
+        '%Y-%m-%dT%H:%M:%S.%f',
+    )[:-3] + 'Z'
+
+def epoch_seconds_to_iso(epoch: float) -> str:
+    """时间格式转换"""
+    return datetime.utcfromtimestamp(epoch).strftime(
+        '%Y-%m-%dT%H:%M:%S.%f',
+    )[:-3] + 'Z'
+
+
+def sign(
+    request_path: str,
+    method: str,
+    iso_timestamp: str,
+    data: dict,
+) -> str:
+    """生成签名"""
+    body: str = ""
+    if data:
+        body = json.dumps(data, separators=(',', ':'))
+
+    message_string = "".join([
+        iso_timestamp,
+        method,
+        request_path,
+        body
+    ])
+
+    hashed = hmac.new(
+        base64.urlsafe_b64decode(
+            (api_key_credentials_map["secret"]).encode('utf-8'),
+        ),
+        msg=message_string.encode('utf-8'),
+        digestmod=hashlib.sha256,
+    )
+    return base64.urlsafe_b64encode(hashed.digest()).decode()
+
 
 
 def _to_quantums_helper(human_amount, asset, ctx):

@@ -1,10 +1,6 @@
 from datetime import datetime
-import re
 from typing import Dict, List
-import base64
-import pytz
 import json
-import hmac
 import time
 from copy import copy
 from requests.exceptions import SSLError
@@ -31,7 +27,6 @@ from abquant.event import EventDispatcher
 from abquant.trader.common import Exchange, Interval
 
 from abquant.gateway.basegateway import Gateway
-from example.connectbinancec import parse
 from ..listener import WebsocketListener
 from ..accessor import Request, RestfulAccessor
 
@@ -54,13 +49,10 @@ from . import (
 from .dydx_util import *
 
 # test 和官方客户端对比
-from dydx3.modules.private import Private
+# from dydx3.modules.private import Private
 
-# 账户信息全局缓存字典
-api_key_credentials_map: Dict[str, str] = {}
 
-# UTC时区
-UTC_TZ = pytz.utc
+
 
 class DydxGateway(Gateway):
     default_setting = {
@@ -159,7 +151,7 @@ class DydxGateway(Gateway):
         return self.orders.get(orderid, None)
 
     def process_timer_event(self, event: Event) -> None:
-        """定时事件处理"""
+        """定时事件处理,账户信息，订单信息回报用定时任务来处理"""
         self.count += 1
         if self.count < 2:
             return
@@ -201,9 +193,7 @@ class DydxWebsocketListener(WebsocketListener):
         self.subscribe_topic()
 
         for req in list(self.subscribed.values()):
-            print("#### on_connected req",req)
             self.subscribe(req)
-        print("#### after on_connected")
     
     def on_disconnected(self):
         self.gateway.write_log("Websocket API断开")
@@ -244,7 +234,8 @@ class DydxWebsocketListener(WebsocketListener):
         req: dict = {
             "type": "subscribe",
             "channel": "v3_orderbook",
-            "id": symbol
+            "id": symbol,
+            "batched": True
         }
         self.send_packet(req)
 
@@ -270,7 +261,7 @@ class DydxWebsocketListener(WebsocketListener):
         }
         self.send_packet(req)
 
-        # 
+        
         # req: dict = {
         #     "type": "subscribe",
         #     "channel": "v3_markets"
@@ -294,7 +285,9 @@ class DydxWebsocketListener(WebsocketListener):
                 self.on_message(packet)
 
     def on_orderbook(self, packet: dict) -> None:
-        """订单簿更新推送"""
+        """订单簿更新专用"""
+        # id: BTC-USD
+        # print("######on_orderbook",packet)
         orderbook = self.orderbooks[packet["id"]]
         orderbook.on_message(packet)
 
@@ -323,7 +316,7 @@ class DydxWebsocketListener(WebsocketListener):
             self.gateway.on_order(order)
 
         if packet["type"] == "subscribed":
-            print("&&^&& linstener on_packet ", packet["contents"]["account"])
+            # print("&&^&& linstener on_packet ", packet["contents"]["account"])
             self.gateway.posid = packet["contents"]["account"]["positionId"]
             self.gateway.id = packet["id"]
             self.gateway.init_query()
@@ -393,7 +386,7 @@ class OrderBook():
         dt: datetime = datetime.now(UTC_TZ)
         if type == "subscribed" and channel == "v3_orderbook":
             self.on_snapshot(d["contents"]["asks"], d["contents"]["bids"], dt)
-        elif type == "channel_data" and channel == "v3_orderbook":
+        elif type == "channel_batch_data" and channel == "v3_orderbook":
             self.on_update(d["contents"], dt)
         elif channel == "v3_trades":
             self.on_trades(d["contents"]["trades"], dt)
@@ -426,46 +419,48 @@ class OrderBook():
         tick.trade_volume = float(d[0]["size"])
         self.gateway.on_tick(copy(tick))
 
-    def on_update(self, d: dict, dt) -> None:
+    def on_update(self, ddd: dict, dt) -> None:
         """盘口更新推送"""
-        offset: int = int(d["offset"])
-        if offset < self.offset:
-            return
-        self.offset = offset
-
-        for price, ask_volume in d["asks"]:
-            price: float = float(price)
-            ask_volume: float = float(ask_volume)
-            if price in self.asks:
-                if ask_volume > 0:
-                    ask_volume: float = float(ask_volume)
-                    self.asks[price] = ask_volume
+        # print("on_update",ddd)
+        for d in ddd:
+            offset: int = int(d["offset"])
+            if offset < self.offset:
+                return
+            self.offset = offset
+            # 
+            for price, ask_volume in d["asks"]:
+                price: float = float(price)
+                ask_volume: float = float(ask_volume)
+                if price in self.asks:
+                    if ask_volume > 0 :
+                        ask_volume: float = float(ask_volume)
+                        self.asks[price] = ask_volume
+                    else:
+                        self.asks.pop(price)
                 else:
-                    del self.asks[price]
-            else:
-                if ask_volume > 0:
-                    self.asks[price] = ask_volume
+                    if ask_volume > 0:
+                        self.asks[price] = ask_volume
 
-        for price, bid_volume in d["bids"]:
-            price: float = float(price)
-            bid_volume: float = float(bid_volume)
-            if price in self.bids:
-                if bid_volume > 0:
-                    self.bids[price] = bid_volume
+            for price, bid_volume in d["bids"]:
+                price: float = float(price)
+                bid_volume: float = float(bid_volume)
+                if price in self.bids:
+                    if bid_volume > 0 :
+                        self.bids[price] = bid_volume
+                    else:
+                        self.bids.pop(price)
                 else:
-                    del self.bids[price]
-            else:
-                if bid_volume > 0:
-                    self.bids[price] = bid_volume
-        
-        if len(d["asks"]) > 0:
-            self.depth.volume = float(d["asks"][0][0])
-            self.depth.price = float(d["asks"][0][1])
-            self.depth.direction = Direction.SHORT
-        if len(d["bids"]) > 0:
-            self.depth.volume = float(d["bids"][0][0])
-            self.depth.price = float(d["bids"][0][1])
-            self.depth.direction = Direction.LONG
+                    if bid_volume > 0:
+                        self.bids[price] = bid_volume
+            
+            if len(d["asks"]) > 0:
+                self.depth.volume = float(d["asks"][0][0])
+                self.depth.price = float(d["asks"][0][1])
+                self.depth.direction = Direction.SHORT
+            if len(d["bids"]) > 0:
+                self.depth.volume = float(d["bids"][0][0])
+                self.depth.price = float(d["bids"][0][1])
+                self.depth.direction = Direction.LONG
 
         depth = self.depth
         depth.localtime = datetime.now()
@@ -494,15 +489,22 @@ class OrderBook():
         """合成tick"""
         tick: TickData = self.tick
 
+        for k in list(self.bids.keys()):
+            if k > self.tick.trade_price:
+                self.bids.pop(k)
         bids_keys: list = self.bids.keys()
         bids_keys: list = sorted(bids_keys, reverse=True)
 
+        # print("self.bids",self.bids)
         for i in range(min(5, len(bids_keys))):
             price: float = float(bids_keys[i])
             volume: float = float(self.bids[bids_keys[i]])
             setattr(tick, f"bid_price_{i + 1}", price)
             setattr(tick, f"bid_volume_{i + 1}", volume)
 
+        for k in list(self.asks.keys()):
+            if k < self.tick.trade_price:
+                self.asks.pop(k)
         asks_keys: list = self.asks.keys()
         asks_keys: list = sorted(asks_keys)
 
@@ -511,7 +513,11 @@ class OrderBook():
             volume: float = float(self.asks[asks_keys[i]])
             setattr(tick, f"ask_price_{i + 1}", price)
             setattr(tick, f"ask_volume_{i + 1}", volume)
-
+        
+        tick.best_ask_price = tick.ask_price_1
+        tick.best_ask_volume = tick.ask_volume_1
+        tick.best_bid_price = tick.bid_price_1
+        tick.best_bid_volume = tick.bid_volume_1
         tick.datetime = dt
         tick.localtime = datetime.now()
         self.gateway.on_tick(copy(tick))
@@ -567,8 +573,7 @@ class DydxAccessor(RestfulAccessor):
         server: str,
         proxy_host: str,
         proxy_port: int,
-        limitFee: float
-    ) -> None:
+        limitFee: float) -> None:
         """连接REST服务器"""
         self.proxy_port = proxy_port
         self.proxy_host = proxy_host
@@ -801,11 +806,12 @@ class DydxAccessor(RestfulAccessor):
 
     def on_query_account(self, data: dict, request: Request) -> None:
         """资金查询回报"""
-        # print("$$$$$$$query_account",data)
         d: dict = data["accounts"][0]
         self.position_id = d["positionId"]
         balance: float = float(d["equity"])
         available: float = float(d["freeCollateral"])
+        # print("$$$$$$$query_account",d)
+
         account: AccountData = AccountData(
             accountid=d["id"],
             balance=balance,
@@ -869,56 +875,3 @@ class DydxAccessor(RestfulAccessor):
 
         msg: str = f"撤单失败，状态码：{status_code}，信息：{request.response.text}"
         self.gateway.write_log(msg)
-
-def generate_datetime(timestamp: str) -> datetime:
-    """生成时间"""
-    dt: datetime = datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S.%fZ')
-    dt: datetime = UTC_TZ.localize(dt)
-    return dt
-
-
-def generate_now_iso() -> str:
-    """生成ISO时间"""
-    return datetime.utcnow().strftime(
-        '%Y-%m-%dT%H:%M:%S.%f',
-    )[:-3] + 'Z'
-
-def generate_datetime_iso(dt: datetime) -> str:
-    """datetime生成ISO时间"""
-    return dt.strftime(
-        '%Y-%m-%dT%H:%M:%S.%f',
-    )[:-3] + 'Z'
-
-def epoch_seconds_to_iso(epoch: float) -> str:
-    """时间格式转换"""
-    return datetime.utcfromtimestamp(epoch).strftime(
-        '%Y-%m-%dT%H:%M:%S.%f',
-    )[:-3] + 'Z'
-
-
-def sign(
-    request_path: str,
-    method: str,
-    iso_timestamp: str,
-    data: dict,
-) -> str:
-    """生成签名"""
-    body: str = ""
-    if data:
-        body = json.dumps(data, separators=(',', ':'))
-
-    message_string = "".join([
-        iso_timestamp,
-        method,
-        request_path,
-        body
-    ])
-
-    hashed = hmac.new(
-        base64.urlsafe_b64decode(
-            (api_key_credentials_map["secret"]).encode('utf-8'),
-        ),
-        msg=message_string.encode('utf-8'),
-        digestmod=hashlib.sha256,
-    )
-    return base64.urlsafe_b64encode(hashed.digest()).decode()

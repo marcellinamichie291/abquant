@@ -55,24 +55,26 @@ if __name__ == '__main__':
     # event_dispatcher.register(EventType.EVENT_CONTRACT, lambda event:  print(str('CONTRACT: ') + str(event.data))) # pass
 
     # ok need test
-    # event_dispatcher.register(EventType.EVENT_POSITION, lambda event: print(
-    #     str('POSITION: ') + str(event.data)))  # pass accessor, trade_listerer not done
+    event_dispatcher.register(EventType.EVENT_POSITION, lambda event: print(
+        str('POSITION: ') + str(event.data)))  # pass accessor, trade_listerer not done
 
 
     # event_dispatcher.register(EventType.EVENT_EXCEPTION, lambda event: print(
     #     str('EXCEPTION: ') + str(event.data)))
 
     # ok
-    # event_dispatcher.register(EventType.EVENT_ORDER, lambda event: print(
-    #     str('ORDER: ') + str(event.data)))
+    event_dispatcher.register(EventType.EVENT_ORDER, lambda event: print(
+        str('ORDER: ') + str(event.data)))
 
     # need test
-    # event_dispatcher.register(EventType.EVENT_TRADE, lambda event: print(
-    #     str('TRADE: ') + str(event.data)))
+    event_dispatcher.register(EventType.EVENT_TRADE, lambda event: print(
+        str('TRADE: ') + str(event.data)))
 
     # ok
-    # event_dispatcher.register(EventType.EVENT_TICK, lambda event: print(
-    #     str('TICK: ') + str(event.data)))
+    event_dispatcher.register(EventType.EVENT_TICK, lambda event: print(
+        f"TICK:{event.data.datetime}: ask1 {event.data.ask_volume_1}@{event.data.ask_price_1}, bid1 {event.data.bid_volume_1}@{event.data.bid_price_1}, last {event.data.trade_volume}@{event.data.trade_price} "))
+        # str('TICK: ') + str(event.data)))
+        # str('TICK: ') + str(event.data.datetime) +":"+ str(event.data.trade_price)))
 
     # ok
     # event_dispatcher.register(EventType.EVENT_DEPTH, lambda event: print(
@@ -106,9 +108,9 @@ if __name__ == '__main__':
     # for i in range(2):
     #     order_id = dydx_gateway.send_order(OrderRequest(symbol="BTC-USD", exchange=Exchange.DYDX,
     #                                 direction=Direction.LONG, type=OrderType.LIMIT, 
-    #                                 price=60000, volume=0.01, offset=Offset.OPEN))
+    #                                 price=60000, volume=0.001, offset=Offset.OPEN))
     #     print("@@@open_long",order_id)
-    #     dydx_gateway.cancel_order(CancelRequest(order_id, symbol="BTC-USD",exchange=Exchange.DYDX))
+        # dydx_gateway.cancel_order(CancelRequest(order_id, symbol="BTC-USD",exchange=Exchange.DYDX))
 
 
 
