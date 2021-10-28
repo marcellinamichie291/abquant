@@ -24,7 +24,6 @@ class Transmitter:
         self.username = setting.get("username", None)
         self.password = setting.get("password", None)
         self._pp_thread = None  # underlying ping/pong thread
-        # self.init_ws(username, password)
 
     def connect_ws(self):
         if self.client is not None:
@@ -37,15 +36,15 @@ class Transmitter:
             print("监控：初始化：用户名或密码不存在")
             return
         login_url = LOGIN_URL + "?userName=" + self.username + "&password=" + self.password
-        # access_token = None
-        access_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzY3MDU3MjgsImlkIjoxMCwidXNlck5hbWUiOiJ5YXFpYW5nIn0.TRZPoUiJqAwk6j68Sv_h4GVnKRkdoMTCddumSLCzVpc"
-        # try:
-        #     response = requests.request("GET", login_url, headers=headers, data=payload)
-        #     jn = json.loads(response.text)
-        #     access_token = jn.get("data").get("access_token")
-        #     print(access_token)
-        # except Exception:
-        #     return
+        access_token = None
+        # access_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzY3MDU3MjgsImlkIjoxMCwidXNlck5hbWUiOiJ5YXFpYW5nIn0.TRZPoUiJqAwk6j68Sv_h4GVnKRkdoMTCddumSLCzVpc"
+        try:
+            response = requests.request("GET", login_url, headers=headers, data=payload)
+            jn = json.loads(response.text)
+            access_token = jn.get("data").get("access_token")
+            print(access_token)
+        except Exception:
+            return
 
         websocket.enableTrace(False)
         ws = websocket.WebSocketApp(WS_URL + access_token, on_message=self.on_message, on_error=self.on_error,
@@ -68,11 +67,20 @@ class Transmitter:
         if self.client is None:
             print("Error: tx: no client to run ping pong thread")
             return
-        self.client.run_forever(ping_interval=30, ping_timeout=5)
+        self.client.run_forever(ping_interval=5, ping_timeout=3)
 
     def send(self, data):
         if self.client is None:
-            print("Error: tx: websocket client not found")
+            print("Error: tx: websocket client is none")
+            raise Exception("websocket client is none")
+        if isinstance(data, (int, float)):
+            data = str(data)
+        elif isinstance(data, (list, tuple, set)):
+            data = str(data)
+        elif isinstance(data, dict):
+            data = json.dumps(data)
+        else:
+            pass
         self.client.send(data)
 
     def on_message(self, ws, msg):
@@ -85,13 +93,14 @@ class Transmitter:
         self.client = ws
         print("tx: open")
 
-    def on_close(self, close_status_code, close_msg):
+    def on_close(self, ws, b, c):
         print("tx: close")
         self.client = None
         i = 1
+        time.sleep(3)
         while i <= MAX_CONNECT_RETRY:
-            time.sleep(i)
             self.client = self.connect_ws()
+            time.sleep(i * 2)
             if self.client is not None:
                 break
             i += 1

@@ -9,6 +9,7 @@ from .transmitter import Transmitter
 pong_count = 0
 MAX_PONG_COUNT = 5
 MAX_QUEUE_SIZE = 1000
+MAX_BUFFER_SIZE = 1000
 
 
 class Monitor(Thread):
@@ -44,7 +45,7 @@ class Monitor(Thread):
             print("Error: qu: queue is full")
             return
         self.queue.put_nowait(data)
-        print(f"qu: send: put to queue: {data}  {self.queue.qsize()}")
+        print(f"qu: send: put to queue: {data}  {self.queue.qsize()}\n")
 
     def consumer(self):
         self.queue.put(1.5)
@@ -60,22 +61,27 @@ class Monitor(Thread):
         if self.txmt is None or self.txmt.client is None:
             print("Error: tx: ws client is none.")
             return
+        cycles = 0
         while True:
             try:
+                self.send_buffer()
                 size = self.queue.qsize()
-                # print(f'qu: 当前队列有：{size} 个元素')
+                print(f'qu: 当前队列有：{size} 个元素')
                 data = self.queue.get(timeout=1)
                 print(f'qu: 拿出元素：{data}, 发送...')
                 # await self.txmt.client.send(str(data))
-                if isinstance(data, (int, float)):
-                    data = str(data)
-                elif isinstance(data, (list, tuple, set)):
-                    data = str(data)
-                elif isinstance(data, dict):
-                    data = json.dumps(data)
-                else:
-                    pass
-                self.txmt.client.send(data)
+                try:
+                    self.txmt.send(data)
+                except Exception as e:
+                    print(f'Error: tx: ws发送错误：{e}')
+                    self.push_buffer(data)
+                    cycles += 1
+                    if cycles > 10:
+                        self.txmt = Transmitter(self.setting)
+                        self.txmt.connect_ws()
+                        time.sleep(1)
+                        self.txmt.client.send("rrrrrrrrrrrrrrr")
+                    continue
                 size = self.queue.qsize()
                 print(f'qu: 然后队列有：{size} 个元素')
             except Empty:
@@ -85,6 +91,26 @@ class Monitor(Thread):
                 print('Error: qu: ', e)
                 continue
 
-    def push_info(self, info: Dict):
-        info_json = json.dumps(info)
-        self.send(info_json)
+    def push_buffer(self, data) -> int:
+        if len(self.buffer) < MAX_BUFFER_SIZE:
+            self.buffer.append(data)
+            return len(self.buffer)
+        else:
+            print("Error: qu: buffer is full")
+            return -1
+
+    def send_buffer(self):
+        blen = len(self.buffer)
+        print(f'qu: buffer size {blen}')
+        if len(self.buffer) > 0:
+            for buf in self.buffer:
+                try:
+                    self.txmt.send(buf)
+                except Exception as e:
+                    print(f'Error: tx: ws发送错误：{e}')
+                    return -2
+                print(f"as: send buffer: {buf}")
+            self.buffer.clear()
+            print(f'qu: buffer clear {blen}')
+            return blen
+        return 0
