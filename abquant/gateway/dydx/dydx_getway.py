@@ -4,6 +4,8 @@ import json
 import time
 from copy import copy
 from requests.exceptions import SSLError
+import uuid
+from threading import Lock
 
 from abquant.event.event import EventType
 from abquant.gateway.accessor import Request
@@ -230,7 +232,7 @@ class DydxWebsocketListener(WebsocketListener):
 
         orderbook = OrderBook(symbol, req.exchange, self.gateway)
         self.orderbooks[symbol] = orderbook
-
+        # 开启批量数据订阅，与web版一致
         req: dict = {
             "type": "subscribe",
             "channel": "v3_orderbook",
@@ -316,7 +318,6 @@ class DydxWebsocketListener(WebsocketListener):
             self.gateway.on_order(order)
 
         if packet["type"] == "subscribed":
-            # print("&&^&& linstener on_packet ", packet["contents"]["account"])
             self.gateway.posid = packet["contents"]["account"]["positionId"]
             self.gateway.id = packet["id"]
             self.gateway.init_query()
@@ -421,7 +422,6 @@ class OrderBook():
 
     def on_update(self, ddd: dict, dt) -> None:
         """盘口更新推送"""
-        # print("on_update",ddd)
         for d in ddd:
             offset: int = int(d["offset"])
             if offset < self.offset:
@@ -530,12 +530,17 @@ class DydxAccessor(RestfulAccessor):
     签名
     下单、撤单、查询交易信息
     """
+    ORDER_PREFIX = str(hex(uuid.getnode()))
+
     def __init__(self, gateway: Gateway):
         super(DydxAccessor,self).__init__(gateway)
         self.gateway: DydxGateway = gateway
         self.gateway.set_gateway_name(gateway.gateway_name)
         self.order_count: int = 0
         self.position_id = ""
+        self.connect_time = 0
+        self.order_count: int = 1_000_000
+        self.order_count_lock: Lock = Lock()
 
 
     def sign(self, request: Request) -> Request:
@@ -579,6 +584,10 @@ class DydxAccessor(RestfulAccessor):
         self.proxy_host = proxy_host
         self.server = server
         self.limitFee = limitFee
+
+        self.connect_time = (
+            int(datetime.now().strftime("%y%m%d%H%M%S")) * self.order_count
+        )
 
         if self.server == "REAL":
             self.init(REST_HOST, proxy_host, proxy_port)
@@ -626,10 +635,17 @@ class DydxAccessor(RestfulAccessor):
         orderid: str = prefix + suffix
         return orderid
 
+    def _new_order_id(self) -> int:
+        """"""
+        with self.order_count_lock:
+            self.order_count += 1
+            return self.order_count
+
     def send_order(self, req: OrderRequest) -> str:
         """委托下单"""
         # 生成本地委托号
-        orderid: str = self.new_orderid()
+        # orderid: str = self.new_orderid()
+        orderid = self.ORDER_PREFIX + str(self.connect_time + self._new_order_id())
 
         # 推送提交中事件
         order: OrderData = req.create_order_data(
@@ -806,7 +822,8 @@ class DydxAccessor(RestfulAccessor):
 
     def on_query_account(self, data: dict, request: Request) -> None:
         """资金查询回报"""
-        d: dict = data["accounts"][0]
+        # print("on_query_account",data)
+        d: dict = data["account"]
         self.position_id = d["positionId"]
         balance: float = float(d["equity"])
         available: float = float(d["freeCollateral"])

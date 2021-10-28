@@ -23,7 +23,7 @@ if __name__ == '__main__':
         "proxy_port": 0,
         "test_net": ["TESTNET", "REAL"][1],
         "limitFee": 0.001, # makerFeeRate: 0.00050 or takerFeeRate: takerFeeRate: 0.00100
-        "accountNumber": 0
+        "accountNumber": "0"
     }
 
     # dydx_setting = {
@@ -105,12 +105,12 @@ if __name__ == '__main__':
     dydx_gateway.start()
 
     # 下单撤单
-    # for i in range(2):
-    #     order_id = dydx_gateway.send_order(OrderRequest(symbol="BTC-USD", exchange=Exchange.DYDX,
-    #                                 direction=Direction.LONG, type=OrderType.LIMIT, 
-    #                                 price=60000, volume=0.001, offset=Offset.OPEN))
-    #     print("@@@open_long",order_id)
-        # dydx_gateway.cancel_order(CancelRequest(order_id, symbol="BTC-USD",exchange=Exchange.DYDX))
+    for i in range(2):
+        order_id = dydx_gateway.send_order(OrderRequest(symbol="BTC-USD", exchange=Exchange.DYDX,
+                                    direction=Direction.LONG, type=OrderType.LIMIT, 
+                                    price=60000, volume=0.001, offset=Offset.OPEN))
+        print("@@@open_long",order_id)
+        dydx_gateway.cancel_order(CancelRequest(order_id, symbol="BTC-USD",exchange=Exchange.DYDX))
 
 
 

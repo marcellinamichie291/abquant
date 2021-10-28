@@ -12,7 +12,8 @@ from abquant.trader.utility import generate_ab_symbol, round_up
 from abquant.event.event import EventType
 from abquant.strategytrading import StrategyTemplate, LiveStrategyRunner
 from abquant.event import EventDispatcher, Event
-from abquant.gateway import BinanceUBCGateway, BinanceBBCGateway
+# from abquant.gateway import BinanceUBCGateway, BinanceBBCGateway
+from abquant.gateway import DydxGateway, dydx
 
 from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
 from abquant.trader.object import SubscribeMode
@@ -119,52 +120,54 @@ class TheStrategy(StrategyTemplate):
 
         # 更新window_bar生成器， 方便生成 n分钟k线。
         self.bar_accumulator.update_bars(bars)
+        print("*************on_bar*************",bars)
+        # print("----------self.bgs----------",self.bgs)
 
-        if self.trade_flag:
-            self.write_log("BARS, timestamp:{}, thread: {}, last_time: {}".format(
-                datetime.now(), threading.get_native_id(), self.last_tick_time))
+        # if self.trade_flag:
+        #     self.write_log("BARS, timestamp:{}, thread: {}, last_time: {}".format(
+        #         datetime.now(), threading.get_native_id(), self.last_tick_time))
 
-            self.write_log("activate orders: {}".format(self.active_orderids))
-            for ab_orderid in self.active_orderids:
-                self.cancel_order(ab_orderid)
+        #     self.write_log("activate orders: {}".format(self.active_orderids))
+        #     for ab_orderid in self.active_orderids:
+        #         self.cancel_order(ab_orderid)
 
-            # 平仓  self.pos存储的是该策略实例维护的仓位。
-            for pos_ab_symbol, pos_volume in self.pos.items():
-                if pos_volume == 0:
-                    continue
-                elif pos_volume > 0:
-                    # 平多
-                    self.sell(pos_ab_symbol, bars[pos_ab_symbol].close_price, abs(
-                        pos_volume), OrderType.MARKET)
-                else:
-                    # 平空
-                    self.cover(pos_ab_symbol, bars[pos_ab_symbol].close_price, abs(
-                        pos_volume), OrderType.MARKET)
+        #     # 平仓  self.pos存储的是该策略实例维护的仓位。
+        #     for pos_ab_symbol, pos_volume in self.pos.items():
+        #         if pos_volume == 0:
+        #             continue
+        #         elif pos_volume > 0:
+        #             # 平多
+        #             self.sell(pos_ab_symbol, bars[pos_ab_symbol].close_price, abs(
+        #                 pos_volume), OrderType.MARKET)
+        #         else:
+        #             # 平空
+        #             self.cover(pos_ab_symbol, bars[pos_ab_symbol].close_price, abs(
+        #                 pos_volume), OrderType.MARKET)
 
             # 开新仓
-            u_per_trade = 10
-            trade_instrument = self.ab_symbols[0]
-            trade_instrument_min_volumn = 0.001
-            trade_price = bars[trade_instrument].close_price * (1 - 0.01)
-            # 不用太担心，abquant会在发送订单前，自动检查 金融产品的 price_tick, 因此，如果你不知道该产品的price_tick，或下单的仓位较大，不用担心，下一行代码 可以不使用round_up.该操作是为高频小仓位的策略，精确控制仓位存在的。
-            trade_volume = round_up(
-                u_per_trade / trade_price, target=trade_instrument_min_volumn)
-            self.buy(self.ab_symbols[0], price=trade_price,
-                     volume=trade_volume, order_type=OrderType.LIMIT)
-            self.write_log(
-                f"buy {self.ab_symbols[0]}, in price {trade_price}, with vol {trade_volume}")
+            # u_per_trade = 10
+            # trade_instrument = self.ab_symbols[0]
+            # trade_instrument_min_volumn = 0.001
+            # trade_price = bars[trade_instrument].close_price * (1 - 0.01)
+            # # 不用太担心，abquant会在发送订单前，自动检查 金融产品的 price_tick, 因此，如果你不知道该产品的price_tick，或下单的仓位较大，不用担心，下一行代码 可以不使用round_up.该操作是为高频小仓位的策略，精确控制仓位存在的。
+            # trade_volume = round_up(
+            #     u_per_trade / trade_price, target=trade_instrument_min_volumn)
+            # self.buy(self.ab_symbols[0], price=trade_price,
+            #          volume=trade_volume, order_type=OrderType.LIMIT)
+            # self.write_log(
+            #     f"buy {self.ab_symbols[0]}, in price {trade_price}, with vol {trade_volume}")
 
-            if len(self.ab_symbols) >= 2:
-                u_per_trade = 10
-                trade_instrument = self.ab_symbols[1]
-                trade_instrument_min_volumn = 0.001
-                trade_price = bars[trade_instrument].close_price * (1 + 0.01)
-                # 不round， 则最小成交单位交由abquant处理。
-                trade_volume = u_per_trade / trade_price
-                self.short(self.ab_symbols[1], price=trade_price,
-                           volume=trade_volume, order_type=OrderType.LIMIT)
-            self.write_log(
-                f"short {self.ab_symbols[1]}, in price {trade_price}, with vol {trade_volume}")
+            # if len(self.ab_symbols) >= 2:
+            #     u_per_trade = 10
+            #     trade_instrument = self.ab_symbols[1]
+            #     trade_instrument_min_volumn = 0.001
+            #     trade_price = bars[trade_instrument].close_price * (1 + 0.01)
+            #     # 不round， 则最小成交单位交由abquant处理。
+            #     trade_volume = u_per_trade / trade_price
+            #     self.short(self.ab_symbols[1], price=trade_price,
+            #                volume=trade_volume, order_type=OrderType.LIMIT)
+            # self.write_log(
+            #     f"short {self.ab_symbols[1]}, in price {trade_price}, with vol {trade_volume}")
         # self.write_log(bars)
         # pprint({k:v for k, v in bars.items() if v is not None})
         # print("\n\n\n\n")
@@ -206,18 +209,18 @@ class TheStrategy(StrategyTemplate):
 
 
 def main():
-    args = parse()
-    binance_setting = {
-        "key": args.key,
-        "secret": args.secret,
-        "session_number": 3,
-        # "127.0.0.1" str类型
-        "proxy_host": args.proxy_host if args.proxy_host else "",
-        # 1087 int类型
-        "proxy_port": args.proxy_port if args.proxy_port else 0,
+    dydx_setting = {
+        "key": "0ec5b370-74d1-be64-a578-b7bb085ac937",
+        "secret": "NLrG3Kuyspe0jt45gENM6UmWGLdSrwj88P-5UPrz",
+        "passphrase": "rOkw33sCBiTQhE5PX_GR",
+        "stark_private_key": "01a65d7c5fccd96786b0a42ba38df41f58383fcdace4be8581487b61739cc559",
+        "walletAddress":"0xf02f589bBaB91a8609D896aBeC1f8e4E5D1165c3",
+        "proxy_host": "",
+        "proxy_port": 0,
         "test_net": ["TESTNET", "REAL"][1],
+        "limitFee": 0.001, # makerFeeRate: 0.00050 or takerFeeRate: takerFeeRate: 0.00100
+        "accountNumber": "0"
     }
-
     event_dispatcher = EventDispatcher(interval=1)
 
     # 注册一下 log 事件的回调函数， 该函数决定了如何打log。
@@ -228,46 +231,31 @@ def main():
             event.data.gateway_name,
             event.data.msg)
     ))
-    event_dispatcher.register(EventType.EVENT_ACCOUNT, lambda event: print(
-        str('ACCOUNT: ') + str(event.data)))  # pass accessor,  trade_listerer not done
+    # event_dispatcher.register(EventType.EVENT_ACCOUNT, lambda event: print(
+    #     str('ACCOUNT: ') + str(event.data)))  # pass accessor,  trade_listerer not done
     # event_dispatcher.register(EventType.EVENT_CONTRACT, lambda event:  print(str('CONTRACT: ') + str(event.data))) # pass
     event_dispatcher.register(EventType.EVENT_POSITION, lambda event: print(
         str('POSITION: ') + str(event.data)))
 
-    binance_ubc_gateway = BinanceUBCGateway(event_dispatcher)
-    binance_ubc_gateway.connect(binance_setting)
-    binance_bbc_gateway = BinanceBBCGateway(event_dispatcher)
-    binance_bbc_gateway.connect(binance_setting)
+    dydx_gateway = DydxGateway(event_dispatcher)
+    dydx_gateway.connect(dydx_setting)
 
     # 等待连接成功。
     time.sleep(3)
-    subscribe_mode = SubscribeMode(
-        # 订阅 深度数据 depth. 除非重建orderbook，否则不开也罢。
-        depth=False,
-        # 订阅最优五档tick
-        tick_5=False,
-        # 订阅best bid/ask tick
-        best_tick=False,
-        # 订阅委托单（通常不支持） entrust
-        entrust=False,
-        # 订阅交易数据 transaction, 自动生成 tick.
-        transaction=True
-    )
+
 
     # 有默认值，默认全订阅, 可以不调用下面两行。
-    binance_ubc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
-    binance_bbc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
 
     strategy_runner = LiveStrategyRunner(event_dispatcher)
-    from abquant.gateway.binancec import symbol_contract_map
-    for k, v in symbol_contract_map.items():
-        print(v)
-    ab_symbols = [generate_ab_symbol(
-        symbol, exchange=Exchange.BINANCE) for symbol in symbol_contract_map.keys()]
-    # this is subscribe all
-    time.sleep(5)
-    print("{} instrument symbol strategy0 subscribed: ".format(
-        len(ab_symbols)), ab_symbols)
+    # from abquant.gateway.dydx import symbol_contract_map
+    # for k, v in symbol_contract_map.items():
+    #     print(v)
+    # ab_symbols = [generate_ab_symbol(
+    #     symbol, exchange=Exchange.DYDX) for symbol in symbol_contract_map.keys()]
+    # # this is subscribe all
+    # time.sleep(5)
+    # print("{} instrument symbol strategy0 subscribed: ".format(
+    #     len(ab_symbols)), ab_symbols)
     # strategy 订阅所有binance合约 的金融产品行情数据。
     # strategy_runner.add_strategy(strategy_class=TheStrategy,
     #                              strategy_name='the_strategy0',
@@ -276,45 +264,45 @@ def main():
     #                              )
     strategy_runner.add_strategy(strategy_class=TheStrategy,
                                  strategy_name='the_strategy1',
-                                 ab_symbols=["BTCUSDT.BINANCE",
-                                             "ETHUSDT.BINANCE"],
+                                 ab_symbols=["BTC-USD.DYDX",
+                                             "ETH-USD.DYDX"],
                                  setting={"param1": 1, "param2": 2}
                                  )
-    strategy_runner.add_strategy(strategy_class=TheStrategy,
-                                 strategy_name='the_strategy2',
-                                 ab_symbols=["BTCUSD_PERP.BINANCE",
-                                             "ETHUSD_PERP.BINANCE"],
-                                 setting={"param1": 3, "param2": 4}
-                                 )
-    strategy_runner.add_strategy(strategy_class=TheStrategy,
-                                 strategy_name='the_strategy3',
-                                 ab_symbols=["XRPUSDT.BINANCE",
-                                             "ICPUSDT.BINANCE"],
-                                 # uncommnet for test trade operation.
-                                 setting={"param1": 3, "param2": 4,
-                                          "trade_flag": True}
-                                 )
+    # strategy_runner.add_strategy(strategy_class=TheStrategy,
+    #                              strategy_name='the_strategy2',
+    #                              ab_symbols=["BTCUSD_PERP.BINANCE",
+    #                                          "ETHUSD_PERP.BINANCE"],
+    #                              setting={"param1": 3, "param2": 4}
+    #                              )
+    # strategy_runner.add_strategy(strategy_class=TheStrategy,
+    #                              strategy_name='the_strategy3',
+    #                              ab_symbols=["XRPUSDT.BINANCE",
+    #                                          "ICPUSDT.BINANCE"],
+    #                              # uncommnet for test trade operation.
+    #                              setting={"param1": 3, "param2": 4,
+    #                                       "trade_flag": True}
+                                #  )
     strategy_runner.init_all_strategies()
 
     # 策略 start之前 sleepy一段时间， 新的策略实例有可能订阅新的产品行情，这使得abquant需要做一次与交易所的重连操作。
     time.sleep(5)
     strategy_runner.start_all_strategies()
 
-    import random
-    while True:
-        # renew strategy1 setting.
-        time.sleep(5)
-        # edit_strategy 方法用于修改策略的 parameter。 random在这里就是一个示例。
-        the_strategy1_setting = {"param1": 2,
-                                 "param2": 2 * random.uniform(0, 1)}
-        strategy_runner.edit_strategy(
-            strategy_name='the_strategy1', setting=the_strategy1_setting)
-        # renew strategy2 setting.
-        the_strategy2_setting = {"param1": 4,
-                                 "param2": 4 * random.uniform(0, 1),
-                                 }
-        strategy_runner.edit_strategy(
-            strategy_name='the_strategy2', setting=the_strategy2_setting)
+    # import random
+    # while True:
+    #     # renew strategy1 setting.
+    #     time.sleep(5)
+    #     # edit_strategy 方法用于修改策略的 parameter。 random在这里就是一个示例。
+    #     the_strategy1_setting = {"param1": 2,
+    #                              "param2": 2 * random.uniform(0, 1)}
+    #     strategy_runner.edit_strategy(
+    #         strategy_name='the_strategy1', setting=the_strategy1_setting)
+    #     # renew strategy2 setting.
+    #     the_strategy2_setting = {"param1": 4,
+    #                              "param2": 4 * random.uniform(0, 1),
+    #                              }
+    #     strategy_runner.edit_strategy(
+    #         strategy_name='the_strategy2', setting=the_strategy2_setting)
 
     # print([c.func.id for c in ast.walk(ast.parse(inspect.getsource(TheStrategy))) if isinstance(c, ast.Call)])
 if __name__ == '__main__':
