@@ -5,6 +5,7 @@ import logging
 from threading import Lock
 from decimal import Decimal
 import math
+import inspect
 
 from abquant.trader.msg import OrderData
 
@@ -93,6 +94,18 @@ def round_down(value: float, target: float) -> float:
     rounded = float(int(math.floor(value / target)) * target)
     return rounded
 
+
+def object_as_dict(obj):
+    d = {}
+    for attr in dir(obj):
+        if not attr.startswith('__'):
+            try:
+                value = getattr(obj, attr)
+                if not inspect.ismethod(value):
+                    d[attr] = value
+            except UnicodeDecodeError:
+                continue
+    return d
 
 class OrderGrouper:
     def __init__(self):
