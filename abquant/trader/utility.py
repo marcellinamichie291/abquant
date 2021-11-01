@@ -1,4 +1,6 @@
 from collections import defaultdict
+from datetime import datetime
+from enum import Enum
 import re
 from typing import Iterable, List, Tuple, Dict
 import logging
@@ -101,6 +103,12 @@ def object_as_dict(obj):
         if not attr.startswith('__'):
             try:
                 value = getattr(obj, attr)
+                if isinstance(value, Enum):
+                    d[attr] = value.name
+                    continue
+                if isinstance(value, datetime):
+                    d[attr] = value.timestamp()
+                    continue
                 if not inspect.ismethod(value):
                     d[attr] = value
             except UnicodeDecodeError:
