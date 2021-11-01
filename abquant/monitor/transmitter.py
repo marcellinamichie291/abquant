@@ -6,7 +6,8 @@ import requests
 
 import websocket
 
-# from . import LOGIN_URL, WS_URL
+from .util import MLogger
+
 LOGIN_URL = "https://dct-test001.wecash.net/dct-business-api/login"
 WS_URL = "wss://dct-test001-internal.wecash.net/dct-service-abquant/ws/business?access_token="
 MAX_CONNECT_RETRY = 5
@@ -33,16 +34,15 @@ class Transmitter:
             'Content-Type': 'application/json; charset=UTF-8'
         }
         if self.username is None or self.password is None:
-            print("监控：初始化：用户名或密码不存在")
+            MLogger.log("监控：初始化：用户名或密码不存在")
             return
         login_url = LOGIN_URL + "?userName=" + self.username + "&password=" + self.password
         access_token = None
-        # access_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzY3MDU3MjgsImlkIjoxMCwidXNlck5hbWUiOiJ5YXFpYW5nIn0.TRZPoUiJqAwk6j68Sv_h4GVnKRkdoMTCddumSLCzVpc"
         try:
             response = requests.request("GET", login_url, headers=headers, data=payload)
             jn = json.loads(response.text)
             access_token = jn.get("data").get("access_token")
-            print(access_token)
+            # MLogger.log(access_token)
         except Exception:
             return
 
@@ -54,7 +54,7 @@ class Transmitter:
         # ws.run_forever(ping_interval=30, ping_timeout=5)
         self._pp_thread = Thread(target=self.run_forever, args=(ws,))
         self._pp_thread.start()
-        print("tx: start ping/pong thread")
+        MLogger.log("tx: start ping/pong thread")
         time.sleep(1)
 
         return ws
@@ -63,15 +63,15 @@ class Transmitter:
         pass
 
     def run_forever(self, ws):
-        print("tx: run forever\n")
+        MLogger.log("tx: run forever\n")
         if self.client is None:
-            print("Error: tx: no client to run ping pong thread")
+            MLogger.log("Error: tx: no client to run ping pong thread")
             return
         self.client.run_forever(ping_interval=5, ping_timeout=3)
 
     def send(self, data):
         if self.client is None:
-            print("Error: tx: websocket client is none")
+            MLogger.log("Error: tx: websocket client is none")
             raise Exception("websocket client is none")
         if isinstance(data, (int, float)):
             data = str(data)
@@ -84,17 +84,17 @@ class Transmitter:
         self.client.send(data)
 
     def on_message(self, ws, msg):
-        print(msg)
+        MLogger.log(msg)
 
     def on_error(self, ws, error):
-        print(error)
+        MLogger.error(error)
 
     def on_open(self, ws):
         self.client = ws
-        print("tx: open")
+        MLogger.info("tx: open")
 
     def on_close(self, ws, b, c):
-        print("tx: close")
+        MLogger.info("tx: close")
         self.client = None
         i = 1
         time.sleep(3)
@@ -104,14 +104,15 @@ class Transmitter:
             if self.client is not None:
                 break
             i += 1
-        print(f"tx: Reconnect after {i} retries")
+        MLogger.info(f"tx: Reconnect after {i} retries")
 
     def on_ping(self, pingMsg, ex):
         # ws._send_ping()
-        print("tx: ping")
+        MLogger.log("tx: ping")
 
     def on_pong(self, pongMsg, ex):
-        print("tx: pong")
+        # MLogger.log("tx: pong")
+        pass
 
 
 if __name__ == '__main__':
