@@ -129,3 +129,7 @@ dmypy.json
 # MODIFIED SECITON
 #PyCharm project
 .idea/
+
+.DS_store
+*/.DS_store
+
