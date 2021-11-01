@@ -88,7 +88,7 @@ class Monitor(Thread):
                 # MLogger.log('empty queue')
                 continue
             except Exception as e:
-                MLogger.error('Error: qu: ', e)
+                MLogger.error(f'Error: qu: {e}')
                 continue
 
     def push_buffer(self, data) -> int:
