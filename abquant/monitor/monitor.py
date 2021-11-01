@@ -41,11 +41,14 @@ class Monitor(Thread):
             MLogger.log(f"Error: {e}")
 
     def send(self, data: json):
+        # if self.txmt is None or self.txmt.client is None:
+        #     MLogger.error("Error: websocket client is None.")
+        #     return
         if self.queue.full():
             MLogger.error("Error: qu: queue is full")
             return
         self.queue.put_nowait(data)
-        MLogger.log(f"监控: 放入队列: {data}  {self.queue.qsize()}\n")
+        MLogger.log(f"监控: 放入队列: {data}, 目前长度: {self.queue.qsize()}")
 
     def consumer(self):
         # self.queue.put(1.5)
@@ -61,6 +64,7 @@ class Monitor(Thread):
         if self.txmt is None or self.txmt.client is None:
             MLogger.error("Error: tx: ws client is none.")
             return
+        MLogger.info("监控：consumer启动")
         cycles = 0
         while True:
             try:

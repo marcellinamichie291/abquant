@@ -63,7 +63,7 @@ class Transmitter:
         pass
 
     def run_forever(self, ws):
-        MLogger.log("tx: run forever\n")
+        MLogger.log("tx: run forever")
         if self.client is None:
             MLogger.log("Error: tx: no client to run ping pong thread")
             return
