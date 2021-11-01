@@ -38,7 +38,7 @@ class Monitor(Thread):
             # asyncio.run(self.consumer())
             self.consumer()
         except Exception as e:
-            MLogger.log("Error: {}", e)
+            MLogger.log(f"Error: {e}")
 
     def send(self, data: json):
         if self.queue.full():
