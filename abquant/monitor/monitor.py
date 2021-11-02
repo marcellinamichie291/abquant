@@ -6,6 +6,7 @@ from threading import Thread
 from queue import Empty, Queue
 from typing import Dict, List, Tuple
 from copy import copy
+import uuid
 
 from abquant.trader.msg import OrderData, TradeData
 from abquant.trader.object import LogData
@@ -56,6 +57,7 @@ class Monitor(Thread):
 
     def default_info(self, run_id: str, event_type: str):
         info = {"event_time": datetime.now().timestamp(),
+                "id": str(uuid.uuid4()),
                 "run_id": run_id,
                 "strategy_name": ''.join(run_id.split('-')[:-1]),
                 "event_type": event_type,
@@ -108,10 +110,11 @@ class Monitor(Thread):
             current_info['payload']['value'] = value
             self.send(current_info)
 
-    def send_log(self, run_id, log: LogData):
+    def send_log(self, run_id, log: LogData, log_type: str='custom'):
         info = self.default_info(run_id, "log")
         payload = object_as_dict(log)
         payload['level'] = logging.getLevelName(payload['level'])
+        payload['type'] = log_type
         info['payload'] = payload
         self.send(info)
 

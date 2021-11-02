@@ -3,6 +3,7 @@
 from abc import abstractmethod
 from logging import INFO
 from typing import Iterable
+from abquant.monitor.monitor import Monitor
 from abquant.trader.common import Direction, Interval, Offset, OrderType
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -11,6 +12,13 @@ if TYPE_CHECKING:
 LOG_LEVEL = int
 
 class StrategyRunner:
+
+    def __init__(self):
+        self.monitor = None
+
+    def set_monitor(self, monitor: Monitor):
+        self.monitor = monitor
+
 
     @abstractmethod
     def add_strategy(
