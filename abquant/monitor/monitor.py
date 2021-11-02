@@ -62,7 +62,7 @@ class Monitor(Thread):
         if self.txmt is None or self.txmt.client is None:
             logger.error("Error: tx: ws client is none.")
             return
-        logger.info("监控：consumer启动")
+        logger.info("监控：启动")
         cycles = 0
         while True:
             try:

@@ -311,14 +311,12 @@ def main():
 
     # Monitor.init_monitor(common_setting)
     monitor = Monitor(common_setting)
-    print("Monitor init")
     monitor.start()
     print("Monitor start")
 
     import random
     while True:
         # renew strategy1 setting.
-        print('cycling ..')
         time.sleep(5)
         # edit_strategy 方法用于修改策略的 parameter。 random在这里就是一个示例。
         the_strategy1_setting = {"param1": 2,

@@ -23,7 +23,6 @@ def main():
     }
     monitor = Monitor(common_setting)
     monitor.start()
-    print('start')
 
     i = 0
     while True:

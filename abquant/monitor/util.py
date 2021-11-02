@@ -1,15 +1,14 @@
 
-from logging import ERROR, WARNING, INFO, DEBUG
 import logging
-import logging.handlers
 
 from logging.handlers import RotatingFileHandler
 
-LOG_LEVEL = DEBUG
+LOG_LEVEL = logging.DEBUG
+FORMAT = "%(asctime)s %(levelname)s %(name)s: %(message)s"
 
 
 def get_formatter():
-    return logging.Formatter("%(asctime)s %(levelname)s  %(name)s(%(filename)s:%(lineno)d)  %(message)s")
+    return logging.Formatter(FORMAT)
 
 
 def get_handler(htype):
@@ -24,7 +23,7 @@ def get_handler(htype):
     return handler
 
 
-logging.basicConfig()
+logging.basicConfig(format=FORMAT)
 logger = logging.getLogger('abquant')
 logger.setLevel(LOG_LEVEL)
 # logger.addHandler(get_handler('stdout'))
