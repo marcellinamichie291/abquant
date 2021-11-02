@@ -34,15 +34,17 @@ def main():
 
     while True:
         time.sleep(5)
-        order = OrderData('binancec', 'BTCUSDT', Exchange.BINANCE, '123123123213', OrderType.LIMIT, Direction.LONG, Offset.CLOSE, 100, 100, 1, Status.ALLTRADED, datetime.now())
-        monitor.send_order("strategy-123123", order)
-        trade = TradeData('binancec', 'BTCUSDT', Exchange.BINANCE, 'asdfasdf', 'asdfsdf2322', Direction.LONG, Offset.OPEN, 112, 222, datetime.now())
-        monitor.send_trade('strategy-123123', trade)
+        # order = OrderData('binancec', 'BTCUSDT', Exchange.BINANCE, '123123123213', OrderType.LIMIT, Direction.LONG, Offset.CLOSE, 100, 100, 1, Status.ALLTRADED, datetime.now())
+        # monitor.send_order("strategy-123123", order)
+        # trade = TradeData('binancec', 'BTCUSDT', Exchange.BINANCE, 'asdfasdf', 'asdfsdf2322', Direction.LONG, Offset.OPEN, 112, 222, datetime.now())
+        # monitor.send_trade('strategy-123123', trade)
 
-        monitor.send_position('strategy-123123', ab_symbol="BTCUSDT.BINANCE", pos=1.1)
-        monitor.send_parameter('strategy-123123', {'a': 1, 'b': 2})
-        monitor.send_variable('strategy-123123', {'a': 1, 'b': [1,1,1]})
-        monitor.send_log('strategy-123123', LogData('binancec', 'ahahaahahah'))
+        # monitor.send_position('strategy-123123', ab_symbol="BTCUSDT.BINANCE", pos=1.1)
+        # monitor.send_parameter('strategy-123123', {'a': 1, 'b': 2})
+        # monitor.send_variable('strategy-123123', {'a': 1, 'b': [1,1,1]})
+        # monitor.send_log('strategy-123123', LogData('binancec', 'ahahaahahah'))
+
+        monitor.send_status('strategy-123123', 'heartbeat', ['btcusdt.BINANCE', 'sadfdsf.bitmex'])
 
 
 if __name__ == '__main__':

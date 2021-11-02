@@ -1,8 +1,15 @@
+from datetime import datetime
 import json
+import logging
 import time
 from threading import Thread
 from queue import Empty, Queue
+from typing import Dict, List, Tuple
+from copy import copy
 
+from abquant.trader.msg import OrderData, TradeData
+from abquant.trader.object import LogData
+from abquant.trader.utility import extract_ab_symbol, object_as_dict
 from .transmitter import Transmitter
 from .util import MLogger
 
@@ -38,7 +45,7 @@ class Monitor(Thread):
             # asyncio.run(self.consumer())
             self.consumer()
         except Exception as e:
-            MLogger.log("Error: {}", e)
+            MLogger.log("Error: {}".format(e))
 
     def send(self, data: json):
         if self.queue.full():
@@ -46,6 +53,76 @@ class Monitor(Thread):
             return
         self.queue.put_nowait(data)
         MLogger.log(f"监控: 放入队列: {data}  {self.queue.qsize()}\n")
+
+    def default_info(self, run_id: str, event_type: str):
+        info = {"event_time": datetime.now().timestamp(),
+                "run_id": run_id,
+                "strategy_name": ''.join(run_id.split('-')[:-1]),
+                "event_type": event_type,
+                "payload": None}
+        return info
+
+    def send_order(self, run_id, order: OrderData):
+        info = self.default_info(run_id, "order")
+        payload = object_as_dict(order)
+        info['payload'] = payload
+        self.send(info)
+
+    def send_trade(self, run_id, trade: TradeData):
+        info = self.default_info(run_id, "order_trade")
+        payload = object_as_dict(trade)
+        info['payload'] = payload
+        self.send(info)
+
+    def send_position(self, run_id, ab_symbol: str, pos: float):
+        info = self.default_info(run_id, "position")
+        symbol, exchange = extract_ab_symbol(ab_symbol)
+        payload = {"symbol": symbol,
+                   "exchange": exchange.value,
+                   "ab_symbol": ab_symbol,
+                   "position": pos}
+        info['payload'] = payload
+        self.send(info)
+
+    def send_parameter(self, run_id, parameters: Dict):
+        info = self.default_info(run_id, "parameter")
+        payload = {"type": "parameter",
+                   "name": None,
+                   "value": None}
+        info['payload'] = payload
+        for name, value in parameters.items():
+            current_info = copy(info)
+            current_info['payload']['name'] = name
+            current_info['payload']['value'] = value
+            self.send(current_info)
+
+    def send_variable(self, run_id, variables: Dict):
+        info = self.default_info(run_id, "parameter")
+        payload = {"type": "variable",
+                   "name": None,
+                   "value": None}
+        info['payload'] = payload
+        for name, value in variables.items():
+            current_info = copy(info)
+            current_info['payload']['name'] = name
+            current_info['payload']['value'] = value
+            self.send(current_info)
+
+    def send_log(self, run_id, log: LogData):
+        info = self.default_info(run_id, "log")
+        payload = object_as_dict(log)
+        payload['level'] = logging.getLevelName(payload['level'])
+        info['payload'] = payload
+        self.send(info)
+
+    def send_status(self, run_id, status_type: str, ab_symbols: List[str]):
+        info = self.default_info(run_id, "status_report")
+        payload = {"type": status_type,
+                   "message": "",
+                   "account_name": self.setting.get("username", None),
+                   "ab_symbols": ab_symbols}
+        info['payload'] = payload
+        self.send(info)
 
     def consumer(self):
         # self.queue.put(1.5)
