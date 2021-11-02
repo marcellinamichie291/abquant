@@ -49,6 +49,11 @@ class OrderType(Enum):
     LIMIT = "限价"
     MARKET = "市价"
     STOP = "STOP"
+    FAK = "FAK"
+    FOK = "FOK"
+    STOP_LIMIT = "止损"
+    TRAILING_STOP = "追踪止损"
+    TAKE_PROFIT = "止盈"
 
 
 class OptionType(Enum):

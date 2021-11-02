@@ -60,14 +60,14 @@ class TheStrategy(StrategyTemplate):
 
     def __init__(
         self,
-        strategy_engine: LiveStrategyRunner,
+        strategy_runner: LiveStrategyRunner,
         strategy_name: str,
         ab_symbols: List[str],
         setting: dict
     ):
         """"""
 
-        super().__init__(strategy_engine, strategy_name, ab_symbols, setting)
+        super().__init__(strategy_runner, strategy_name, ab_symbols, setting)
         self.bgs: Dict[str, BarGenerator] = {}
         self.bar_accumulator: BarAccumulater = None
         self.last_tick_time = None
@@ -95,6 +95,8 @@ class TheStrategy(StrategyTemplate):
 
     def on_tick(self, tick: TickData):
         # 以下的代码是根据tick数据，生成 bars数据的代码。如果策略是分钟级，则不要做任何修改。
+        # print(f"------tick----------{tick.ask_volume_1}@{tick.ask_price_1},{tick.bid_volume_1}@{tick.bid_price_1},last {tick.trade_volume}@{tick.trade_price}")
+
         if (
             self.last_tick_time and
             tick.datetime > self.last_tick_time and
@@ -231,8 +233,8 @@ def main():
             event.data.gateway_name,
             event.data.msg)
     ))
-    # event_dispatcher.register(EventType.EVENT_ACCOUNT, lambda event: print(
-    #     str('ACCOUNT: ') + str(event.data)))  # pass accessor,  trade_listerer not done
+    event_dispatcher.register(EventType.EVENT_ACCOUNT, lambda event: print(
+        str('ACCOUNT: ') + str(event.data)))  # pass accessor,  trade_listerer not done
     # event_dispatcher.register(EventType.EVENT_CONTRACT, lambda event:  print(str('CONTRACT: ') + str(event.data))) # pass
     event_dispatcher.register(EventType.EVENT_POSITION, lambda event: print(
         str('POSITION: ') + str(event.data)))
@@ -264,8 +266,7 @@ def main():
     #                              )
     strategy_runner.add_strategy(strategy_class=TheStrategy,
                                  strategy_name='the_strategy1',
-                                 ab_symbols=["BTC-USD.DYDX",
-                                             "ETH-USD.DYDX"],
+                                 ab_symbols=["BTC-USD.DYDX"],
                                  setting={"param1": 1, "param2": 2}
                                  )
     # strategy_runner.add_strategy(strategy_class=TheStrategy,

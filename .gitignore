@@ -131,3 +131,11 @@ dmypy.json
 .idea/
 abquant/.DS_Store
 .DS_Store
+long_short_strategy.py
+connect_dydx.py
+basis.py
+run_strategy.py
+binance_test.py
+basis.json
+run_strategy.py
+.DS_Store

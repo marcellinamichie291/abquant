@@ -155,7 +155,7 @@ class DydxGateway(Gateway):
     def process_timer_event(self, event: Event) -> None:
         """定时事件处理,账户信息，订单信息回报用定时任务来处理"""
         self.count += 1
-        if self.count < 2:
+        if self.count < 10:
             return
         self.count = 0
         self.query_account()
@@ -520,7 +520,8 @@ class OrderBook():
         tick.best_bid_volume = tick.bid_volume_1
         tick.datetime = dt
         tick.localtime = datetime.now()
-        self.gateway.on_tick(copy(tick))
+        # 盘口更新时，不推送tick
+        # self.gateway.on_tick(copy(tick))
 
 
 
@@ -596,6 +597,7 @@ class DydxAccessor(RestfulAccessor):
 
         self.start()
         self.query_contract()
+        self.query_account()
 
         self.gateway.write_log("REST API启动成功")
 
@@ -823,7 +825,8 @@ class DydxAccessor(RestfulAccessor):
     def on_query_account(self, data: dict, request: Request) -> None:
         """资金查询回报"""
         # print("on_query_account",data)
-        d: dict = data["account"]
+        # dydx 有时候返回accounts 有时候返回account
+        d: dict = data["accounts"][0] if "accounts" in data else data["account"]
         self.position_id = d["positionId"]
         balance: float = float(d["equity"])
         available: float = float(d["freeCollateral"])
