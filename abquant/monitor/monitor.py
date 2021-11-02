@@ -4,10 +4,8 @@ from threading import Thread
 from queue import Empty, Queue
 
 from .transmitter import Transmitter
-from .util import MLogger
+from .util import logger
 
-pong_count = 0
-MAX_PONG_COUNT = 5
 MAX_QUEUE_SIZE = 1000
 MAX_BUFFER_SIZE = 1000
 
@@ -26,7 +24,7 @@ class Monitor(Thread):
 
     def run(self):
         if self.setting is None:
-            MLogger.log("Error: no setting, exit")
+            logger.debug("Error: no setting, exit")
             return
         try:
             if self.txmt is None:
@@ -34,21 +32,21 @@ class Monitor(Thread):
                 self.txmt.connect_ws()
                 time.sleep(1)
                 self.txmt.client.send("test: websocket start")
-            MLogger.log("qu: self run consumer")
+            logger.debug("qu: self run consumer")
             # asyncio.run(self.consumer())
             self.consumer()
         except Exception as e:
-            MLogger.log(f"Error: {e}")
+            logger.debug(f"Error: {e}")
 
     def send(self, data: json):
         # if self.txmt is None or self.txmt.client is None:
-        #     MLogger.error("Error: websocket client is None.")
+        #     logger.error("Error: websocket client is None.")
         #     return
         if self.queue.full():
-            MLogger.error("Error: qu: queue is full")
+            logger.error("Error: qu: queue is full")
             return
         self.queue.put_nowait(data)
-        MLogger.log(f"监控: 放入队列: {data}, 目前长度: {self.queue.qsize()}")
+        logger.debug(f"监控: 放入队列: {data}, 目前长度: {self.queue.qsize()}")
 
     def consumer(self):
         # self.queue.put(1.5)
@@ -57,27 +55,27 @@ class Monitor(Thread):
         # self.queue.put([1, '2'])
         # self.queue.put({1, '2'})
         # self.queue.put((1, 2))
-        # MLogger.log("监控：示例数据填充完成")
+        # logger.debug("监控：示例数据填充完成")
         if self.queue is None:
-            MLogger.error("Error: qu: queue is none.")
+            logger.error("Error: qu: queue is none.")
             return
         if self.txmt is None or self.txmt.client is None:
-            MLogger.error("Error: tx: ws client is none.")
+            logger.error("Error: tx: ws client is none.")
             return
-        MLogger.info("监控：consumer启动")
+        logger.info("监控：consumer启动")
         cycles = 0
         while True:
             try:
                 self.send_buffer()
                 size = self.queue.qsize()
-                # MLogger.log(f'qu: 当前队列有：{size} 个元素')
+                # logger.debug(f'qu: 当前队列有：{size} 个元素')
                 data = self.queue.get(timeout=1)
-                MLogger.log(f'监控: 拿出元素：{data}, 发送...')
+                logger.debug(f'监控: 拿出元素：{data}, 发送...')
                 # await self.txmt.client.send(str(data))
                 try:
                     self.txmt.send(data)
                 except Exception as e:
-                    MLogger.error(f'Error: tx: ws发送错误：{e}')
+                    logger.error(f'Error: tx: ws发送错误：{e}')
                     self.push_buffer(data)
                     cycles += 1
                     if cycles > 10:
@@ -87,12 +85,12 @@ class Monitor(Thread):
                         self.txmt.client.send("test: websocket restart")
                     continue
                 size = self.queue.qsize()
-                MLogger.log(f'监控: 当前队列长度：{size}')
+                logger.debug(f'监控: 当前队列长度：{size}')
             except Empty:
-                # MLogger.log('empty queue')
+                # logger.debug('empty queue')
                 continue
             except Exception as e:
-                MLogger.error(f'Error: qu: {e}')
+                logger.error(f'Error: qu: {e}')
                 continue
 
     def push_buffer(self, data) -> int:
@@ -100,21 +98,21 @@ class Monitor(Thread):
             self.buffer.append(data)
             return len(self.buffer)
         else:
-            MLogger.log("Error: qu: buffer is full")
+            logger.debug("Error: qu: buffer is full")
             return -1
 
     def send_buffer(self):
         blen = len(self.buffer)
-        # MLogger.log(f'qu: buffer size {blen}')
+        # logger.debug(f'qu: buffer size {blen}')
         if len(self.buffer) > 0:
             for buf in self.buffer:
                 try:
                     self.txmt.send(buf)
                 except Exception as e:
-                    MLogger.error(f'Error: tx: ws发送错误：{e}')
+                    logger.error(f'Error: tx: ws发送错误：{e}')
                     raise
-                MLogger.log(f"as: send buffer: {buf}")
+                logger.debug(f"as: send buffer: {buf}")
             self.buffer.clear()
-            MLogger.log(f'qu: buffer clear {blen}')
+            logger.debug(f'qu: buffer clear {blen}')
             return blen
         return 0

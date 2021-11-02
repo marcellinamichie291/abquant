@@ -5,10 +5,6 @@ from abquant.monitor import Monitor
 from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
 
 
-
-
-
-
 def parse():
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', '--username', type=str, required=True,
@@ -18,15 +14,16 @@ def parse():
     args = parser.parse_args()
     return args
 
+
 def main():
     args = parse()
     common_setting = {
         "username": args.username,
         "password": args.password,
     }
-    # Monitor.init_monitor(common_setting)
     monitor = Monitor(common_setting)
     monitor.start()
+    print('start')
 
     i = 0
     while True:

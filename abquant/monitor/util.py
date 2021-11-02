@@ -1,33 +1,31 @@
 
-DEBUG_LEVEL = 1
-INFO_LEVEL = 2
-WARNING_LEVEL = 4
-ERROR_LEVEL = 5
-LOG_LEVEL = DEBUG_LEVEL
+from logging import ERROR, WARNING, INFO, DEBUG
+import logging
+import logging.handlers
+
+from logging.handlers import RotatingFileHandler
+
+LOG_LEVEL = DEBUG
 
 
-class MLogger:
+def get_formatter():
+    return logging.Formatter("%(asctime)s %(levelname)s  %(name)s(%(filename)s:%(lineno)d)  %(message)s")
 
-    @staticmethod
-    def debug(data):
-        if LOG_LEVEL <= DEBUG_LEVEL:
-            print(data)
 
-    @staticmethod
-    def log(data):
-        MLogger.debug(data)
+def get_handler(htype):
+    handler = None
+    if htype == 'stdout':
+        handler = logging.StreamHandler()
+    elif htype == 'file':
+        # handler = TimedRotatingFileHandler(**config)
+        handler = RotatingFileHandler("abquant.log", maxBytes=10*1024*1024, encoding="UTF-8", backupCount=10)
+    handler.setLevel(LOG_LEVEL)
+    handler.setFormatter(get_formatter())
+    return handler
 
-    @staticmethod
-    def info(data):
-        if LOG_LEVEL <= INFO_LEVEL:
-            print(data)
 
-    @staticmethod
-    def warn(data):
-        if LOG_LEVEL <= WARNING_LEVEL:
-            print(data)
-
-    @staticmethod
-    def error(data):
-        if LOG_LEVEL <= ERROR_LEVEL:
-            print(data)
+logging.basicConfig()
+logger = logging.getLogger('abquant')
+logger.setLevel(LOG_LEVEL)
+# logger.addHandler(get_handler('stdout'))
+logger.addHandler(get_handler('file'))
