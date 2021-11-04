@@ -62,9 +62,8 @@ TIMEDELTA_MAP: Dict[Interval, timedelta] = {
 }
 
 class Security(Enum):
-    NONE: int = 0
-    SIGNED: int = 1
-    API_KEY: int = 2
+    PUBLIC: int = 0
+    PRIVATE: int = 1
 
 symbol_name_map: Dict[str, str] = {}
 symbol_contract_map: Dict[str, ContractData] = {}
