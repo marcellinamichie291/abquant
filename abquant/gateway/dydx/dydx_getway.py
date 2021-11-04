@@ -5,11 +5,11 @@ from ...event.event import EventType
 from ...event.dispatcher import Event
 from ...trader.msg import BarData
 from ...trader.object import (
-    OrderData, 
-    CancelRequest, 
-    HistoryRequest, 
+    OrderData,
+    CancelRequest,
+    HistoryRequest,
     OrderRequest,
-    PositionData, 
+    PositionData,
     SubscribeRequest,
     HistoryRequest,
 )
@@ -25,8 +25,6 @@ from .dydx_util import api_key_credentials_map
 # from dydx3.modules.private import Private
 
 
-
-
 class DydxGateway(Gateway):
     default_setting = {
         "key": "",
@@ -36,11 +34,10 @@ class DydxGateway(Gateway):
         "proxy_host": "",
         "proxy_port": 0,
         "test_net": ["TESTNET", "REAL"],
-        "limitFee": 0.0005, # makerFeeRate: 0.00050 or takerFeeRate: takerFeeRate: 0.00100
+        "limitFee": 0.0005,  # makerFeeRate: 0.00050 or takerFeeRate: takerFeeRate: 0.00100
         "accountNumber": 0
     }
     exchanges: Exchange = [Exchange.DYDX]
-    
 
     def __init__(self, event_dispatcher: EventDispatcher, gateway_name="DYDX"):
         super().__init__(event_dispatcher, gateway_name)
@@ -56,7 +53,7 @@ class DydxGateway(Gateway):
         self.local_sys_map: Dict[str, str] = {}
 
         self.orders: Dict[str, OrderData] = {}
-        self.position: Dict[str, PositionData] = {}
+        self.positions: Dict[str, PositionData] = {}
 
     def connect(self, setting: dict) -> None:
         """连接"""
@@ -65,22 +62,22 @@ class DydxGateway(Gateway):
         api_key_credentials_map["secret"] = setting["secret"]
         api_key_credentials_map["passphrase"] = setting["passphrase"]
         api_key_credentials_map["stark_private_key"] = setting["stark_private_key"]
-        # self.id = setting["walletAddress"]
         server: str = setting["test_net"]
         proxy_host: str = setting["proxy_host"]
         proxy_port: int = setting["proxy_port"]
         limitFee: float = setting["limitFee"]
         accountNumber: str = setting["accountNumber"]
 
-
         self.rest_accessor.connect(server, proxy_host, proxy_port, limitFee)
-        self.market_listener.connect(proxy_host, proxy_port, server, accountNumber)
+        self.market_listener.connect(
+            proxy_host, proxy_port, server, accountNumber)
         self.event_dispatcher.register(
             EventType.EVENT_TIMER, self.process_timer_event)
         self.on_gateway(self)
+
     def start(self):
         self.market_listener.start()
-    
+
     def subscribe(self, req: SubscribeRequest) -> None:
         """订阅行情"""
         self.market_listener.subscribe(req)
@@ -119,6 +116,10 @@ class DydxGateway(Gateway):
         self.orders[order.orderid] = copy(order)
         super().on_order(order)
 
+    def on_position(self, position: PositionData) -> None:
+        self.positions[position.ab_symbol] = copy(position)
+        super().on_position(position)
+
     def get_order(self, orderid: str) -> OrderData:
         """查询委托数据"""
         return self.orders.get(orderid, None)
@@ -134,4 +135,5 @@ class DydxGateway(Gateway):
     def init_query(self) -> None:
         """初始化查询任务"""
         self.count: int = 0
-        self.event_dispatcher.register(EventType.EVENT_TIMER, self.process_timer_event)
+        self.event_dispatcher.register(
+            EventType.EVENT_TIMER, self.process_timer_event)

@@ -2,19 +2,19 @@ from typing import Dict, List
 from datetime import datetime
 from copy import copy
 from . import (
-    DIRECTION_DYDX2AB, 
-    WEBSOCKET_HOST, 
-    TESTNET_WEBSOCKET_HOST, 
+    DIRECTION_DYDX2AB,
+    WEBSOCKET_HOST,
+    TESTNET_WEBSOCKET_HOST,
     STATUS_DYDX2AB,
-    ORDERTYPE_DYDX2AB, 
-    symbol_contract_map, 
+    ORDERTYPE_DYDX2AB,
+    symbol_contract_map,
 )
 
 from ..listener import WebsocketListener
 from .dydx_getway import Gateway
 from ...trader.object import (
-    OrderData, 
-    HistoryRequest, 
+    OrderData,
+    HistoryRequest,
     SubscribeRequest,
     HistoryRequest,
     Status,
@@ -25,12 +25,14 @@ from ...trader.common import Exchange, Interval
 
 from .dydx_util import generate_datetime, api_key_credentials_map, generate_datetime_iso, sign, generate_now_iso, UTC_TZ
 
+
 class DydxWebsocketListener(WebsocketListener):
     """
     dydx websocket
     """
+
     def __init__(self, gateway: Gateway):
-        super(DydxWebsocketListener,self).__init__(gateway)
+        super(DydxWebsocketListener, self).__init__(gateway)
         self.ping_interval = 30
         self.gateway = gateway
         self.gateway.set_gateway_name(gateway.gateway_name)
@@ -46,7 +48,7 @@ class DydxWebsocketListener(WebsocketListener):
             self.init(WEBSOCKET_HOST, proxy_host, proxy_port)
         else:
             self.init(TESTNET_WEBSOCKET_HOST, proxy_host, proxy_port)
-        
+
         self.start()
 
     def on_connected(self):
@@ -56,7 +58,7 @@ class DydxWebsocketListener(WebsocketListener):
 
         for req in list(self.subscribed.values()):
             self.subscribe(req)
-    
+
     def on_disconnected(self):
         self.gateway.write_log("Websocket API断开")
 
@@ -123,7 +125,6 @@ class DydxWebsocketListener(WebsocketListener):
         }
         self.send_packet(req)
 
-        
         # req: dict = {
         #     "type": "subscribe",
         #     "channel": "v3_markets"
@@ -149,7 +150,6 @@ class DydxWebsocketListener(WebsocketListener):
     def on_orderbook(self, packet: dict) -> None:
         """订单簿更新专用"""
         # id: BTC-USD
-        # print("######on_orderbook",packet)
         orderbook = self.orderbooks[packet["id"]]
         orderbook.on_message(packet)
 
@@ -157,8 +157,10 @@ class DydxWebsocketListener(WebsocketListener):
         """Websocket账户更新推送"""
         for order_data in packet["contents"]["orders"]:
             # 绑定本地和系统委托号映射
-            self.gateway.local_sys_map[order_data["clientId"]] = order_data["id"]
-            self.gateway.sys_local_map[order_data["id"]] = order_data["clientId"]
+            self.gateway.local_sys_map[order_data["clientId"]
+                                       ] = order_data["id"]
+            self.gateway.sys_local_map[order_data["id"]
+                                       ] = order_data["clientId"]
             order: OrderData = OrderData(
                 symbol=order_data["market"],
                 exchange=Exchange.DYDX,
@@ -168,8 +170,10 @@ class DydxWebsocketListener(WebsocketListener):
                 # offset=Offset.NONE,
                 price=float(order_data["price"]),
                 volume=float(order_data["size"]),
-                traded=float(order_data["size"]) - float(order_data["remainingSize"]),
-                status=STATUS_DYDX2AB.get(order_data["status"], Status.SUBMITTING),
+                traded=float(order_data["size"]) - \
+                float(order_data["remainingSize"]),
+                status=STATUS_DYDX2AB.get(
+                    order_data["status"], Status.SUBMITTING),
                 datetime=generate_datetime(order_data["createdAt"]),
                 gateway_name=self.gateway_name
             )
@@ -241,7 +245,6 @@ class OrderBook():
 
     def on_message(self, d: dict) -> None:
         """Websocket订单簿更新推送"""
-        # print("@@@OrderBook",d)
         type: str = d["type"]
         channel: str = d["channel"]
         dt: datetime = datetime.now(UTC_TZ)
@@ -287,12 +290,12 @@ class OrderBook():
             if offset < self.offset:
                 return
             self.offset = offset
-            # 
+            #
             for price, ask_volume in d["asks"]:
                 price: float = float(price)
                 ask_volume: float = float(ask_volume)
                 if price in self.asks:
-                    if ask_volume > 0 :
+                    if ask_volume > 0:
                         ask_volume: float = float(ask_volume)
                         self.asks[price] = ask_volume
                     else:
@@ -305,14 +308,14 @@ class OrderBook():
                 price: float = float(price)
                 bid_volume: float = float(bid_volume)
                 if price in self.bids:
-                    if bid_volume > 0 :
+                    if bid_volume > 0:
                         self.bids[price] = bid_volume
                     else:
                         self.bids.pop(price)
                 else:
                     if bid_volume > 0:
                         self.bids[price] = bid_volume
-            
+
             if len(d["asks"]) > 0:
                 self.depth.volume = float(d["asks"][0][0])
                 self.depth.price = float(d["asks"][0][1])
@@ -327,7 +330,6 @@ class OrderBook():
         depth.datetime = dt
         self.gateway.on_depth(copy(depth))
         self.generate_tick(dt)
-
 
     def on_snapshot(self, asks, bids, dt: datetime) -> None:
         """盘口推送回报"""
@@ -355,7 +357,6 @@ class OrderBook():
         bids_keys: list = self.bids.keys()
         bids_keys: list = sorted(bids_keys, reverse=True)
 
-        # print("self.bids",self.bids)
         for i in range(min(5, len(bids_keys))):
             price: float = float(bids_keys[i])
             volume: float = float(self.bids[bids_keys[i]])
@@ -373,7 +374,7 @@ class OrderBook():
             volume: float = float(self.asks[asks_keys[i]])
             setattr(tick, f"ask_price_{i + 1}", price)
             setattr(tick, f"ask_volume_{i + 1}", volume)
-        
+
         tick.best_ask_price = tick.ask_price_1
         tick.best_ask_volume = tick.ask_volume_1
         tick.best_bid_price = tick.bid_price_1

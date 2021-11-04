@@ -18,7 +18,6 @@ if __name__ == '__main__':
         "secret": "NLrG3Kuyspe0jt45gENM6UmWGLdSrwj88P-5UPrz",
         "passphrase": "rOkw33sCBiTQhE5PX_GR",
         "stark_private_key": "01a65d7c5fccd96786b0a42ba38df41f58383fcdace4be8581487b61739cc559",
-        "walletAddress":"0xf02f589bBaB91a8609D896aBeC1f8e4E5D1165c3",
         "proxy_host": "",
         "proxy_port": 0,
         "test_net": ["TESTNET", "REAL"][1],
@@ -110,7 +109,7 @@ if __name__ == '__main__':
     for i in range(1):
         # ab_order_id = dydx_gateway.send_order(OrderRequest(symbol="BTC-USD", exchange=Exchange.DYDX,
         #                             direction=Direction.SHORT, type=OrderType.LIMIT, 
-        #                             price=62705, volume=0.001, offset=Offset.OPEN))
+        #                             price=60000, volume=0.001, offset=Offset.OPEN))
     #     order_id = ab_order_id.split('.')[-1]
     #     print("------open_long",order_id)
         time.sleep(1)
@@ -121,7 +120,6 @@ if __name__ == '__main__':
     for order_id in dydx_gateway.orders:
         dydx_gateway.cancel_order(CancelRequest(order_id, symbol="BTC-USD",exchange=Exchange.DYDX))
 
-    # # close all
     # dydx_gateway.send_order(OrderRequest(symbol="BTC-USD", exchange=Exchange.DYDX,
     #                 direction=Direction.LONG, type=OrderType.LIMIT, 
     #                 price=100000, volume=0.001, offset=Offset.CLOSE))

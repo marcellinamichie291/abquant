@@ -9,11 +9,11 @@ from threading import Lock
 from ..accessor import Request
 from ...trader.msg import BarData
 from ...trader.object import (
-    OrderData, 
-    AccountData, 
-    CancelRequest, 
-    HistoryRequest, 
-    OrderRequest, 
+    OrderData,
+    AccountData,
+    CancelRequest,
+    HistoryRequest,
+    OrderRequest,
     ContractData,
     PositionData,
     HistoryRequest,
@@ -23,26 +23,27 @@ from ...trader.object import (
 )
 from ...trader.common import Exchange
 from . import (
-    DIRECTION_AB2DYDX, 
-    REST_HOST, 
-    TESTNET_REST_HOST, 
-    INTERVAL_AB2DYDX, 
-    ORDERTYPE_AB2DYDX, 
-    symbol_contract_map, 
+    DIRECTION_AB2DYDX,
+    REST_HOST,
+    TESTNET_REST_HOST,
+    INTERVAL_AB2DYDX,
+    ORDERTYPE_AB2DYDX,
+    symbol_contract_map,
     Security
 )
 from ..basegateway import Gateway
 from ..accessor import Request, RestfulAccessor
 from .dydx_util import (
-    generate_datetime, 
-    api_key_credentials_map, 
-    generate_datetime_iso, 
-    sign, 
-    generate_now_iso, 
+    generate_datetime,
+    api_key_credentials_map,
+    generate_datetime_iso,
+    sign,
+    generate_now_iso,
     generate_hash_number,
     order_to_sign,
     epoch_seconds_to_iso
 )
+
 
 class DydxAccessor(RestfulAccessor):
     """
@@ -53,7 +54,7 @@ class DydxAccessor(RestfulAccessor):
     ORDER_PREFIX = str(hex(uuid.getnode()))
 
     def __init__(self, gateway: Gateway):
-        super(DydxAccessor,self).__init__(gateway)
+        super(DydxAccessor, self).__init__(gateway)
         self.gateway: Gateway = gateway
         self.gateway.set_gateway_name(gateway.gateway_name)
         self.order_count: int = 0
@@ -61,7 +62,6 @@ class DydxAccessor(RestfulAccessor):
         self.connect_time = 0
         self.order_count: int = 1_000_000
         self.order_count_lock: Lock = Lock()
-
 
     def sign(self, request: Request) -> Request:
         """生成dYdX签名"""
@@ -91,14 +91,14 @@ class DydxAccessor(RestfulAccessor):
         }
         request.headers = headers
 
-        return request 
+        return request
 
     def connect(
-        self,
-        server: str,
-        proxy_host: str,
-        proxy_port: int,
-        limitFee: float) -> None:
+            self,
+            server: str,
+            proxy_host: str,
+            proxy_port: int,
+            limitFee: float) -> None:
         """连接REST服务器"""
         self.proxy_port = proxy_port
         self.proxy_host = proxy_host
@@ -156,7 +156,8 @@ class DydxAccessor(RestfulAccessor):
         """委托下单"""
         # TODO market 单有点问题
         # 生成本地委托号
-        orderid = self.ORDER_PREFIX + str(self.connect_time + self._new_order_id())
+        orderid = self.ORDER_PREFIX + \
+            str(self.connect_time + self._new_order_id())
 
         # 推送提交中事件
         order: OrderData = req.create_order_data(
@@ -179,7 +180,8 @@ class DydxAccessor(RestfulAccessor):
             expiration_epoch_seconds=expiration_epoch_seconds
         )
 
-        signature: str = order_to_sign(hash_namber, api_key_credentials_map["stark_private_key"])
+        signature: str = order_to_sign(
+            hash_namber, api_key_credentials_map["stark_private_key"])
 
         # 生成委托请求
         data: dict = {
@@ -310,12 +312,10 @@ class DydxAccessor(RestfulAccessor):
             self.gateway.on_contract(contract)
 
             symbol_contract_map[contract.symbol] = contract
-        # print(symbol_contract_map)
         self.gateway.write_log("合约信息查询成功")
 
     def on_query_account(self, data: dict, request: Request) -> None:
         """资金查询回报"""
-        # print("on_query_account",data)
         # dydx 有时候返回accounts 有时候返回account
         d: dict = data["accounts"][0] if "accounts" in data else data["account"]
         self.position_id = d["positionId"]
@@ -347,7 +347,6 @@ class DydxAccessor(RestfulAccessor):
 
     def on_send_order(self, data: dict, request: Request) -> None:
         """委托下单回报"""
-        # print("##### order_back",data, request)
         pass
 
     def on_send_order_error(
