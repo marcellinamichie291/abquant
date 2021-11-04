@@ -33,7 +33,7 @@ from . import (
 )
 from ..basegateway import Gateway
 from ..accessor import Request, RestfulAccessor
-from dydx_util import (
+from .dydx_util import (
     generate_datetime, 
     api_key_credentials_map, 
     generate_datetime_iso, 

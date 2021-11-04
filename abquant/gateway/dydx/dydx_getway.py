@@ -15,9 +15,9 @@ from ...trader.object import (
 from ...event import EventDispatcher
 from ...trader.common import Exchange
 from ...gateway.basegateway import Gateway
-from dydx_accessor import DydxAccessor
-from dydx_listener import DydxWebsocketListener
-from dydx_util import api_key_credentials_map
+from .dydx_accessor import DydxAccessor
+from .dydx_listener import DydxWebsocketListener
+from .dydx_util import api_key_credentials_map
 
 
 # test 和官方客户端对比

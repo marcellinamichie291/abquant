@@ -23,7 +23,7 @@ from ...trader.object import (
 from ...trader.msg import BarData, TickData, TradeData, DepthData
 from ...trader.common import Exchange, Interval
 
-from dydx_util import generate_datetime, api_key_credentials_map, generate_datetime_iso, sign, generate_now_iso, UTC_TZ
+from .dydx_util import generate_datetime, api_key_credentials_map, generate_datetime_iso, sign, generate_now_iso, UTC_TZ
 
 class DydxWebsocketListener(WebsocketListener):
     """
