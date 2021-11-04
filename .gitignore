@@ -129,13 +129,8 @@ dmypy.json
 # MODIFIED SECITON
 #PyCharm project
 .idea/
-abquant/.DS_Store
-.DS_Store
-long_short_strategy.py
-basis.py
-run_strategy.py
-binance_test.py
-basis.json
-run_strategy.py
-.DS_Store
+
+.DS_store
+*/.DS_store
 connect_dydx.py
+

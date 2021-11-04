@@ -13,7 +13,7 @@ from abquant.event.event import EventType
 from abquant.strategytrading import StrategyTemplate, LiveStrategyRunner
 from abquant.event import EventDispatcher, Event
 from abquant.gateway import BinanceUBCGateway, BinanceBBCGateway
-
+from abquant.monitor import Monitor
 from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
 from abquant.trader.object import SubscribeMode
 
@@ -24,6 +24,10 @@ def parse():
                         help='api key')
     parser.add_argument('-s', '--secret', type=str, required=True,
                         help='secret')
+    parser.add_argument('-n', '--username', type=str, required=True,
+                        help='username')
+    parser.add_argument('-w', '--password', type=str, required=True,
+                        help='password')
     parser.add_argument('-u', '--proxy_host', type=str,
                         # default='127.0.0.1',
                         help='proxy host')
@@ -218,6 +222,15 @@ def main():
         "test_net": ["TESTNET", "REAL"][1],
     }
 
+    common_setting = {
+        "username": args.username,
+        "password": args.password,
+    }
+    # Monitor.init_monitor(common_setting)
+    monitor = Monitor(common_setting)
+    monitor.start()
+    print("监控启动")
+
     event_dispatcher = EventDispatcher(interval=1)
 
     # 注册一下 log 事件的回调函数， 该函数决定了如何打log。
@@ -315,6 +328,7 @@ def main():
                                  }
         strategy_runner.edit_strategy(
             strategy_name='the_strategy2', setting=the_strategy2_setting)
+        # monitor.send(the_strategy1_setting)
 
     # print([c.func.id for c in ast.walk(ast.parse(inspect.getsource(TheStrategy))) if isinstance(c, ast.Call)])
 if __name__ == '__main__':
