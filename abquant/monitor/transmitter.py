@@ -67,7 +67,7 @@ class Transmitter:
         if self.client is None:
             logger.debug("Error: tx: no client to run ping pong thread")
             return
-        self.client.run_forever(ping_interval=5, ping_timeout=3)
+        self.client.run_forever(ping_interval=10, ping_timeout=5)
 
     def send(self, data):
         if self.client is None:
@@ -91,7 +91,7 @@ class Transmitter:
 
     def on_open(self, ws):
         self.client = ws
-        logger.info("tx: open")
+        logger.info("监控：WebSocket开启")
 
     def on_close(self, ws, code, msg):
         logger.info(f"tx: close, code: {code}, msg: {msg}")

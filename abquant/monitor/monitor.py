@@ -21,10 +21,11 @@ class Monitor(Thread):
         self.setting = setting
         self.buffer = []
         self.queue: Queue = Queue(maxsize=MAX_QUEUE_SIZE)
+        logger.info("监控：队列初始化（{}）".format(MAX_QUEUE_SIZE))
 
     def run(self):
         if self.setting is None:
-            logger.debug("Error: no setting, exit")
+            logger.error("Error: no setting, exit")
             return
         try:
             if self.txmt is None:
@@ -32,7 +33,6 @@ class Monitor(Thread):
                 self.txmt.connect_ws()
                 time.sleep(1)
                 self.txmt.client.send("test: websocket start")
-            logger.debug("qu: self run consumer")
             # asyncio.run(self.consumer())
             self.consumer()
         except Exception as e:
@@ -62,7 +62,7 @@ class Monitor(Thread):
         if self.txmt is None or self.txmt.client is None:
             logger.error("Error: tx: ws client is none.")
             return
-        logger.info("监控：启动")
+        logger.info("监控：启动完成")
         cycles = 0
         while True:
             try:
