@@ -8,7 +8,8 @@ from ...trader.object import (
     OrderData, 
     CancelRequest, 
     HistoryRequest, 
-    OrderRequest, 
+    OrderRequest,
+    PositionData, 
     SubscribeRequest,
     HistoryRequest,
 )
@@ -55,6 +56,7 @@ class DydxGateway(Gateway):
         self.local_sys_map: Dict[str, str] = {}
 
         self.orders: Dict[str, OrderData] = {}
+        self.position: Dict[str, PositionData] = {}
 
     def connect(self, setting: dict) -> None:
         """连接"""

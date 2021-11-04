@@ -11,7 +11,7 @@ from . import (
 )
 
 from ..listener import WebsocketListener
-from ..basegateway import Gateway
+from .dydx_getway import Gateway
 from ...trader.object import (
     OrderData, 
     HistoryRequest, 

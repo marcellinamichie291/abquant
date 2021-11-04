@@ -146,26 +146,16 @@ class DydxAccessor(RestfulAccessor):
             data=data
         )
 
-    def new_orderid(self) -> str:
-        """生成本地委托号"""
-        prefix: str = datetime.now().strftime("%Y%m%d%H%M%S")
-
-        self.order_count += 1
-        suffix: str = str(self.order_count).rjust(8, "0")
-
-        orderid: str = prefix + suffix
-        return orderid
-
     def _new_order_id(self) -> int:
-        """"""
+        """生成本地委托号"""
         with self.order_count_lock:
             self.order_count += 1
             return self.order_count
 
     def send_order(self, req: OrderRequest) -> str:
         """委托下单"""
+        # TODO market 单有点问题
         # 生成本地委托号
-        # orderid: str = self.new_orderid()
         orderid = self.ORDER_PREFIX + str(self.connect_time + self._new_order_id())
 
         # 推送提交中事件
@@ -190,28 +180,6 @@ class DydxAccessor(RestfulAccessor):
         )
 
         signature: str = order_to_sign(hash_namber, api_key_credentials_map["stark_private_key"])
-        # 和官方版本对比签名
-
-        # print("!!!!!old_sign",signature)
-        # p = Private(host=REST_HOST, network_id=1, stark_private_key="", default_address="", api_key_credentials=api_key_credentials_map)
-
-        # print(p.create_order(
-        #     position_id=self.position_id,
-        #     market="BTC-USD",
-        #     side="BUY",
-        #     order_type="LIMIT",
-        #     post_only=False,
-        #     size="0.1",
-        #     price="60000",
-        #     limit_fee="0.001",
-        #     time_in_force="GTT",
-        #     client_id=orderid,
-        #     expiration_epoch_seconds=expiration_epoch_seconds
-
-        # ))
-
-        
-
 
         # 生成委托请求
         data: dict = {
@@ -219,7 +187,7 @@ class DydxAccessor(RestfulAccessor):
             "market": req.symbol,
             "side": DIRECTION_AB2DYDX[req.direction],
             "type": ORDERTYPE_AB2DYDX[req.type],
-            "timeInForce": "GTT",
+            # "timeInForce": "GTT",
             "size": str(req.volume),
             "price": str(req.price),
             "limitFee": str(self.limitFee),
@@ -262,6 +230,10 @@ class DydxAccessor(RestfulAccessor):
             on_failed=self.on_cancel_failed,
             extra=order
         )
+
+    def query_order(self, client_id: str) -> OrderData:
+
+        pass
 
     def query_history(self, req: HistoryRequest) -> List[BarData]:
         """查询历史数据"""
@@ -349,7 +321,6 @@ class DydxAccessor(RestfulAccessor):
         self.position_id = d["positionId"]
         balance: float = float(d["equity"])
         available: float = float(d["freeCollateral"])
-        # print("$$$$$$$query_account",d)
 
         account: AccountData = AccountData(
             accountid=d["id"],
@@ -376,8 +347,8 @@ class DydxAccessor(RestfulAccessor):
 
     def on_send_order(self, data: dict, request: Request) -> None:
         """委托下单回报"""
-        print("##### order_back",data, request)
-        # pass
+        # print("##### order_back",data, request)
+        pass
 
     def on_send_order_error(
         self, exception_type: type, exception_value: Exception, tb, request: Request
@@ -400,10 +371,8 @@ class DydxAccessor(RestfulAccessor):
         self.gateway.write_log(msg)
 
     def on_cancel_order(self, data: dict, request: Request) -> None:
-        """委托撤单回报"""
-        print("##### cancel_order_back",data, request)
-
-        # pass
+        """撤单成功回报"""
+        pass
 
     def on_cancel_failed(self, status_code: str, request: Request) -> None:
         """撤单回报函数报错回报"""
