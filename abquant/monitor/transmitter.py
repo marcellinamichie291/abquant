@@ -19,11 +19,9 @@ class Transmitter:
     username = None
     password = None
 
-    def __init__(self, setting: dict):
-        if setting is None:
-            return
-        self.username = setting.get("username", None)
-        self.password = setting.get("password", None)
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
         self._pp_thread = None  # underlying ping/pong thread
 
     def connect_ws(self):
@@ -120,7 +118,7 @@ if __name__ == '__main__':
         "username": "zhanghui",
         "password": "123456",
     }
-    tx = Transmitter(setting)
+    tx = Transmitter(setting.get("username", None), setting.get("password", None))
     client = tx.connect_ws()
     time.sleep(5)
     assert client == tx.client

@@ -4,7 +4,7 @@ from threading import Thread
 from queue import Empty, Queue
 
 from .transmitter import Transmitter
-from .util import logger
+from .util import logger, config_logger
 
 MAX_QUEUE_SIZE = 1000
 MAX_BUFFER_SIZE = 1000
@@ -27,9 +27,10 @@ class Monitor(Thread):
         if self.setting is None:
             logger.error("Error: no setting, exit")
             return
+        config_logger(self.setting.get("log_path", None))
         try:
             if self.txmt is None:
-                self.txmt = Transmitter(self.setting)
+                self.txmt = Transmitter(self.setting.get("username", None), self.setting.get("password", None))
                 self.txmt.connect_ws()
                 time.sleep(1)
                 self.txmt.client.send("test: websocket start")
@@ -79,7 +80,7 @@ class Monitor(Thread):
                     self.push_buffer(data)
                     cycles += 1
                     if cycles > 10:
-                        self.txmt = Transmitter(self.setting)
+                        self.txmt = Transmitter(self.setting.get("username", None), self.setting.get("password", None))
                         self.txmt.connect_ws()
                         time.sleep(1)
                         self.txmt.client.send("test: websocket restart")
