@@ -55,7 +55,7 @@ class Monitor(Thread):
             logger.error("Error: qu: queue is full")
             return
         self.queue.put_nowait(data)
-        logger.debug(f"监控: 放入队列: {data}, 目前长度: {self.queue.qsize()}")
+        # logger.debug(f"监控: 放入队列: {data}, 目前长度: {self.queue.qsize()}")
 
     def default_info(self, run_id: str, event_type: str):
         info = {"event_time": datetime.now().timestamp(),
@@ -151,7 +151,7 @@ class Monitor(Thread):
                 size = self.queue.qsize()
                 # logger.debug(f'qu: 当前队列有：{size} 个元素')
                 data = self.queue.get(timeout=1)
-                logger.debug(f'监控: 拿出元素：{data}, 发送...')
+                # logger.debug(f'监控: 拿出元素：{data}, 发送...')
                 # await self.txmt.client.send(str(data))
                 try:
                     self.txmt.send(data)
@@ -166,7 +166,7 @@ class Monitor(Thread):
                         self.txmt.client.send("test: websocket restart")
                     continue
                 size = self.queue.qsize()
-                logger.debug(f'监控: 当前队列长度：{size}')
+                # logger.debug(f'监控: 当前队列长度：{size}')
             except Empty:
                 # logger.debug('empty queue')
                 continue

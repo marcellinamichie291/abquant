@@ -79,6 +79,7 @@ class Transmitter:
             data = json.dumps(data)
         else:
             pass
+        logger.debug(f"监控：发送：{data}")
         self.client.send(data)
 
     def on_message(self, ws, msg):
