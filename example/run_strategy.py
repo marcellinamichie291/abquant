@@ -28,6 +28,8 @@ def parse():
                         help='username')
     parser.add_argument('-w', '--password', type=str, required=True,
                         help='password')
+    parser.add_argument('-l', '--log_path', type=str, required=False,
+                        help='log path')
     parser.add_argument('-u', '--proxy_host', type=str,
                         # default='127.0.0.1',
                         help='proxy host')
@@ -225,6 +227,7 @@ def main():
     common_setting = {
         "username": args.username,
         "password": args.password,
+        "log_path": args.log_path,
     }
     # Monitor.init_monitor(common_setting)
     monitor = Monitor(common_setting)

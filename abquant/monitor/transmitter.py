@@ -6,7 +6,7 @@ import requests
 
 import websocket
 
-from .util import MLogger
+from .util import logger
 
 LOGIN_URL = "https://dct-test001.wecash.net/dct-business-api/login"
 WS_URL = "wss://dct-test001-internal.wecash.net/dct-service-abquant/ws/business?access_token="
@@ -19,11 +19,9 @@ class Transmitter:
     username = None
     password = None
 
-    def __init__(self, setting: dict):
-        if setting is None:
-            return
-        self.username = setting.get("username", None)
-        self.password = setting.get("password", None)
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
         self._pp_thread = None  # underlying ping/pong thread
 
     def connect_ws(self):
@@ -34,7 +32,7 @@ class Transmitter:
             'Content-Type': 'application/json; charset=UTF-8'
         }
         if self.username is None or self.password is None:
-            MLogger.log("监控：初始化：用户名或密码不存在")
+            logger.debug("监控：初始化：用户名或密码不存在")
             return
         login_url = LOGIN_URL + "?userName=" + self.username + "&password=" + self.password
         access_token = None
@@ -42,7 +40,7 @@ class Transmitter:
             response = requests.request("GET", login_url, headers=headers, data=payload)
             jn = json.loads(response.text)
             access_token = jn.get("data").get("access_token")
-            # MLogger.log(access_token)
+            # logger.debug(access_token)
         except Exception:
             return
 
@@ -54,7 +52,7 @@ class Transmitter:
         # ws.run_forever(ping_interval=30, ping_timeout=5)
         self._pp_thread = Thread(target=self.run_forever, args=(ws,))
         self._pp_thread.start()
-        MLogger.log("tx: start ping/pong thread")
+        logger.debug("tx: start ping/pong thread")
         time.sleep(1)
 
         return ws
@@ -63,15 +61,15 @@ class Transmitter:
         pass
 
     def run_forever(self, ws):
-        MLogger.log("tx: run forever\n")
+        logger.debug("tx: run forever")
         if self.client is None:
-            MLogger.log("Error: tx: no client to run ping pong thread")
+            logger.debug("Error: tx: no client to run ping pong thread")
             return
-        self.client.run_forever(ping_interval=5, ping_timeout=3)
+        self.client.run_forever(ping_interval=10, ping_timeout=5)
 
     def send(self, data):
         if self.client is None:
-            MLogger.log("Error: tx: websocket client is none")
+            logger.debug("Error: tx: websocket client is none")
             raise Exception("websocket client is none")
         if isinstance(data, (int, float)):
             data = str(data)
@@ -84,17 +82,17 @@ class Transmitter:
         self.client.send(data)
 
     def on_message(self, ws, msg):
-        MLogger.log(msg)
+        logger.debug(msg)
 
     def on_error(self, ws, error):
-        MLogger.error(error)
+        logger.error(error)
 
     def on_open(self, ws):
         self.client = ws
-        MLogger.info("tx: open")
+        logger.info("监控：WebSocket开启")
 
-    def on_close(self, ws, b, c):
-        MLogger.info("tx: close")
+    def on_close(self, ws, code, msg):
+        logger.info(f"tx: close, code: {code}, msg: {msg}")
         self.client = None
         i = 1
         time.sleep(3)
@@ -104,14 +102,14 @@ class Transmitter:
             if self.client is not None:
                 break
             i += 1
-        MLogger.info(f"tx: Reconnect after {i} retries")
+        logger.info(f"tx: Reconnect after {i} retries")
 
     def on_ping(self, pingMsg, ex):
         # ws._send_ping()
-        MLogger.log("tx: ping")
+        logger.debug("tx: ping")
 
     def on_pong(self, pongMsg, ex):
-        # MLogger.log("tx: pong")
+        # logger.debug("tx: pong")
         pass
 
 
@@ -120,7 +118,7 @@ if __name__ == '__main__':
         "username": "zhanghui",
         "password": "123456",
     }
-    tx = Transmitter(setting)
+    tx = Transmitter(setting.get("username", None), setting.get("password", None))
     client = tx.connect_ws()
     time.sleep(5)
     assert client == tx.client
