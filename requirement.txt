@@ -2,4 +2,5 @@ numpy
 requests
 websocket-client
 pytz
+pandas
 #ta-lib

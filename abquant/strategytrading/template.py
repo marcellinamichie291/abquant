@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+import time
 from logging import INFO
+from abquant import gateway
 from abquant.event.dispatcher import Event
 from copy import copy
 from typing import Dict, Set, List, TYPE_CHECKING
@@ -7,6 +9,7 @@ from collections import defaultdict
 
 from abquant.trader.common import Interval, Direction, Offset, OrderType
 from abquant.trader.msg import BarData, TickData, OrderData, TradeData, TransactionData, EntrustData, DepthData
+from abquant.trader.object import LogData
 
 # TODO typechecking  and same thing in msg.py
 
@@ -30,9 +33,11 @@ class StrategyTemplate(ABC):
         self.strategy_name: str = strategy_name
         self.ab_symbols: List[str] = ab_symbols
 
+        self.run_id = "{}-{}".format(strategy_name, int(time.time()))
+
         self.inited: bool = False
         self.trading: bool = False
-        self.pos: Dict[str, float] = defaultdict(int)
+        self.pos: Dict[str, float] = defaultdict(float)
 
         self.orders: Dict[str, OrderData] = {}
         self.active_orderids: Set[str] = set()
@@ -40,9 +45,6 @@ class StrategyTemplate(ABC):
         # Copy a new variables list here to avoid duplicate insert when multiple
         # strategy instances are created with the same strategy class.
         self.variables: List = copy(self.variables)
-        self.variables.insert(0, "inited")
-        self.variables.insert(1, "trading")
-        self.variables.insert(2, "pos")
 
         self.update_setting(setting)
 
@@ -53,6 +55,7 @@ class StrategyTemplate(ABC):
         for name in self.parameters:
             if name in setting:
                 setattr(self, name, setting[name])
+        self.strategy_runner.monitor.send_parameter(self.run_id, self.get_parameters())
 
     @classmethod
     def get_class_parameters(cls) -> Dict:
@@ -90,7 +93,6 @@ class StrategyTemplate(ABC):
             "strategy_name": self.strategy_name,
             "ab_symbols": self.ab_symbols,
             "class_name": self.__class__.__name__,
-            "author": self.author,
             "parameters": self.get_parameters(),
             "variables": self.get_variables(),
         }
@@ -114,7 +116,7 @@ class StrategyTemplate(ABC):
     @abstractmethod
     def on_stop(self) -> None:
         """
-        策略正式运行的callback。 
+        策略正式停运的callback。 
         """
         pass
 
@@ -181,10 +183,12 @@ class StrategyTemplate(ABC):
         重写该方法时最好 super().update_trade(trade)，调用父类StrategeTemplate该方法的实现。
         回测时会支持模拟回报，调用该方法。
         """
+        self.strategy_runner.monitor.send_trade(self.run_id, trade)
         if trade.direction == Direction.LONG:
             self.pos[trade.ab_symbol] += trade.volume
         else:
             self.pos[trade.ab_symbol] -= trade.volume
+        self.strategy_runner.monitor.send_position(self.run_id, trade.ab_symbol, self.pos.get(trade.ab_symbol))
 
     @abstractmethod
     def update_order(self, order: OrderData) -> None:
@@ -194,6 +198,7 @@ class StrategyTemplate(ABC):
         回测时会支持模拟回报，调用该方法。
         """
         self.orders[order.ab_orderid] = order
+        self.strategy_runner.monitor.send_order(self.run_id, order)
 
         if not order.is_active() and order.ab_orderid in self.active_orderids:
             self.active_orderids.remove(order.ab_orderid)
@@ -307,6 +312,7 @@ class StrategyTemplate(ABC):
         """
         """
         self.strategy_runner.write_log(msg, self, level)
+        self.strategy_runner.monitor.send_log(self.run_id, LogData(gateway_name=self.__class__.__name__, msg='msg', level=level))
 
     def load_bars(self, days: int, interval: Interval = Interval.MINUTE) -> None:
         """

@@ -6,6 +6,7 @@ from types import TracebackType
 from collections import defaultdict
 import sys
 import traceback
+import uuid
 from functools import lru_cache
 from typing import Any, Callable, Dict, Iterable, List, Set, Tuple
 from logging import ERROR, INFO, WARNING
@@ -23,8 +24,10 @@ from .strategyrunner import StrategyRunner, LOG_LEVEL
 
 
 class LiveStrategyRunner(StrategyRunner):
+    MAC = str(hex(uuid.getnode()))
 
     def __init__(self, event_dispatcher: EventDispatcher):
+        super(LiveStrategyRunner, self).__init__()
         self.event_dispatcher = event_dispatcher
         self.order_manager: OrderManager = self.event_dispatcher.order_manager
 
@@ -147,6 +150,7 @@ class LiveStrategyRunner(StrategyRunner):
             return
 
         self.call_strategy_func(strategy, strategy.on_start)
+        self.monitor.send_status(strategy.run_id, "start", strategy.ab_symbols)
         strategy.trading = True
 
     def stop_strategy(self, strategy_name: str):
@@ -160,10 +164,10 @@ class LiveStrategyRunner(StrategyRunner):
             return
 
         self.call_strategy_func(strategy, strategy.on_stop)
+        self.monitor.send_status(strategy.run_id, "stop", strategy.ab_symbols)
         strategy.trading = False
         strategy.cancel_all()
 
-        # TODO record postion ?
 
     def init_all_strategies(self):
         """
@@ -188,6 +192,7 @@ class LiveStrategyRunner(StrategyRunner):
 
     def init(self):
         self.register_event()
+        self.timer_count: int = 0
 
     def register_event(self):
         # register event to process_xx method
@@ -214,14 +219,21 @@ class LiveStrategyRunner(StrategyRunner):
             EventType.EVENT_EXCEPTION, self.process_exception_event)
         self.event_dispatcher.register(
             EventType.EVENT_TIMER, self.process_timer_event)
+        self.event_dispatcher.register(
+            EventType.EVENT_LOG, self.process_log_event)
 
     def process_timer_event(self, event: Event):
         """"""
         interval: int = event.data
-
+        new_timer_count = self.timer_count + interval
         for _, strategy in self.strategies.items():
             if strategy.trading:
                 self.call_strategy_func(strategy, strategy.on_timer, interval)
+                if (new_timer_count // 10) != self.timer_count // 10:
+                    self.monitor.send_status(strategy.run_id, 'heartbeat', strategy.ab_symbols)
+            
+        self.timer_count = new_timer_count
+                
 
     def process_exception_event(self, event: Event):
         exception: Exception = event.data
@@ -307,6 +319,14 @@ class LiveStrategyRunner(StrategyRunner):
             return
 
         self.call_strategy_func(strategy, strategy.update_trade, trade)
+
+
+    def process_log_event(self, event: Event):
+        log: LogData = event.data
+        if log.gateway_name == self.__class__.__name__:
+            return
+        self.monitor.send_log(self.MAC, log, log_type='system')
+
 
     def send_order(self,
                    strategy: StrategyTemplate,
@@ -395,6 +415,7 @@ class LiveStrategyRunner(StrategyRunner):
         except Exception:
             strategy.trading = False
             strategy.inited = False
+            self.monitor.send_status(strategy.run_id, "stop", strategy.ab_symbols)
 
             # et, ev, tb = sys.exc_info()
             msg = f"Exception in strategy: {strategy.strategy_name}. strategy stoped. \n{traceback.format_exc()}"
