@@ -13,7 +13,7 @@ setup(
         'requests',
         'websocket-client',
         'pytz',
-
+        'ecdsa'
     ],
     python_requires='>=3.8',
 

@@ -3,4 +3,5 @@ requests
 websocket-client
 pytz
 pandas
+ecdsa
 #ta-lib
