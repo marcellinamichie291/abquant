@@ -34,7 +34,7 @@ class Transmitter:
         if self.username is None or self.password is None:
             logger.debug("监控：初始化：用户名或密码不存在")
             return
-        login_url = LOGIN_URL + "?userName=" + self.username + "&password=" + self.password
+        login_url = LOGIN_URL + "userName=" + self.username + "&password=" + self.password
         access_token = None
         try:
             response = requests.request("GET", login_url, headers=headers, data=payload)
@@ -69,7 +69,7 @@ class Transmitter:
 
     def send(self, data):
         if self.client is None:
-            logger.debug("Error: tx: websocket client is none")
+            # logger.debug("Error: tx: websocket client is none")
             raise Exception("websocket client is none")
         if isinstance(data, (int, float)):
             data = str(data)
@@ -79,7 +79,7 @@ class Transmitter:
             data = json.dumps(data)
         else:
             pass
-        logger.debug(f"监控：发送：{data}")
+        # logger.debug(f"监控：发送：{data}")
         self.client.send(data)
 
     def on_message(self, ws, msg):
