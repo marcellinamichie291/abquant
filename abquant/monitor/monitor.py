@@ -12,10 +12,10 @@ from abquant.trader.msg import OrderData, TradeData
 from abquant.trader.object import LogData
 from abquant.trader.utility import extract_ab_symbol, object_as_dict
 from .transmitter import Transmitter
-from .util import logger, config_logger
+from .util import logger, config_logger, print_log_format
 
-MAX_QUEUE_SIZE = 1000
-MAX_BUFFER_SIZE = 1000
+MAX_QUEUE_SIZE = 10000
+MAX_BUFFER_SIZE = 100000
 
 
 class Monitor(Thread):
@@ -158,7 +158,8 @@ class Monitor(Thread):
                 size = self.queue.qsize()
                 # logger.debug(f'qu: 当前队列有：{size} 个元素')
                 data = self.queue.get(timeout=1)
-                logger.info(data)
+                # logger.info(data)
+                print_log_format(data)
                 # logger.debug(f'监控: 拿出元素：{data}, 发送...')
                 # await self.txmt.client.send(str(data))
                 try:
@@ -207,6 +208,6 @@ class Monitor(Thread):
                     raise
                 logger.debug(f"qu: send buffer: {buf}")
             self.buffer.clear()
-            logger.debug(f'qu: buffer clear {blen}')
+            logger.info(f'发送断线期间日志 {blen} 条')
             return blen
         return 0
