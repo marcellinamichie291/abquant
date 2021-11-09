@@ -34,7 +34,7 @@ class Transmitter:
         if self.username is None or self.password is None:
             logger.debug("监控：初始化：用户名或密码不存在")
             return
-        login_url = LOGIN_URL + "userName=" + self.username + "&password=" + self.password
+        login_url = LOGIN_URL + "?userName=" + self.username + "&password=" + self.password
         access_token = None
         try:
             response = requests.request("GET", login_url, headers=headers, data=payload)
