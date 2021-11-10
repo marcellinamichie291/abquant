@@ -58,7 +58,7 @@ def calculate_grid(ab_symbol, upper_bound, lower_bound, num):
 
 # 策略的实现，所有细节都需要明确。务必先看完.
 class GridStrategy(StrategyTemplate):
-    # 一下类属性/成员， 均由交易员自行决定并声明。
+    # 以下类属性/成员， 均由交易员自行决定并声明。
     window = 15
     history = 300
     lower_bound_multipler = 0.8

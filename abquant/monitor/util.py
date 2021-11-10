@@ -64,15 +64,15 @@ def print_log_format(data):
             run_id = data.get("run_id")
             payload = data.get("payload")
             formatStr = ''
-            if strategy_name is not None:
+            if strategy_name is not None and strategy_name != '':
                 formatStr += f'[{strategy_name}] '
-            if run_id is not None:
-                formatStr += f'[{run_id}] '
+            # if run_id is not None and run_id[:2] != '0x':
+            #     formatStr += f'[{run_id}] '
             if payload is not None:
                 if event_type == 'order':
-                    formatStr += f"订单: {payload.get('exchange')} - {payload.get('symbol')} - {payload.get('offset')} - {payload.get('direction')} status: {payload.get('status')}, price: {payload.get('price')}, volume: {payload.get('volume')}, type: {payload.get('type')}, order ID: {payload.get('orderid')} "
+                    formatStr += f"订单: {payload.get('exchange')} - {payload.get('symbol')} - {payload.get('direction')} status: {payload.get('status')}, price: {payload.get('price')}, volume: {payload.get('volume')}, type: {payload.get('type')}, order_id: {payload.get('orderid')} "
                 elif event_type == 'order_trade':
-                    formatStr += f"订单成交: {payload.get('exchange')} - {payload.get('symbol')} - {payload.get('offset')} - {payload.get('direction')} price: {payload.get('price')}, volume: {payload.get('volume')}, order ID: {payload.get('orderid')}, trade ID: {payload.get('tradeid')} "
+                    formatStr += f"订单成交: {payload.get('exchange')} - {payload.get('symbol')} - {payload.get('direction')} price: {payload.get('price')}, volume: {payload.get('volume')}, order_id: {payload.get('orderid')}, trade_id: {payload.get('tradeid')} "
                 elif event_type == 'position':
                     formatStr += f'仓位: {payload.get("exchange")} - {payload.get("symbol")}:  {payload.get("position")}'
                 elif event_type == 'parameter':
