@@ -121,3 +121,6 @@ class BinanceCGateway(Gateway):
     def process_timer_event(self, event: Event) -> None:
         """"""
         self.rest_accessor.keep_user_stream(event.data)
+        self.rest_accessor.reset_server_time(event.data)
+
+
