@@ -12,10 +12,10 @@ from abquant.trader.msg import OrderData, TradeData
 from abquant.trader.object import LogData
 from abquant.trader.utility import extract_ab_symbol, object_as_dict
 from .transmitter import Transmitter
-from .util import logger, config_logger
+from .util import logger, config_logger, print_log_format
 
-MAX_QUEUE_SIZE = 1000
-MAX_BUFFER_SIZE = 1000
+MAX_QUEUE_SIZE = 10000
+MAX_BUFFER_SIZE = 100000
 
 
 class Monitor(Thread):
@@ -42,8 +42,11 @@ class Monitor(Thread):
                 self.txmt.connect_ws()
                 time.sleep(1)
                 self.txmt.client.send("test: websocket start")
-            # asyncio.run(self.consumer())
+        except Exception as e:
+            logger.error(f"Error: {e}")
+        try:
             self.consumer()
+            # asyncio.run(self.consumer())
         except Exception as e:
             logger.debug(f"Error: {e}")
 
@@ -55,7 +58,7 @@ class Monitor(Thread):
             logger.error("Error: qu: queue is full")
             return
         self.queue.put_nowait(data)
-        logger.debug(f"监控: 放入队列: {data}, 目前长度: {self.queue.qsize()}")
+        # logger.debug(f"监控: 放入队列: {data}, 目前长度: {self.queue.qsize()}")
 
     def default_info(self, run_id: str, event_type: str):
         info = {"event_time": datetime.now().timestamp(),
@@ -140,24 +143,31 @@ class Monitor(Thread):
         if self.queue is None:
             logger.error("Error: qu: queue is none.")
             return
-        if self.txmt is None or self.txmt.client is None:
-            logger.error("Error: tx: ws client is none.")
-            return
+        # if self.txmt is None or self.txmt.client is None:
+        #     logger.error("Error: tx: ws client is none.")
+        #     return
         logger.info("监控：启动完成")
         cycles = 0
         while True:
             try:
                 self.send_buffer()
+            except Exception as e:
+                logger.error(f'Error: buffer: {e}')
+
+            try:
                 size = self.queue.qsize()
                 # logger.debug(f'qu: 当前队列有：{size} 个元素')
                 data = self.queue.get(timeout=1)
-                logger.debug(f'监控: 拿出元素：{data}, 发送...')
+                # logger.info(data)
+                print_log_format(data)
+                # logger.debug(f'监控: 拿出元素：{data}, 发送...')
                 # await self.txmt.client.send(str(data))
                 try:
                     self.txmt.send(data)
                 except Exception as e:
-                    logger.error(f'Error: tx: ws发送错误：{e}')
+                    logger.error(f'Error: 队列发送错误：{e}')
                     self.push_buffer(data)
+                    time.sleep(1)
                     cycles += 1
                     if cycles > 10:
                         self.txmt = Transmitter(self.setting.get("username", None), self.setting.get("password", None))
@@ -166,12 +176,13 @@ class Monitor(Thread):
                         self.txmt.client.send("test: websocket restart")
                     continue
                 size = self.queue.qsize()
-                logger.debug(f'监控: 当前队列长度：{size}')
+                # logger.debug(f'监控: 当前队列长度：{size}')
             except Empty:
                 # logger.debug('empty queue')
                 continue
             except Exception as e:
                 logger.error(f'Error: qu: {e}')
+                time.sleep(1)
                 continue
 
     def push_buffer(self, data) -> int:
@@ -185,15 +196,18 @@ class Monitor(Thread):
     def send_buffer(self):
         blen = len(self.buffer)
         # logger.debug(f'qu: buffer size {blen}')
+        if self.txmt is None or self.txmt.client is None:
+            # logger.debug("Error: buffer: ws client is none.")
+            return
         if len(self.buffer) > 0:
             for buf in self.buffer:
                 try:
                     self.txmt.send(buf)
                 except Exception as e:
-                    logger.error(f'Error: tx: ws发送错误：{e}')
+                    logger.error(f'Error: buffer发送错误：{e}')
                     raise
-                logger.debug(f"as: send buffer: {buf}")
+                logger.debug(f"qu: send buffer: {buf}")
             self.buffer.clear()
-            logger.debug(f'qu: buffer clear {blen}')
+            logger.info(f'发送断线期间日志 {blen} 条')
             return blen
         return 0

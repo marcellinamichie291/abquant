@@ -69,7 +69,7 @@ class Transmitter:
 
     def send(self, data):
         if self.client is None:
-            logger.debug("Error: tx: websocket client is none")
+            # logger.debug("Error: tx: websocket client is none")
             raise Exception("websocket client is none")
         if isinstance(data, (int, float)):
             data = str(data)
@@ -79,6 +79,7 @@ class Transmitter:
             data = json.dumps(data)
         else:
             pass
+        # logger.debug(f"监控：发送：{data}")
         self.client.send(data)
 
     def on_message(self, ws, msg):
