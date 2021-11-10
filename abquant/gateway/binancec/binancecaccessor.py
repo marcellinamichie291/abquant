@@ -44,6 +44,15 @@ class BinanceCAccessor(RestfulAccessor):
         self.connect_time: int = 0
         self.usdt_base: bool = None
 
+        self.server_datetime: datetime = datetime.now()
+        self.request_limit = 2400
+        self.minite_orders_limit = 1200
+        self.seconds_orders_limit = 300
+
+        self.request_used = 0
+        self.minite_orders_used = 0
+        self.seconds_orders_used = 0
+
     def sign(self, request: Request) -> Request:
         security = request.data["security"]
         if security == Security.NONE:
@@ -131,6 +140,7 @@ class BinanceCAccessor(RestfulAccessor):
 
         self.query_time()
         self.query_account()
+        self.query_rate_limit()
         self.query_position()
         self.query_order()
         self.query_contract()
@@ -167,6 +177,24 @@ class BinanceCAccessor(RestfulAccessor):
             method="GET",
             path=path,
             callback=self.on_query_account,
+            data=data
+        )
+
+    def query_rate_limit(self) -> Request:
+        """"""
+        data = {
+            "security": Security.SIGNED
+        }
+
+        if self.usdt_base:
+            path = "/fapi/v1/exchangeInfo"
+        else:
+            path = "/dapi/v1/exchangeInfo"
+
+        return self.add_request(
+            "GET",
+            path,
+            callback=self.on_query_rate_limit,
             data=data
         )
 
@@ -228,6 +256,8 @@ class BinanceCAccessor(RestfulAccessor):
 
     def send_order(self, req: OrderRequest) -> str:
         """"""
+        if not self.check_rate_limit(request=1, order=1):
+            return ""
         orderid = self.ORDER_PREFIX + \
             str(self.connect_time + self._new_order_id())
         order = req.create_order_data(
@@ -280,6 +310,8 @@ class BinanceCAccessor(RestfulAccessor):
 
     def cancel_order(self, req: CancelRequest) -> Request:
         """"""
+        if not self.check_rate_limit(request=1, order=0):
+            return
         data = {
             "security": Security.SIGNED
         }
@@ -364,6 +396,17 @@ class BinanceCAccessor(RestfulAccessor):
                 self.gateway.on_account(account)
 
         self.gateway.write_log("账户资金查询成功")
+
+    def on_query_rate_limit(self, data: dict, request: Request) -> None:
+        for rateLimits in data['rateLimits']:
+            if rateLimits['rateLimitType'] == 'REQUEST_WEIGHT':
+                self.request_limit = rateLimits['limit']
+            elif rateLimits['rateLimitType'] == 'ORDERS':
+                if rateLimits['interval'] == 'MINUTE':
+                    self.minite_orders_limit = rateLimits['limit']
+                elif rateLimits['interval'] == 'SECOND':
+                    self.seconds_orders_limit = rateLimits['limit']
+
 
     def on_query_position(self, data: dict, request: Request) -> None:
         """"""
@@ -450,12 +493,13 @@ class BinanceCAccessor(RestfulAccessor):
 
     def on_send_order(self, data: dict, request: Request) -> None:
         """"""
-        pass
+        self.update_rate_limit(request)
 
     def on_send_order_failed(self, status_code: str, request: Request) -> None:
         """
         Callback when sending order failed on server.
         """
+        self.update_rate_limit(request)
         order = request.extra
         order.status = Status.REJECTED
         self.gateway.on_order(order)
@@ -479,7 +523,11 @@ class BinanceCAccessor(RestfulAccessor):
 
     def on_cancel_order(self, data: dict, request: Request) -> None:
         """"""
-        pass
+        self.update_rate_limit(request)
+
+    def on_failed(self, status_code: int, request: Request):
+        self.update_rate_limit(request)
+        super(BinanceCAccessor, self).on_failed(status_code, request)
 
     def on_start_user_stream(self, data: dict, request: Request) -> None:
         """"""
@@ -501,10 +549,55 @@ class BinanceCAccessor(RestfulAccessor):
         """"""
         if self.user_stream_key != data["listenKey"]:
             self.on_start_user_stream(data, request)
-        
+
+    def reset_server_time(self, interval: int):
+
+        server_datetime = datetime.fromtimestamp(
+            time.time() - self.time_offset / 1000)
+        if server_datetime.second // 10 != self.server_datetime.second // 10:
+            self.seconds_orders_used = 0
+        if server_datetime.minute != self.server_datetime.minute:
+            self.minite_orders_used = 0
+            self.request_used = 0
+        self.server_datetime = server_datetime
+
+    def check_rate_limit(self, request: int = 1, order: int = 0) -> bool:
+        self.seconds_orders_used += order
+        self.minite_orders_used += order
+        self.request_used += request
+
+        if self.seconds_orders_used > self.seconds_orders_limit:
+            msg = f"下单过于频繁，已被Binance限制, 10s内已下单{self.seconds_orders_used}, 超过{self.seconds_orders_limit}次每10s的限制"
+            self.gateway.write_log(msg, level=WARNING)
+            return False
+        if self.minite_orders_used > self.minite_orders_limit:
+            msg = f"下单过于频繁，已被Binance限制, 分钟内已下单{self.minite_orders_used}，超过{self.seconds_orders_limit}次每分钟的限制。"
+            self.gateway.write_log(msg, level=WARNING)
+            return False
+        if self.request_used > self.request_limit:
+            msg = f"请求过于频繁，已被Binance限制, 分钟内已请求{self.request_used}，超过{self.request_limit}次每分钟的限制。"
+            self.gateway.write_log(msg, level=WARNING)
+            return False
+        return True
+
+    def update_rate_limit(self, request: Request):
+        if request.response is None:
+            return
+        headers = request.response.headers
+
+        self.request_used = int(headers.get("X-MBX-USED-WEIGHT-1M", 0))
+        minite_orders_used = headers.get("X-MBX-ORDER-COUNT-1M", None)
+        if minite_orders_used is not None:
+            self.minite_orders_used = int(minite_orders_used)
+        seconds_orders_used = headers.get("X-MBX-ORDER-COUNT-10S", None)
+        if seconds_orders_used is not None:
+            self.seconds_orders_used = int(seconds_orders_used)
 
     def query_history(self, req: HistoryRequest) -> Iterable[BarData]:
         """"""
+
+        if not self.check_rate_limit(request=1, order=0):
+            return
         history = []
         limit = 1500
         if self.usdt_base:
@@ -525,14 +618,14 @@ class BinanceCAccessor(RestfulAccessor):
                 path = "/fapi/v1/klines"
                 if req.end:
                     end_time = int(datetime.timestamp(req.end))
-                    params["endTime"] = end_time * 1000     
+                    params["endTime"] = end_time * 1000
 
             else:
                 params["endTime"] = end_time * 1000
                 path = "/dapi/v1/klines"
                 if req.start:
                     start_time = int(datetime.timestamp(req.start))
-                    params["startTime"] = start_time * 1000    
+                    params["startTime"] = start_time * 1000
             try:
                 resp = self.request(
                     "GET",
@@ -540,10 +633,11 @@ class BinanceCAccessor(RestfulAccessor):
                     data={"security": Security.NONE},
                     params=params
                 )
-            except MissingSchema as e: 
+            except MissingSchema as e:
                 et, ev, tb = sys.exc_info()
                 self.on_error(et, ev, tb, req)
-                raise ConnectionError("call the gateway.connect method before trying to query history data. otherwaise UBC or BBC gateway is unknown.")
+                raise ConnectionError(
+                    "call the gateway.connect method before trying to query history data. otherwaise UBC or BBC gateway is unknown.")
             # Break if request failed with other status code
             if resp.status_code // 100 != 2:
                 msg = f"获取历史数据失败，状态码：{resp.status_code}，信息：{resp.text}"
