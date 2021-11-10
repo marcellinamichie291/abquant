@@ -34,14 +34,14 @@ STATUS_DYDX2AB: Dict[str, Status] = {
 }
 
 ORDERTYPE_AB2DYDX: Dict[OrderType, Tuple[str, str]] = {
-    OrderType.LIMIT: "LIMIT",
-    OrderType.MARKET: "MARKET",
-    OrderType.STOP: "STOP_LIMIT",
-    OrderType.TRAILING_STOP: "TRAILING_STOP",
-    OrderType.TAKE_PROFIT: "TAKE_PROFIT"
+    OrderType.LIMIT: ("LIMIT", "GTT"),
+    OrderType.MARKET: ("MARKET", "FOK"),
+    OrderType.STOP: ("STOP_LIMIT", "IOC"),
+    OrderType.TRAILING_STOP: ("TRAILING_STOP", "IOC"),
+    OrderType.TAKE_PROFIT: ("TAKE_PROFIT", "IOC")
 
 }
-ORDERTYPE_DYDX2AB: Dict[Tuple[str, str], OrderType] = {v: k for k, v in ORDERTYPE_AB2DYDX.items()}
+ORDERTYPE_DYDX2AB: Dict[Tuple[str, str], OrderType] = {v[0]: k for k, v in ORDERTYPE_AB2DYDX.items()}
 
 DIRECTION_AB2DYDX: Dict[Direction, str] = {
     Direction.LONG: "BUY",

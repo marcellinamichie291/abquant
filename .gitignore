@@ -128,14 +128,13 @@ dmypy.json
 
 # MODIFIED SECITON
 #PyCharm project
-.idea/
-abquant/.DS_Store
+
 .DS_Store
-long_short_strategy.py
-basis.py
-run_strategy.py
-binance_test.py
-basis.json
-run_strategy.py
-.DS_Store
+basis_dydx.json
+.gitignore
+parameters.json
+connectbinancec copy.py
+
 connect_dydx.py
+basis_dydx.py
+basis.py

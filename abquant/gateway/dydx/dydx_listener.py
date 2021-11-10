@@ -1,6 +1,8 @@
 from typing import Dict, List
 from datetime import datetime
 from copy import copy
+
+from abquant import gateway
 from . import (
     DIRECTION_DYDX2AB,
     WEBSOCKET_HOST,
@@ -54,7 +56,7 @@ class DydxWebsocketListener(WebsocketListener):
     def on_connected(self):
         """"""
         self.gateway.write_log("Websocket API连接成功")
-        self.subscribe_topic()
+        self.subscribe_account()
 
         for req in list(self.subscribed.values()):
             self.subscribe(req)
@@ -62,7 +64,7 @@ class DydxWebsocketListener(WebsocketListener):
     def on_disconnected(self):
         self.gateway.write_log("Websocket API断开")
 
-    def subscribe_topic(self) -> None:
+    def subscribe_account(self) -> None:
         """订阅委托、资金和持仓推送"""
         now_iso_string = generate_now_iso()
         signature: str = sign(
@@ -89,7 +91,7 @@ class DydxWebsocketListener(WebsocketListener):
             return
 
         # 缓存订阅记录
-        self.subscribed[req.ab_symbol] = req
+        self.subscribed[req.symbol] = req
         symbol = req.symbol
 
         orderbook = OrderBook(symbol, req.exchange, self.gateway)
@@ -328,7 +330,8 @@ class OrderBook():
         depth = self.depth
         depth.localtime = datetime.now()
         depth.datetime = dt
-        self.gateway.on_depth(copy(depth))
+        if self.gateway.subscribe_mode.depth:
+            self.gateway.on_depth(copy(depth))
         self.generate_tick(dt)
 
     def on_snapshot(self, asks, bids, dt: datetime) -> None:
@@ -381,5 +384,6 @@ class OrderBook():
         tick.best_bid_volume = tick.bid_volume_1
         tick.datetime = dt
         tick.localtime = datetime.now()
-        # 盘口更新时，不推送tick
-        # self.gateway.on_tick(copy(tick))
+        # 订阅tick_5档的时候 推送
+        if self.gateway.subscribe_mode.tick_5:
+            self.gateway.on_tick(copy(tick))
