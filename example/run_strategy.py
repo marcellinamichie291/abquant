@@ -28,6 +28,8 @@ def parse():
                         help='username')
     parser.add_argument('-w', '--password', type=str, required=True,
                         help='password')
+    parser.add_argument('-l', '--log_path', type=str, required=False,
+                        help='log path')
     parser.add_argument('-u', '--proxy_host', type=str,
                         # default='127.0.0.1',
                         help='proxy host')
@@ -225,6 +227,7 @@ def main():
     common_setting = {
         "username": args.username,
         "password": args.password,
+        "log_path": args.log_path,
     }
     # Monitor.init_monitor(common_setting)
     monitor = Monitor(common_setting)
@@ -234,13 +237,13 @@ def main():
     event_dispatcher = EventDispatcher(interval=1)
 
     # 注册一下 log 事件的回调函数， 该函数决定了如何打log。
-    event_dispatcher.register(EventType.EVENT_LOG, lambda event: print(
-        "LOG--{}. {}. gateway: {}; msg: {}".format(
-            getLevelName(event.data.level),
-            event.data.time,
-            event.data.gateway_name,
-            event.data.msg)
-    ))
+    # event_dispatcher.register(EventType.EVENT_LOG, lambda event: print(
+    #     "LOG--{}. {}. gateway: {}; msg: {}".format(
+    #         getLevelName(event.data.level),
+    #         event.data.time,
+    #         event.data.gateway_name,
+    #         event.data.msg)
+    # ))
     event_dispatcher.register(EventType.EVENT_ACCOUNT, lambda event: print(
         str('ACCOUNT: ') + str(event.data)))  # pass accessor,  trade_listerer not done
     # event_dispatcher.register(EventType.EVENT_CONTRACT, lambda event:  print(str('CONTRACT: ') + str(event.data))) # pass
@@ -328,7 +331,7 @@ def main():
                                  }
         strategy_runner.edit_strategy(
             strategy_name='the_strategy2', setting=the_strategy2_setting)
-        # monitor.send(the_strategy1_setting)
+        monitor.send(the_strategy1_setting)
 
     # print([c.func.id for c in ast.walk(ast.parse(inspect.getsource(TheStrategy))) if isinstance(c, ast.Call)])
 if __name__ == '__main__':
