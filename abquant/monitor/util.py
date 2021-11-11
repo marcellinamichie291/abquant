@@ -63,6 +63,9 @@ def print_log_format(data):
             event_type = data.get("event_type")
             run_id = data.get("run_id")
             payload = data.get("payload")
+            if strategy_name is None and event_type is None and payload is None:
+                logger.info(json.dumps(data))
+                return
             formatStr = ''
             if strategy_name is not None and strategy_name != '':
                 formatStr += f'[{strategy_name}] '
@@ -85,10 +88,10 @@ def print_log_format(data):
                         formatStr += f'策略结束'
                     elif ptype == 'heartbeat':
                         formatStr += f'策略心跳'
-                        logger.debug(formatStr)
-                        return
                     else:
                         formatStr += str(ptype)
+                    logger.debug(formatStr)
+                    return
                 elif event_type == 'log':
                     ltype = payload.get("type")
                     if ltype == 'system':

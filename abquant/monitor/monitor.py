@@ -5,7 +5,7 @@ import time
 from threading import Thread
 from queue import Empty, Queue
 from typing import Dict, List, Tuple
-from copy import copy
+from copy import copy, deepcopy
 import uuid
 
 from abquant.trader.msg import OrderData, TradeData
@@ -98,7 +98,7 @@ class Monitor(Thread):
                    "value": None}
         info['payload'] = payload
         for name, value in parameters.items():
-            current_info = copy(info)
+            current_info = deepcopy(info)
             current_info['payload']['name'] = name
             current_info['payload']['value'] = value
             self.send(current_info)
@@ -110,7 +110,7 @@ class Monitor(Thread):
                    "value": None}
         info['payload'] = payload
         for name, value in variables.items():
-            current_info = copy(info)
+            current_info = deepcopy(info)
             current_info['payload']['name'] = name
             current_info['payload']['value'] = value
             self.send(current_info)
