@@ -275,6 +275,7 @@ def main():
     binance_bbc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
 
     strategy_runner = LiveStrategyRunner(event_dispatcher)
+    strategy_runner.set_monitor(monitor)
     from abquant.gateway.binancec import symbol_contract_map
     for k, v in symbol_contract_map.items():
         print(v)
@@ -331,7 +332,7 @@ def main():
                                  }
         strategy_runner.edit_strategy(
             strategy_name='the_strategy2', setting=the_strategy2_setting)
-        monitor.send(the_strategy1_setting)
+        # monitor.send(the_strategy1_setting)
 
     # print([c.func.id for c in ast.walk(ast.parse(inspect.getsource(TheStrategy))) if isinstance(c, ast.Call)])
 if __name__ == '__main__':
