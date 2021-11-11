@@ -93,7 +93,7 @@ class Transmitter:
         logger.info("监控：WebSocket开启")
 
     def on_close(self, ws, code, msg):
-        logger.info(f"tx: close, code: {code}, msg: {msg}")
+        logger.info(f"WebSocket连接断开, code: {code}, msg: {msg}")
         self.client = None
         i = 1
         time.sleep(3)
@@ -103,7 +103,10 @@ class Transmitter:
             if self.client is not None:
                 break
             i += 1
-        logger.info(f"tx: Reconnect after {i} retries")
+        if self.client is None:
+            logger.info(f"重试{i}次失败，监控服务器断开连接")
+        else:
+            logger.info(f"重试{i}次后，监控服务器重新连接")
 
     def on_ping(self, pingMsg, ex):
         # ws._send_ping()

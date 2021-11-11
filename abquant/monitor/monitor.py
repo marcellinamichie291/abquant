@@ -147,7 +147,7 @@ class Monitor(Thread):
         #     logger.error("Error: tx: ws client is none.")
         #     return
         logger.info("监控：启动完成")
-        cycles = 0
+        cycles = 1
         while True:
             try:
                 self.send_buffer()
@@ -165,15 +165,17 @@ class Monitor(Thread):
                 try:
                     self.txmt.send(data)
                 except Exception as e:
-                    logger.error(f'Error: 队列发送错误：{e}')
+                    logger.debug(f'Error: 队列发送错误：{e}，放入buffer')
                     self.push_buffer(data)
                     time.sleep(1)
                     cycles += 1
                     if cycles > 10:
                         self.txmt = Transmitter(self.setting.get("username", None), self.setting.get("password", None))
                         self.txmt.connect_ws()
-                        time.sleep(1)
-                        self.txmt.client.send("test: websocket restart")
+                        time.sleep(2)
+                        if self.txmt is not None and self.txmt.client is not None:
+                            self.txmt.client.send("test: websocket restart")
+                        cycles = 1
                     continue
                 size = self.queue.qsize()
                 # logger.debug(f'监控: 当前队列长度：{size}')
@@ -181,7 +183,7 @@ class Monitor(Thread):
                 # logger.debug('empty queue')
                 continue
             except Exception as e:
-                logger.error(f'Error: qu: {e}')
+                logger.debug(f'Error: qu: {e}')
                 time.sleep(1)
                 continue
 
