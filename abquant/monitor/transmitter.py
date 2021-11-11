@@ -71,14 +71,18 @@ class Transmitter:
         if self.client is None:
             # logger.debug("Error: tx: websocket client is none")
             raise Exception("websocket client is none")
-        if isinstance(data, (int, float)):
+        try:
+            if isinstance(data, (int, float)):
+                data = str(data)
+            elif isinstance(data, (list, tuple, set)):
+                data = str(data)
+            elif isinstance(data, dict):
+                data = json.dumps(data)
+            else:
+                pass
+        except Exception as e:
+            logger.debug(f'Data transform error, use str()')
             data = str(data)
-        elif isinstance(data, (list, tuple, set)):
-            data = str(data)
-        elif isinstance(data, dict):
-            data = json.dumps(data)
-        else:
-            pass
         # logger.debug(f"监控：发送：{data}")
         self.client.send(data)
 

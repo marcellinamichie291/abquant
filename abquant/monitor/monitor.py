@@ -55,7 +55,7 @@ class Monitor(Thread):
         #     logger.error("Error: websocket client is None.")
         #     return
         if self.queue.full():
-            logger.error("Error: qu: queue is full")
+            logger.error("错误：监控队列已满")
             return
         self.queue.put_nowait(data)
         # logger.debug(f"监控: 放入队列: {data}, 目前长度: {self.queue.qsize()}")
