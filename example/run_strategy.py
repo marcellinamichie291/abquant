@@ -227,11 +227,15 @@ def main():
         "log_path": args.log_path,
     }
     # Monitor.init_monitor(common_setting)
+    # 初始化 monitor
     monitor = Monitor(common_setting)
     monitor.start()
     print("监控启动")
 
     event_dispatcher = EventDispatcher(interval=1)
+    strategy_runner = LiveStrategyRunner(event_dispatcher)
+    #设置monitor
+    strategy_runner.set_monitor(monitor)
 
     # 注册一下 log 事件的回调函数， 该函数决定了如何打log。
     # event_dispatcher.register(EventType.EVENT_LOG, lambda event: print(
@@ -271,8 +275,8 @@ def main():
     binance_ubc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
     binance_bbc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
 
-    strategy_runner = LiveStrategyRunner(event_dispatcher)
-    strategy_runner.set_monitor(monitor)
+
+
     from abquant.gateway.binancec import symbol_contract_map
     for k, v in symbol_contract_map.items():
         print(v)
@@ -306,7 +310,7 @@ def main():
                                              "ICPUSDT.BINANCE"],
                                  # uncommnet for test trade operation.
                                  setting={"param1": 3, "param2": 4,
-                                          "trade_flag": True}
+                                          "trade_flag": False}
                                  )
     strategy_runner.init_all_strategies()
 
