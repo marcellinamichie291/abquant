@@ -41,7 +41,7 @@ class Monitor(Thread):
                 self.txmt = Transmitter(self.setting.get("strategy", None))
                 self.txmt.connect_ws()
                 time.sleep(1)
-                self.txmt.client.send("test: websocket start")
+                # self.txmt.client.send("test: websocket start")
         except Exception as e:
             logger.error(f"Error: {e}")
         try:
