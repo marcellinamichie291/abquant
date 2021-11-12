@@ -24,10 +24,8 @@ def parse():
                         help='api key')
     parser.add_argument('-s', '--secret', type=str, required=True,
                         help='secret')
-    parser.add_argument('-n', '--username', type=str, required=True,
-                        help='username')
-    parser.add_argument('-w', '--password', type=str, required=True,
-                        help='password')
+    parser.add_argument('-t', '--strategy', type=str, required=True,
+                        help='strategy')
     parser.add_argument('-l', '--log_path', type=str, required=False,
                         help='log path')
     parser.add_argument('-u', '--proxy_host', type=str,
@@ -127,10 +125,10 @@ class TheStrategy(StrategyTemplate):
         self.bar_accumulator.update_bars(bars)
 
         if self.trade_flag:
-            self.write_log("BARS, timestamp:{}, thread: {}, last_time: {}".format(
-                datetime.now(), threading.get_native_id(), self.last_tick_time))
+            # self.write_log("BARS, timestamp:{}, thread: {}, last_time: {}".format(
+            #     datetime.now(), threading.get_native_id(), self.last_tick_time))
 
-            self.write_log("activate orders: {}".format(self.active_orderids))
+            # self.write_log("activate orders: {}".format(self.active_orderids))
             for ab_orderid in self.active_orderids:
                 self.cancel_order(ab_orderid)
 
@@ -225,17 +223,18 @@ def main():
     }
 
     common_setting = {
-        "username": args.username,
-        "password": args.password,
+        "strategy": args.strategy,
         "log_path": args.log_path,
     }
     # Monitor.init_monitor(common_setting)
+    # 初始化 monitor
     monitor = Monitor(common_setting)
     monitor.start()
     print("监控启动")
 
     event_dispatcher = EventDispatcher(interval=1)
     strategy_runner = LiveStrategyRunner(event_dispatcher)
+    #设置monitor
     strategy_runner.set_monitor(monitor)
 
     # 注册一下 log 事件的回调函数， 该函数决定了如何打log。
@@ -275,6 +274,7 @@ def main():
     # 有默认值，默认全订阅, 可以不调用下面两行。
     binance_ubc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
     binance_bbc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
+
 
 
     from abquant.gateway.binancec import symbol_contract_map
@@ -320,19 +320,19 @@ def main():
 
     import random
     while True:
+        time.sleep(60)
         # renew strategy1 setting.
-        time.sleep(5)
         # edit_strategy 方法用于修改策略的 parameter。 random在这里就是一个示例。
         the_strategy1_setting = {"param1": 2,
                                  "param2": 2 * random.uniform(0, 1)}
         strategy_runner.edit_strategy(
             strategy_name='the_strategy1', setting=the_strategy1_setting)
         # renew strategy2 setting.
-        the_strategy2_setting = {"param1": 4,
-                                 "param2": 4 * random.uniform(0, 1),
-                                 }
-        strategy_runner.edit_strategy(
-            strategy_name='the_strategy2', setting=the_strategy2_setting)
+        # the_strategy2_setting = {"param1": 4,
+        #                          "param2": 4 * random.uniform(0, 1),
+        #                          }
+        # strategy_runner.edit_strategy(
+        #     strategy_name='the_strategy2', setting=the_strategy2_setting)
         # monitor.send(the_strategy1_setting)
 
     # print([c.func.id for c in ast.walk(ast.parse(inspect.getsource(TheStrategy))) if isinstance(c, ast.Call)])
