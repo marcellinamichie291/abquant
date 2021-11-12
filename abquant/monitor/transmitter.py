@@ -9,19 +9,17 @@ import websocket
 from .util import logger
 
 LOGIN_URL = "https://dct-test001.wecash.net/dct-business-api/login"
-WS_URL = "wss://dct-test001-internal.wecash.net/dct-service-abquant/ws/business?access_token="
+WS_URL = "wss://dct-test001-internal.wecash.net/dct-service-abquant/ws/business?strategy="
 MAX_CONNECT_RETRY = 5
 
 
 class Transmitter:
 
     client = None
-    username = None
-    password = None
+    strategy = None
 
-    def __init__(self, username, password):
-        self.username = username
-        self.password = password
+    def __init__(self, strategy):
+        self.strategy = strategy
         self._pp_thread = None  # underlying ping/pong thread
 
     def connect_ws(self):
@@ -31,23 +29,17 @@ class Transmitter:
         headers = {
             'Content-Type': 'application/json; charset=UTF-8'
         }
-        if self.username is None or self.password is None:
-            logger.debug("监控：初始化：用户名或密码不存在")
+        if self.strategy is None:
+            logger.debug("监控：初始化：未配置策略名称")
             return
-        login_url = LOGIN_URL + "?userName=" + self.username + "&password=" + self.password
-        access_token = None
-        try:
-            response = requests.request("GET", login_url, headers=headers, data=payload)
-            jn = json.loads(response.text)
-            access_token = jn.get("data").get("access_token")
-            # logger.debug(access_token)
-        except Exception:
-            return
-
         websocket.enableTrace(False)
-        ws = websocket.WebSocketApp(WS_URL + access_token, on_message=self.on_message, on_error=self.on_error,
-                                    on_close=self.on_close, on_open=self.on_open,
-                                    on_ping=self.on_ping, on_pong=self.on_pong)
+        try:
+            ws = websocket.WebSocketApp(WS_URL + self.strategy, on_message=self.on_message, on_error=self.on_error,
+                                        on_close=self.on_close, on_open=self.on_open,
+                                        on_ping=self.on_ping, on_pong=self.on_pong)
+        except Exception as e:
+            logger.error(e)
+            return
         self.client = ws
         # ws.run_forever(ping_interval=30, ping_timeout=5)
         self._pp_thread = Thread(target=self.run_forever, args=(ws,))
@@ -97,8 +89,11 @@ class Transmitter:
         logger.info("监控：WebSocket开启")
 
     def on_close(self, ws, code, msg):
-        logger.info(f"WebSocket连接断开, code: {code}, msg: {msg}")
         self.client = None
+        if code is not None and code == 1008:   # WS Error Code: Policy Violation, 具体是strategy参数不对
+            logger.info("监控：未指定正确的strategy，WebSocket关闭")
+            return
+        logger.info(f"WebSocket连接断开, code: {code}, msg: {msg}")
         i = 1
         time.sleep(3)
         while i <= MAX_CONNECT_RETRY:

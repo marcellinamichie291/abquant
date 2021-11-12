@@ -38,7 +38,7 @@ class Monitor(Thread):
         config_logger(self.setting.get("log_path", None))
         try:
             if self.txmt is None:
-                self.txmt = Transmitter(self.setting.get("username", None), self.setting.get("password", None))
+                self.txmt = Transmitter(self.setting.get("strategy", None))
                 self.txmt.connect_ws()
                 time.sleep(1)
                 self.txmt.client.send("test: websocket start")
@@ -167,7 +167,7 @@ class Monitor(Thread):
                 except Exception as e:
                     logger.debug(f'Error: 队列发送错误：{e}，放入buffer')
                     self.push_buffer(data)
-                    time.sleep(1)
+                    # time.sleep(1)
                     cycles += 1
                     if cycles > 10:
                         self.txmt = Transmitter(self.setting.get("username", None), self.setting.get("password", None))
@@ -184,7 +184,7 @@ class Monitor(Thread):
                 continue
             except Exception as e:
                 logger.debug(f'Error: qu: {e}')
-                time.sleep(1)
+                # time.sleep(1)
                 continue
 
     def push_buffer(self, data) -> int:

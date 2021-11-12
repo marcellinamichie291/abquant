@@ -24,10 +24,8 @@ def parse():
                         help='api key')
     parser.add_argument('-s', '--secret', type=str, required=True,
                         help='secret')
-    parser.add_argument('-n', '--username', type=str, required=True,
-                        help='username')
-    parser.add_argument('-w', '--password', type=str, required=True,
-                        help='password')
+    parser.add_argument('-t', '--strategy', type=str, required=True,
+                        help='strategy')
     parser.add_argument('-l', '--log_path', type=str, required=False,
                         help='log path')
     parser.add_argument('-u', '--proxy_host', type=str,
@@ -225,8 +223,7 @@ def main():
     }
 
     common_setting = {
-        "username": args.username,
-        "password": args.password,
+        "strategy": args.strategy,
         "log_path": args.log_path,
     }
     # Monitor.init_monitor(common_setting)
