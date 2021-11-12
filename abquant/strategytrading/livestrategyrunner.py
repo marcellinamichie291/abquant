@@ -499,8 +499,11 @@ class LiveStrategyRunner(StrategyRunner):
     def write_log(self, msg: str, strategy: StrategyTemplate = None, level: LOG_LEVEL = INFO):
         if strategy:
             msg = f"{strategy.strategy_name}: {msg}"
+            self.monitor.send_log(strategy.run_id, LogData(gateway_name=self.__class__.__name__, msg=msg, level=level))
+
         else:
             msg = f"StrategyRunner: {msg}"
+            self.monitor.send_log(self.MAC, LogData(gateway_name=self.__class__.__name__, msg=msg, level=level))
         log = LogData(
             msg=msg, gateway_name=self.__class__.__name__, level=level)
         self.on_log(log)

@@ -5,7 +5,7 @@ import time
 from threading import Thread
 from queue import Empty, Queue
 from typing import Dict, List, Tuple
-from copy import copy
+from copy import copy, deepcopy
 import uuid
 
 from abquant.trader.msg import OrderData, TradeData
@@ -38,10 +38,10 @@ class Monitor(Thread):
         config_logger(self.setting.get("log_path", None))
         try:
             if self.txmt is None:
-                self.txmt = Transmitter(self.setting.get("username", None), self.setting.get("password", None))
+                self.txmt = Transmitter(self.setting.get("strategy", None))
                 self.txmt.connect_ws()
                 time.sleep(1)
-                self.txmt.client.send("test: websocket start")
+                # self.txmt.client.send("test: websocket start")
         except Exception as e:
             logger.error(f"Error: {e}")
         try:
@@ -55,7 +55,7 @@ class Monitor(Thread):
         #     logger.error("Error: websocket client is None.")
         #     return
         if self.queue.full():
-            logger.error("Error: qu: queue is full")
+            logger.error("错误：监控队列已满")
             return
         self.queue.put_nowait(data)
         # logger.debug(f"监控: 放入队列: {data}, 目前长度: {self.queue.qsize()}")
@@ -98,7 +98,7 @@ class Monitor(Thread):
                    "value": None}
         info['payload'] = payload
         for name, value in parameters.items():
-            current_info = copy(info)
+            current_info = deepcopy(info)
             current_info['payload']['name'] = name
             current_info['payload']['value'] = value
             self.send(current_info)
@@ -110,7 +110,7 @@ class Monitor(Thread):
                    "value": None}
         info['payload'] = payload
         for name, value in variables.items():
-            current_info = copy(info)
+            current_info = deepcopy(info)
             current_info['payload']['name'] = name
             current_info['payload']['value'] = value
             self.send(current_info)
@@ -147,7 +147,7 @@ class Monitor(Thread):
         #     logger.error("Error: tx: ws client is none.")
         #     return
         logger.info("监控：启动完成")
-        cycles = 0
+        cycles = 1
         while True:
             try:
                 self.send_buffer()
@@ -165,15 +165,17 @@ class Monitor(Thread):
                 try:
                     self.txmt.send(data)
                 except Exception as e:
-                    logger.error(f'Error: 队列发送错误：{e}')
+                    logger.debug(f'Error: 队列发送错误：{e}，放入buffer')
                     self.push_buffer(data)
-                    time.sleep(1)
+                    # time.sleep(1)
                     cycles += 1
                     if cycles > 10:
                         self.txmt = Transmitter(self.setting.get("username", None), self.setting.get("password", None))
                         self.txmt.connect_ws()
-                        time.sleep(1)
-                        self.txmt.client.send("test: websocket restart")
+                        time.sleep(2)
+                        if self.txmt is not None and self.txmt.client is not None:
+                            self.txmt.client.send("test: websocket restart")
+                        cycles = 1
                     continue
                 size = self.queue.qsize()
                 # logger.debug(f'监控: 当前队列长度：{size}')
@@ -181,8 +183,8 @@ class Monitor(Thread):
                 # logger.debug('empty queue')
                 continue
             except Exception as e:
-                logger.error(f'Error: qu: {e}')
-                time.sleep(1)
+                logger.debug(f'Error: qu: {e}')
+                # time.sleep(1)
                 continue
 
     def push_buffer(self, data) -> int:
