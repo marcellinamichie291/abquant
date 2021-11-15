@@ -170,7 +170,7 @@ class Monitor(Thread):
                     # time.sleep(1)
                     cycles += 1
                     if cycles > 10:
-                        self.txmt = Transmitter(self.setting.get("username", None), self.setting.get("password", None))
+                        self.txmt = Transmitter(self.setting.get("strategy", None))
                         self.txmt.connect_ws()
                         time.sleep(2)
                         if self.txmt is not None and self.txmt.client is not None:
@@ -206,7 +206,7 @@ class Monitor(Thread):
                 try:
                     self.txmt.send(buf)
                 except Exception as e:
-                    logger.error(f'Error: buffer发送错误：{e}')
+                    logger.debug(f'Error: buffer发送错误：{e}')
                     raise
                 logger.debug(f"qu: send buffer: {buf}")
             self.buffer.clear()
