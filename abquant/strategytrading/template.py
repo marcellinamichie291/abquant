@@ -312,7 +312,6 @@ class StrategyTemplate(ABC):
         """
         """
         self.strategy_runner.write_log(msg, self, level)
-        self.strategy_runner.monitor.send_log(self.run_id, LogData(gateway_name=self.__class__.__name__, msg='msg', level=level))
 
     def load_bars(self, days: int, interval: Interval = Interval.MINUTE) -> None:
         """
