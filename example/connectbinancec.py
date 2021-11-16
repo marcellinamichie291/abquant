@@ -106,9 +106,9 @@ if __name__ == '__main__':
     # 下单撤单， 由框架异步执行。胆大的下单撤单吧。不必担心阻塞和 IO。
     for i in range(2):
         ab_order_id: str = gateway.send_order(OrderRequest(symbol='XRPUSDT', exchange=Exchange.BINANCE,
-                                            direction=Direction.LONG, type=OrderType.LIMIT, volume=7, price=1.09, offset=Offset.OPEN))
+                                            direction=Direction.LONG, type=OrderType.LIMIT, volume=7.00001, price=1.09, offset=Offset.OPEN))
         print('ab orderid', ab_order_id)
-        # time.sleep(0.03)
+        time.sleep(0.03)
         order_id = ab_order_id.split('.')[-1]
         print('orderid', order_id)
         gateway.cancel_order(CancelRequest(
