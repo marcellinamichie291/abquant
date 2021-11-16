@@ -226,7 +226,7 @@ def main():
 
     common_setting = {
         "strategy": args.strategy,
-        "lark_url": "https://open.larksuite.com/open-apis/bot/v2/hook/2b92f893-83c2-48c1-b366-2e6e38a09efe",
+        "lark_url": None,  # "https://open.larksuite.com/open-apis/bot/v2/hook/2b92f893-83c2-48c1-b366-2e6e38a09efe",
         "log_path": args.log_path,
     }
     # Monitor.init_monitor(common_setting)

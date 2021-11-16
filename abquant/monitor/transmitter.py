@@ -118,10 +118,11 @@ class Transmitter:
 
 if __name__ == '__main__':
     setting = {
-        "username": "zhanghui",
-        "password": "123456",
+        "strategy": "grid",
+        "lark_url": None,
+        "log_path": None,
     }
-    tx = Transmitter(setting.get("username", None), setting.get("password", None))
+    tx = Transmitter(setting.get("strategy", None))
     client = tx.connect_ws()
     time.sleep(5)
     assert client == tx.client
