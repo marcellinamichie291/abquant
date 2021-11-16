@@ -22,23 +22,32 @@ class Monitor(Thread):
     queue = None
     txmt: Transmitter = None
     setting = None
+    strategy = None
     buffer = None
+    lark_url = None
 
     def __init__(self, setting: dict):
         Thread.__init__(self)
         self.setting = setting
+        self.strategy = setting.get("strategy", None)
+        if self.strategy is None:
+            logger.info("监控：未设置strategy，无法上传日志")
+        self.lark_url = setting.get("lark_url", None)
+        if self.lark_url is None:
+            logger.info("监控：未设置lark通知地址")
+        self.log_path = setting.get("log_path", None)
+        if self.log_path is None:
+            logger.info("监控：日志本地目录，默认./logs/")
         self.buffer = []
         self.queue: Queue = Queue(maxsize=MAX_QUEUE_SIZE)
-        logger.info("监控：队列初始化（{}）".format(MAX_QUEUE_SIZE))
+        logger.debug("监控：队列长度（{}）".format(MAX_QUEUE_SIZE))
+        logger.info("监控：初始化完成")
 
     def run(self):
-        if self.setting is None:
-            logger.error("Error: no setting, exit")
-            return
-        config_logger(self.setting.get("log_path", None))
+        config_logger(self.log_path)
         try:
             if self.txmt is None:
-                self.txmt = Transmitter(self.setting.get("strategy", None))
+                self.txmt = Transmitter(self.strategy)
                 self.txmt.connect_ws()
                 time.sleep(1)
                 # self.txmt.client.send("test: websocket start")
@@ -127,16 +136,16 @@ class Monitor(Thread):
         info = self.default_info(run_id, "status_report")
         payload = {"type": status_type,
                    "message": "",
-                   "account_name": self.setting.get("username", None),
+                   # "account_name": self.setting.get("username", None),
                    "ab_symbols": ab_symbols}
         info['payload'] = payload
         self.send(info)
 
-    def send_notify_lark(self, run_id, msg: str, lark_url: str):
-        if lark_url is None:
+    def send_notify_lark(self, run_id, msg: str):
+        if self.lark_url is None:
             return
         info = self.default_info(run_id, "lark")
-        payload = {"lark_group_robot_url": lark_url,
+        payload = {"lark_group_robot_url": self.lark_url,
                    "message": msg}
         info['payload'] = payload
         self.send(info)
@@ -179,7 +188,7 @@ class Monitor(Thread):
                     # time.sleep(1)
                     cycles += 1
                     if cycles > 10:
-                        self.txmt = Transmitter(self.setting.get("strategy", None))
+                        self.txmt = Transmitter(self.strategy)
                         self.txmt.connect_ws()
                         time.sleep(2)
                         if self.txmt is not None and self.txmt.client is not None:
