@@ -368,7 +368,7 @@ class BitmexListener(WebsocketListener):
             order = OrderData(
                 symbol=d["symbol"],
                 exchange=Exchange.BITMEX,
-                type=ORDERTYPE_BITMEX2AB[d["ordType"]],
+                type=ORDERTYPE_BITMEX2AB.get([d["ordType"]], None),
                 orderid=orderid,
                 direction=DIRECTION_BITMEX2AB[side],
                 price=d["price"],
