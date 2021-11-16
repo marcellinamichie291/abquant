@@ -314,7 +314,7 @@ def main():
     # 策略 start之前 sleepy一段时间， 新的策略实例有可能订阅新的产品行情，这使得abquant需要做一次与交易所的重连操作。
     time.sleep(5)
     strategy_runner.start_all_strategies()
-    monitor.send_notify_lark("11111111", "message for lark", common_setting.get("lark_url"))
+    # monitor.send_notify_lark("11111111", "message for lark", common_setting.get("lark_url"))
 
     import random
     while True:

@@ -101,7 +101,7 @@ def print_log_format(data):
                     else:
                         formatStr += str(payload.get("msg"))
                 elif event_type == 'lark':
-                    formatStr += f'发送Lark: {payload.get("msg")}'
+                    formatStr += f'发送Lark: {payload.get("message")}'
                 else:
                     formatStr += json.dumps(payload)
             else:
