@@ -175,7 +175,8 @@ class TheStrategy(StrategyTemplate):
 
     def on_window_bars(self, bars: Dict[str, BarData]):
         # window分钟级策略在这里实现， 注意设置 window参数。方便
-        self.write_log("WINDOW BAR: {}".format(bars))
+        # self.write_log("WINDOW BAR: {}".format(bars))
+        pass
 
     def on_entrust(self, entrust: EntrustData) -> None:
         pass
