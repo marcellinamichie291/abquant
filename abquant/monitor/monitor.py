@@ -132,6 +132,15 @@ class Monitor(Thread):
         info['payload'] = payload
         self.send(info)
 
+    def send_notify_lark(self, run_id, msg: str, lark_url: str):
+        if lark_url is None:
+            return
+        info = self.default_info(run_id, "lark")
+        payload = {"lark_group_robot_url": lark_url,
+                   "message": msg}
+        info['payload'] = payload
+        self.send(info)
+
     def consumer(self):
         # self.queue.put(1.5)
         # self.queue.put('2')
