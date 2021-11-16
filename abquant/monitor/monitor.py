@@ -132,6 +132,15 @@ class Monitor(Thread):
         info['payload'] = payload
         self.send(info)
 
+    def send_notify_lark(self, run_id, msg: str, lark_url: str):
+        if lark_url is None:
+            return
+        info = self.default_info(run_id, "lark")
+        payload = {"lark_group_robot_url": lark_url,
+                   "message": msg}
+        info['payload'] = payload
+        self.send(info)
+
     def consumer(self):
         # self.queue.put(1.5)
         # self.queue.put('2')
@@ -170,7 +179,7 @@ class Monitor(Thread):
                     # time.sleep(1)
                     cycles += 1
                     if cycles > 10:
-                        self.txmt = Transmitter(self.setting.get("username", None), self.setting.get("password", None))
+                        self.txmt = Transmitter(self.setting.get("strategy", None))
                         self.txmt.connect_ws()
                         time.sleep(2)
                         if self.txmt is not None and self.txmt.client is not None:
@@ -206,7 +215,7 @@ class Monitor(Thread):
                 try:
                     self.txmt.send(buf)
                 except Exception as e:
-                    logger.error(f'Error: buffer发送错误：{e}')
+                    logger.debug(f'Error: buffer发送错误：{e}')
                     raise
                 logger.debug(f"qu: send buffer: {buf}")
             self.buffer.clear()
