@@ -177,6 +177,9 @@ class TheStrategy(StrategyTemplate):
     def on_window_bars(self, bars: Dict[str, BarData]):
         # window分钟级策略在这里实现， 注意设置 window参数。方便
         # self.write_log("WINDOW BAR: {}".format(bars))
+
+        # 如果需要报警功能，配置好 monitor后可以通过该方法实现。
+        self.notify_lark("send msg to lark")
         pass
 
     def on_entrust(self, entrust: EntrustData) -> None:

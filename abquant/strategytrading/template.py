@@ -319,8 +319,8 @@ class StrategyTemplate(ABC):
         """
         self.strategy_runner.load_bars(self, days, interval)
 
-    def notify(self, msg: str):
-        self.strategy_runner.notify(msg, self)
+    def notify_lark(self, msg: str):
+        self.strategy_runner.notify_lark(self, msg)
         
     def sync_data(self):
         """
