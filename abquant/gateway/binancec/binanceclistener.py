@@ -289,7 +289,7 @@ class BinanceCTradeWebsocketListener(WebsocketListener):
 
         contract = symbol_contract_map.get(order.symbol, None)
         if contract:
-            trade_volume = round_to(trade_volume, contract.min_volume)
+            trade_volume = round_to(trade_volume, contract.size)
 
         if not trade_volume:
             return
