@@ -6,7 +6,7 @@ import time
 import argparse
 
 from abquant.event import EventDispatcher, EventType, Event
-from abquant.gateway.binances.binancegateway import BinanceSGateway
+from abquant.gateway import BinanceSGateway
 from abquant.trader.object import CancelRequest, HistoryRequest, OrderRequest, SubscribeMode, SubscribeRequest
 from abquant.trader.common import Direction, Exchange, Interval, Offset, OrderType
 
@@ -27,16 +27,17 @@ def parse():
 
 
 if __name__ == '__main__':
+    args = parse()
     binance_setting = {
-        "key": "",
-        "secret": "",
+        "key": args.key,
+        "secret": args.secret,
         "session_number": 20,
         # "127.0.0.1" str类型
-        "proxy_host": "127.0.0.1",
+        "proxy_host": args.proxy_host if args.proxy_host else "",
         # 1087 int类型
-        "proxy_port": 58591,
+        "proxy_port": args.proxy_port if args.proxy_port else 0,
+        "test_net": ["TESTNET", "REAL"][1],
     }
-
     event_dispatcher = EventDispatcher()
 
     # 根据事件类型 注册回调函数。 随意uncomment
