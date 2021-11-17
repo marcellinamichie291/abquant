@@ -255,8 +255,8 @@ def main():
 
     binance_ubc_gateway = BinanceUBCGateway(event_dispatcher)
     binance_ubc_gateway.connect(binance_setting)
-    binance_bbc_gateway = BinanceBBCGateway(event_dispatcher)
-    binance_bbc_gateway.connect(binance_setting)
+    # binance_bbc_gateway = BinanceBBCGateway(event_dispatcher)
+    # binance_bbc_gateway.connect(binance_setting)
 
     # 等待连接成功。
     time.sleep(3)
@@ -275,7 +275,7 @@ def main():
 
     # 有默认值，默认全订阅, 可以不调用下面两行。
     binance_ubc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
-    binance_bbc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
+    # binance_bbc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
 
 
 
