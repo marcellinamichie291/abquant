@@ -282,7 +282,7 @@ class BinanceSTradeWebsocketListener(WebsocketListener):
 
         ord_data = packet
         key = ord_data["o"]
-        order_type = ORDERTYPE_BINANCEC2AB.get(key, None)
+        order_type = ORDERTYPE_BINANCE2AB.get(key, None)
         if not order_type:
             return
 
@@ -304,17 +304,16 @@ class BinanceSTradeWebsocketListener(WebsocketListener):
             elif float(ord_data['z']) != 0:
                 status = Status.PARTTRADED
 
-
         order = OrderData(
             symbol=ord_data["s"],
             exchange=Exchange.BINANCE,
             orderid=str(ord_data["c"]),
             type=order_type,
-            direction=DIRECTION_BINANCEC2AB[ord_data["S"]],
+            direction=DIRECTION_BINANCE2AB[ord_data["S"]],
             price=float(ord_data["p"]),
             volume=float(ord_data["q"]),
             traded=float(ord_data["z"]),
-            status=STATUS_BINANCEC2AB[ord_data["X"]],
+            status=STATUS_BINANCE2AB[ord_data["X"]],
             datetime=datetime.fromtimestamp(ord_data["E"] / 1000),
             gateway_name=self.gateway_name
         )
