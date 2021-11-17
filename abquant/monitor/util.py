@@ -100,6 +100,8 @@ def print_log_format(data):
                         formatStr += f'自定义日志: {payload.get("level")}  {payload.get("msg")}'
                     else:
                         formatStr += str(payload.get("msg"))
+                elif event_type == 'lark':
+                    formatStr += f'发送Lark: {payload.get("message")}'
                 else:
                     formatStr += json.dumps(payload)
             else:

@@ -319,6 +319,9 @@ class StrategyTemplate(ABC):
         """
         self.strategy_runner.load_bars(self, days, interval)
 
+    def notify_lark(self, msg: str):
+        self.strategy_runner.notify_lark(self, msg)
+        
     def sync_data(self):
         """
         同步 策略内相关变量。通常用于记录仓位及参数信息，以便监控及复原。

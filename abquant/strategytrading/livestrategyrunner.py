@@ -512,6 +512,6 @@ class LiveStrategyRunner(StrategyRunner):
         event = Event(EventType.EVENT_LOG, log)
         self.event_dispatcher.put(event)
 
-    def notify(self, msg: str, strategy: StrategyTemplate):
-        # TODO
-        raise NotImplementedError()
+    def notify_lark(self, strategy: StrategyTemplate, msg):
+        # notify lark
+        self.monitor.send_notify_lark(strategy.run_id, msg)

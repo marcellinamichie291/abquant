@@ -23,11 +23,11 @@ def parse():
     parser.add_argument('-k', '--key', type=str, required=True,
                         help='api key')
     parser.add_argument('-s', '--secret', type=str, required=True,
-                        help='secret')
+                        help='api secret')
     parser.add_argument('-t', '--strategy', type=str, required=True,
-                        help='strategy')
+                        help='策略分类名称，找@yaqiang添加')
     parser.add_argument('-l', '--log_path', type=str, required=False,
-                        help='log path')
+                        help='监控日志路径，默认本地logs文件夹')
     parser.add_argument('-u', '--proxy_host', type=str,
                         # default='127.0.0.1',
                         help='proxy host')
@@ -108,7 +108,8 @@ class TheStrategy(StrategyTemplate):
                 bars[ab_symbol] = bg.generate()
             # 生成新的k线数据后，主动调用 on_bars。
             # self.write_log("new minutes tick: {}".format(tick))
-            self.on_bars(bars)
+            if all(bars.values()):
+                self.on_bars(bars)
 
         bg: BarGenerator = self.bgs[tick.ab_symbol]
         bg.update_tick(tick)
@@ -175,7 +176,11 @@ class TheStrategy(StrategyTemplate):
 
     def on_window_bars(self, bars: Dict[str, BarData]):
         # window分钟级策略在这里实现， 注意设置 window参数。方便
-        self.write_log("WINDOW BAR: {}".format(bars))
+        # self.write_log("WINDOW BAR: {}".format(bars))
+
+        # 如果需要报警功能，配置好 monitor后可以通过该方法实现。
+        self.notify_lark("send msg to lark")
+        pass
 
     def on_entrust(self, entrust: EntrustData) -> None:
         pass
@@ -224,6 +229,7 @@ def main():
 
     common_setting = {
         "strategy": args.strategy,
+        "lark_url": None,  # "https://open.larksuite.com/open-apis/bot/v2/hook/2b92f893-83c2-48c1-b366-2e6e38a09efe",
         "log_path": args.log_path,
     }
     # Monitor.init_monitor(common_setting)
@@ -317,6 +323,7 @@ def main():
     # 策略 start之前 sleepy一段时间， 新的策略实例有可能订阅新的产品行情，这使得abquant需要做一次与交易所的重连操作。
     time.sleep(5)
     strategy_runner.start_all_strategies()
+    # monitor.send_notify_lark("11111111", "message for lark", common_setting.get("lark_url"))
 
     import random
     while True:
