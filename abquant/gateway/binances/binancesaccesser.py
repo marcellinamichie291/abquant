@@ -9,13 +9,13 @@ import uuid
 from requests import Request
 from requests.exceptions import SSLError
 
-from . import DIRECTION_AB2BINANCE, DIRECTION_BINANCE2AB, INTERVAL_AB2BINANCE, ORDERTYPE_AB2BINANCE, ORDERTYPE_BINANCE2AB, STATUS_BINANCE2AB, Security, REST_HOST, TIMEDELTA_MAP, WEBSOCKET_TRADE_HOST, symbol_contract_map
+from abquant.gateway.binances import DIRECTION_BINANCE2AB, DIRECTION_AB2BINANCE, INTERVAL_AB2BINANCE, ORDERTYPE_AB2BINANCE, ORDERTYPE_BINANCE2AB, STATUS_BINANCE2AB, Security, REST_HOST, TIMEDELTA_MAP, WEBSOCKET_TRADE_HOST, symbol_contract_map
 from abquant.gateway.accessor import RestfulAccessor
 from abquant.gateway.basegateway import Gateway
 from abquant.trader.common import Exchange, Product, Status
 from abquant.trader.msg import BarData, OrderData
 from abquant.trader.object import AccountData, CancelRequest, ContractData, HistoryRequest, OrderRequest
-
+from .binancelistener import BinanceSTradeWebsocketListener
 
 class BinanceAccessor(RestfulAccessor):
     """
@@ -25,8 +25,8 @@ class BinanceAccessor(RestfulAccessor):
 
     def __init__(self, gateway: Gateway):
         """"""
-        super().__init__()
-        # self.trade_ws_api = self.gateway.trade_ws_api
+        super().__init__(gateway)
+        self.trade_listener = self.gateway.trade_listener
 
         self.key = ""
         self.secret = ""
@@ -41,7 +41,6 @@ class BinanceAccessor(RestfulAccessor):
         self.connect_time = 0
 
     def sign(self, request):
-
         security = request.data["security"]
         if security == Security.NONE:
             request.data = None
@@ -112,6 +111,8 @@ class BinanceAccessor(RestfulAccessor):
 
         self.query_time()
         self.query_account()
+        # 没有position
+        # self.query_position()
         self.query_order()
         self.query_contract()
         self.start_user_stream()
@@ -235,7 +236,7 @@ class BinanceAccessor(RestfulAccessor):
 
         self.add_request(
             method="POST",
-            path="/api/v1/userDataStream",
+            path="/api/v3/userDataStream",
             callback=self.on_start_user_stream,
             data=data
         )
@@ -257,7 +258,7 @@ class BinanceAccessor(RestfulAccessor):
 
         self.add_request(
             method="PUT",
-            path="/api/v1/userDataStream",
+            path="/api/v3/userDataStream",
             callback=self.on_keep_user_stream,
             params=params,
             data=data
