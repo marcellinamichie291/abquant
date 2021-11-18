@@ -236,7 +236,7 @@ class BinanceAccessor(RestfulAccessor):
 
         self.add_request(
             method="POST",
-            path="/api/v3/userDataStream",
+            path="/api/v1/userDataStream",
             callback=self.on_start_user_stream,
             data=data
         )
@@ -258,7 +258,7 @@ class BinanceAccessor(RestfulAccessor):
 
         self.add_request(
             method="PUT",
-            path="/api/v3/userDataStream",
+            path="/api/v1/userDataStream",
             callback=self.on_keep_user_stream,
             params=params,
             data=data
