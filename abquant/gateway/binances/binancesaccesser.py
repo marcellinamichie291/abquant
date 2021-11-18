@@ -315,11 +315,13 @@ class BinanceAccessor(RestfulAccessor):
             pricetick = 1
             min_volume = 1
 
+
             for f in d["filters"]:
                 if f["filterType"] == "PRICE_FILTER":
                     pricetick = float(f["tickSize"])
                 elif f["filterType"] == "LOT_SIZE":
-                    min_volume = float(f["stepSize"])
+                    stepSize = float(f["stepSize"])
+                    min_volume = float(f["minQty"])
 
             contract = ContractData(
                 symbol=d["symbol"].lower(),
@@ -327,9 +329,12 @@ class BinanceAccessor(RestfulAccessor):
                 name=name,
                 pricetick=pricetick,
                 size=1,
+                step_size = stepSize,
                 min_volume=min_volume,
                 product=Product.SPOT,
                 history_data=True,
+                net_position=True,
+                # on_board=datetime.fromtimestamp(d["onboardDate"] / 1000),
                 gateway_name=self.gateway_name,
             )
             self.gateway.on_contract(contract)
