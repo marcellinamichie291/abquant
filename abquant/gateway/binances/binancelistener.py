@@ -123,6 +123,7 @@ class BinanceSDataWebsocketListener(WebsocketListener):
             # if newest < transaction.datetime:
             if newest is not None and newest < transaction.datetime:
                 return
+
             transaction.datetime = newest
             transaction.volume = float(data['q'])
             transaction.price = float(data['p'])
@@ -133,7 +134,7 @@ class BinanceSDataWebsocketListener(WebsocketListener):
             self.gateway.on_transaction(copy(transaction))
 
             tick = self.ticks[symbol]
-            if tick.datetime < newest:
+            if newest is not None and newest.datetime < newest:
                 tick.datetime = newest
             tick.trade_price = float(data['p'])
             tick.trade_volume = float(data['q'])
@@ -236,6 +237,7 @@ class BinanceSTradeWebsocketListener(WebsocketListener):
                 self.gateway.on_account(account)
 
     def on_order(self, packet: dict) -> None:
+        print(packet)
         """
         NEW 新订单
         CANCELED 订单被取消
