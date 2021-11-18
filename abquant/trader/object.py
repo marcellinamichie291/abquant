@@ -72,6 +72,7 @@ class ContractData(BaseData):
     size: float
     pricetick: float
 
+    step_size: float = 1
     min_volume: float = 1           # minimum trading volume of the contract
     stop_supported: bool = False    # whether server supports stop order
     net_position: bool = False      # whether gateway uses net position volume
