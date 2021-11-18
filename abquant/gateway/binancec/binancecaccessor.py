@@ -277,7 +277,7 @@ class BinanceCAccessor(RestfulAccessor):
         if contract:
             price_tick = contract.pricetick
             price = round_to(req.price, price_tick)
-            volume = round_to(req.volume, contract.size)
+            volume = round_to(req.volume, contract.step_size)
 
 
         params = {
@@ -485,7 +485,8 @@ class BinanceCAccessor(RestfulAccessor):
                 exchange=Exchange.BINANCE,
                 name=name,
                 pricetick=pricetick,
-                size=stepSize,
+                size=1,
+                step_size=stepSize,
                 min_volume=min_volume,
                 product=Product.FUTURES,
                 net_position=True,
