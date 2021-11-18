@@ -88,13 +88,13 @@ class TheStrategy(StrategyTemplate):
         # 即load_bars 方法适用于 需要根据历史k线预热的策略。 比如计算3日均线。使用该方法，可以避免strategy实例，上线后预热3日后正式开始交易。
         n = 1
         self.load_bars(n)
-        self.write_log("策略初始化")
+        self.write_log("Strategy initiated")
 
     def on_start(self):
-        self.write_log("策略启动")
+        self.write_log("Strategy started")
 
     def on_stop(self):
-        self.write_log("策略停止")
+        self.write_log("Strategy stopped")
 
     def on_tick(self, tick: TickData):
         # 以下的代码是根据tick数据，生成 bars数据的代码。如果策略是分钟级，则不要做任何修改。
@@ -232,7 +232,6 @@ def main():
     # 初始化 monitor
     monitor = Monitor(common_setting)
     monitor.start()
-    print("监控启动")
 
     event_dispatcher = EventDispatcher(interval=1)
     strategy_runner = LiveStrategyRunner(event_dispatcher)

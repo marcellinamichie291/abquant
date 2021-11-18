@@ -8,7 +8,6 @@ import websocket
 
 from .util import logger
 
-LOGIN_URL = "https://dct-test001.wecash.net/dct-business-api/login"
 WS_URL = "wss://dct-test001-internal.wecash.net/dct-service-abquant/ws/business?strategy="
 MAX_CONNECT_RETRY = 5
 
