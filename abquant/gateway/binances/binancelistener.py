@@ -237,7 +237,6 @@ class BinanceSTradeWebsocketListener(WebsocketListener):
                 self.gateway.on_account(account)
 
     def on_order(self, packet: dict) -> None:
-        print(packet)
         """
         NEW 新订单
         CANCELED 订单被取消
