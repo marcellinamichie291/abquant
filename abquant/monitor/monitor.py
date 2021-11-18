@@ -31,17 +31,17 @@ class Monitor(Thread):
         self.setting = setting
         self.strategy = setting.get("strategy", None)
         if self.strategy is None:
-            logger.info("监控：未设置strategy，无法上传日志")
+            logger.info("Monitor: No strategy config, cannot upload log")
         self.lark_url = setting.get("lark_url", None)
         if self.lark_url is None:
-            logger.info("监控：未设置lark通知地址")
+            logger.info("Monitor: No lark url config, cannot send lark")
         self.log_path = setting.get("log_path", None)
         if self.log_path is None:
-            logger.info("监控：日志本地目录，默认./logs/")
+            logger.info("Monitor: No log path config, default to ./logs/")
         self.buffer = []
         self.queue: Queue = Queue(maxsize=MAX_QUEUE_SIZE)
-        logger.debug("监控：队列长度（{}）".format(MAX_QUEUE_SIZE))
-        logger.info("监控：初始化完成")
+        logger.debug("Monitor: queue length {}".format(MAX_QUEUE_SIZE))
+        logger.info("Monitor initiated")
 
     def run(self):
         config_logger(self.log_path)
@@ -64,10 +64,10 @@ class Monitor(Thread):
         #     logger.error("Error: websocket client is None.")
         #     return
         if self.queue.full():
-            logger.error("错误：监控队列已满")
+            logger.error("Monitor: queue is full")
             return
         self.queue.put_nowait(data)
-        # logger.debug(f"监控: 放入队列: {data}, 目前长度: {self.queue.qsize()}")
+        # logger.debug(f"Monitor: put to queue: {data}, current queue length: {self.queue.qsize()}")
 
     def default_info(self, run_id: str, event_type: str):
         info = {"event_time": datetime.now().timestamp(),
@@ -157,14 +157,14 @@ class Monitor(Thread):
         # self.queue.put([1, '2'])
         # self.queue.put({1, '2'})
         # self.queue.put((1, 2))
-        # logger.debug("监控：示例数据填充完成")
+        # logger.debug("Monitor: test data ok")
         if self.queue is None:
             logger.error("Error: qu: queue is none.")
             return
         # if self.txmt is None or self.txmt.client is None:
         #     logger.error("Error: tx: ws client is none.")
         #     return
-        logger.info("监控：启动完成")
+        logger.info("Monitor Started")
         cycles = 1
         while True:
             try:
@@ -174,16 +174,16 @@ class Monitor(Thread):
 
             try:
                 size = self.queue.qsize()
-                # logger.debug(f'qu: 当前队列有：{size} 个元素')
+                # logger.debug(f'Monitor: current queue length {size}')
                 data = self.queue.get(timeout=1)
                 # logger.info(data)
                 print_log_format(data)
-                # logger.debug(f'监控: 拿出元素：{data}, 发送...')
+                # logger.debug(f'Monitor: take element to send: {data}')
                 # await self.txmt.client.send(str(data))
                 try:
                     self.txmt.send(data)
                 except Exception as e:
-                    logger.debug(f'Error: 队列发送错误：{e}，放入buffer')
+                    logger.debug(f'Error: Queue send: {e},  put into buffer')
                     self.push_buffer(data)
                     # time.sleep(1)
                     cycles += 1
@@ -196,7 +196,7 @@ class Monitor(Thread):
                         cycles = 1
                     continue
                 size = self.queue.qsize()
-                # logger.debug(f'监控: 当前队列长度：{size}')
+                # logger.debug(f'Monitor: current queue length {size}')
             except Empty:
                 # logger.debug('empty queue')
                 continue
@@ -210,7 +210,7 @@ class Monitor(Thread):
             self.buffer.append(data)
             return len(self.buffer)
         else:
-            logger.debug("Error: qu: buffer is full")
+            logger.debug("Error: Buffer is full")
             return -1
 
     def send_buffer(self):
@@ -224,10 +224,10 @@ class Monitor(Thread):
                 try:
                     self.txmt.send(buf)
                 except Exception as e:
-                    logger.debug(f'Error: buffer发送错误：{e}')
+                    logger.debug(f'Error: Buffer send: {e}')
                     raise
                 logger.debug(f"qu: send buffer: {buf}")
             self.buffer.clear()
-            logger.info(f'发送断线期间日志 {blen} 条')
+            logger.info(f'Resend {blen} elements while disconnection')
             return blen
         return 0

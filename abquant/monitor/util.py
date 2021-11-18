@@ -73,21 +73,21 @@ def print_log_format(data):
             #     formatStr += f'[{run_id}] '
             if payload is not None:
                 if event_type == 'order':
-                    formatStr += f"订单: {payload.get('exchange')} - {payload.get('symbol')} - {payload.get('direction')} ts: {payload.get('datetime')}, status: {payload.get('status')}, price: {payload.get('price')}, volume: {payload.get('volume')}, type: {payload.get('type')}, order_id: {payload.get('orderid')} "
+                    formatStr += f"ORDER: {payload.get('exchange')} - {payload.get('symbol')} - {payload.get('direction')} ts: {payload.get('datetime')}, status: {payload.get('status')}, price: {payload.get('price')}, volume: {payload.get('volume')}, type: {payload.get('type')}, order_id: {payload.get('orderid')} "
                 elif event_type == 'order_trade':
-                    formatStr += f"订单成交: {payload.get('exchange')} - {payload.get('symbol')} - {payload.get('direction')} ts: {payload.get('datetime')}, price: {payload.get('price')}, volume: {payload.get('volume')}, order_id: {payload.get('orderid')}, trade_id: {payload.get('tradeid')} "
+                    formatStr += f"TRADE: {payload.get('exchange')} - {payload.get('symbol')} - {payload.get('direction')} ts: {payload.get('datetime')}, price: {payload.get('price')}, volume: {payload.get('volume')}, order_id: {payload.get('orderid')}, trade_id: {payload.get('tradeid')} "
                 elif event_type == 'position':
-                    formatStr += f'仓位: {payload.get("exchange")} - {payload.get("symbol")}:  {payload.get("position")}'
+                    formatStr += f'POSITION: {payload.get("exchange")} - {payload.get("symbol")}:  {payload.get("position")}'
                 elif event_type == 'parameter':
-                    formatStr += f'参数: {payload.get("name")}:  {payload.get("value")}'
+                    formatStr += f'PARAMETER: {payload.get("name")}:  {payload.get("value")}'
                 elif event_type == 'status_report':
                     ptype = payload.get("type")
                     if ptype == 'start':
-                        formatStr += f'策略开始'
+                        formatStr += f'Strategy Start'
                     elif ptype == 'end':
-                        formatStr += f'策略结束'
+                        formatStr += f'Strategy End'
                     elif ptype == 'heartbeat':
-                        formatStr += f'策略心跳'
+                        formatStr += f'Strategy Heartbeat'
                     else:
                         formatStr += str(ptype)
                     logger.debug(formatStr)
@@ -95,13 +95,13 @@ def print_log_format(data):
                 elif event_type == 'log':
                     ltype = payload.get("type")
                     if ltype == 'system':
-                        formatStr += f'系统日志: {payload.get("level")}  {payload.get("msg")}'
+                        formatStr += f'SYSTEM LOG: {payload.get("level")} {payload.get("msg")}'
                     elif ltype == 'custom':
-                        formatStr += f'自定义日志: {payload.get("level")}  {payload.get("msg")}'
+                        formatStr += f'CUSTOM LOG: {payload.get("level")} {payload.get("msg")}'
                     else:
                         formatStr += str(payload.get("msg"))
                 elif event_type == 'lark':
-                    formatStr += f'发送Lark: {payload.get("message")}'
+                    formatStr += f'SEND LARK: {payload.get("message")}'
                 else:
                     formatStr += json.dumps(payload)
             else:
