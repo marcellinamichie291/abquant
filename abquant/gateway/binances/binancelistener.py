@@ -123,6 +123,7 @@ class BinanceSDataWebsocketListener(WebsocketListener):
             # if newest < transaction.datetime:
             if newest is not None and newest < transaction.datetime:
                 return
+
             transaction.datetime = newest
             transaction.volume = float(data['q'])
             transaction.price = float(data['p'])
@@ -133,7 +134,7 @@ class BinanceSDataWebsocketListener(WebsocketListener):
             self.gateway.on_transaction(copy(transaction))
 
             tick = self.ticks[symbol]
-            if tick.datetime < newest:
+            if newest is not None and tick.datetime < newest:
                 tick.datetime = newest
             tick.trade_price = float(data['p'])
             tick.trade_volume = float(data['q'])
@@ -143,6 +144,7 @@ class BinanceSDataWebsocketListener(WebsocketListener):
         elif channel == 'depth@100ms':
             depth = self.depths[symbol]
             depth.localtime = datetime.now()
+
             if newest is not None and newest < depth.datetime:
                 return
             depth.datetime = newest
