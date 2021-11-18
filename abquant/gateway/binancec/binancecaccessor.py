@@ -17,6 +17,7 @@ from .binanceclistener import BinanceCTradeWebsocketListener
 from ..accessor import Request, RestfulAccessor
 from ..basegateway import Gateway
 from abquant.trader.msg import BarData, OrderData
+from abquant.trader.utility import round_to
 from abquant.trader.common import Direction, Exchange, Offset, OrderType, Product, Status
 from abquant.trader.object import AccountData, CancelRequest, ContractData, HistoryRequest, OrderRequest, PositionData
 
@@ -272,13 +273,19 @@ class BinanceCAccessor(RestfulAccessor):
 
         order_type, time_condition = ORDERTYPE_AB2BINANCEC[req.type]
 
+        contract = symbol_contract_map.get(req.symbol)
+        if contract:
+            price_tick = contract.pricetick
+            price = round_to(req.price, price_tick)
+            volume = round_to(req.volume, contract.step_size)
+
+
         params = {
             "symbol": req.symbol,
             "side": DIRECTION_AB2BINANCEC[req.direction],
             "type": order_type,
-            "price": float(req.price),
-            # TODO round
-            "quantity": float(req.volume),
+            "price": float(price),
+            "quantity": float(volume),
             "newClientOrderId": orderid,
             "timeInForce": time_condition
         }
@@ -470,7 +477,8 @@ class BinanceCAccessor(RestfulAccessor):
                 if f["filterType"] == "PRICE_FILTER":
                     pricetick = float(f["tickSize"])
                 elif f["filterType"] == "LOT_SIZE":
-                    min_volume = float(f["stepSize"])
+                    stepSize = float(f["stepSize"])
+                    min_volume = float(f["minQty"])
 
             contract = ContractData(
                 symbol=d["symbol"],
@@ -478,6 +486,7 @@ class BinanceCAccessor(RestfulAccessor):
                 name=name,
                 pricetick=pricetick,
                 size=1,
+                step_size=stepSize,
                 min_volume=min_volume,
                 product=Product.FUTURES,
                 net_position=True,

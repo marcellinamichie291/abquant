@@ -75,3 +75,7 @@ class StrategyRunner:
     @abstractmethod
     def cancel_orders(self, strategy: "StrategyTemplate", ab_orderids: Iterable[str]):
         pass
+
+    @abstractmethod
+    def notify_lark(self, strategy: "StrategyTemplate", msg: str):
+        pass

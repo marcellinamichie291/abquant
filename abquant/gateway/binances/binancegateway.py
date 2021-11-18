@@ -1,12 +1,13 @@
 from abquant.event.dispatcher import EventDispatcher
 from abquant.trader.object import CancelRequest, HistoryRequest, OrderRequest, SubscribeRequest
-from .. import Gateway
-from . import BinanceAccessor
+from abquant.gateway.basegateway import Gateway
+from abquant.gateway.binances.binancesaccesser import BinanceAccessor
 from abquant.trader.common import Exchange
-from abquant.event import EventType
+from .binancelistener import BinanceSDataWebsocketListener, BinanceSTradeWebsocketListener
+from abquant.event.event import EventType
+
 
 class BinanceSGateway(Gateway):
-
     default_setting = {
         "key": "",
         "secret": "",
@@ -21,6 +22,8 @@ class BinanceSGateway(Gateway):
         super().__init__(event_dispatcher, "BINANCES")
 
         # self.market_listener =
+        self.market_listener = BinanceSDataWebsocketListener(self)
+        self.trade_listener = BinanceSTradeWebsocketListener(self)
         self.rest_accessor = BinanceAccessor(self)
 
     def connect(self, setting: dict):
@@ -35,10 +38,19 @@ class BinanceSGateway(Gateway):
                               proxy_host, proxy_port)
         self.market_listener.connect(proxy_host, proxy_port)
 
+        # self.trade_listener.connect(proxy_host=proxy_host, proxy_port=proxy_port)
+
+        self.event_dispatcher.register(
+            EventType.EVENT_TIMER, self.process_timer_event)
+
+        self.on_gateway(self)
 
     def subscribe(self, req: SubscribeRequest):
         """"""
         self.market_listener.subscribe(req)
+
+    def start(self):
+        self.market_listener.start()
 
     def send_order(self, req: OrderRequest):
         """"""
@@ -48,13 +60,34 @@ class BinanceSGateway(Gateway):
         """"""
         self.rest_accessor.cancel_order(req)
 
-    def query_account(self):
-        """"""
+    def cancel_orders(self, reqs):
         pass
+        # return super(BinanceSGateway, self).cancel_orders(reqs)
+
+    def query_account(self):
+        raise NotImplementedError(
+            "do not use this method. Use ordermanager to get the updated account information instead.")
+        accounts = self.trade_listener.accounts
+        if accounts is not None:
+            return accounts
+        accounts = self.rest_accessor.accounts
+        if accounts is None:
+            raise LookupError(
+                "please call the conect method of gateway first and block for a while due to the reason of the async io")
+        return accounts
 
     def query_position(self):
         """"""
-        pass
+        raise NotImplementedError(
+            "do not use this method. Use ordermanager to get the updated position information instead.")
+        positions = self.trade_listener.positions
+        if positions is not None:
+            return positions
+        positions = self.rest_accessor.positions
+        if positions is None:
+            raise LookupError(
+                "please call the conect method of gateway first and block for a while due to the reason of the async io")
+        return positions
 
     def query_history(self, req: HistoryRequest):
         """"""
@@ -64,4 +97,10 @@ class BinanceSGateway(Gateway):
         """"""
         self.rest_accessor.stop()
         self.market_listener.stop()
+        self.trade_listener.stop()
+
+    def process_timer_event(self, event) -> None:
+        """"""
+        self.rest_accessor.keep_user_stream()
+
 
