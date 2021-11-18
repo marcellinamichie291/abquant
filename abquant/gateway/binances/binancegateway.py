@@ -38,6 +38,8 @@ class BinanceSGateway(Gateway):
                               proxy_host, proxy_port)
         self.market_listener.connect(proxy_host, proxy_port)
 
+        # self.trade_listener.connect(proxy_host=proxy_host, proxy_port=proxy_port)
+
         self.event_dispatcher.register(
             EventType.EVENT_TIMER, self.process_timer_event)
 

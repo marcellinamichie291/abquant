@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 from copy import copy, deepcopy
 
-from abquant.gateway.binances import DIRECTION_BINANCE2AB, WEBSOCKET_DATA_HOST, ORDERTYPE_BINANCE2AB, STATUS_BINANCE2AB, symbol_contract_map
+from abquant.gateway.binances import DIRECTION_BINANCE2AB,WEBSOCKET_TRADE_HOST, WEBSOCKET_DATA_HOST, ORDERTYPE_BINANCE2AB, STATUS_BINANCE2AB, symbol_contract_map
 from ..basegateway import Gateway
 from ..listener import WebsocketListener
 from abquant.trader.exception import MarketException
@@ -78,7 +78,6 @@ class BinanceSDataWebsocketListener(WebsocketListener):
             if subscribe_mode.depth:
                 # todoDone diff depth update, not supported yet because the "e" field of payload of chanel "Partial Book Depth Streams" and "Diff. Book Depth Streams" standing for event/channel type are both "depthUpdate"
                 channels.append(ws_symbol + "@depth@100ms")
-
 
         url = WEBSOCKET_DATA_HOST + "/".join(channels)
 
@@ -202,8 +201,10 @@ class BinanceSTradeWebsocketListener(WebsocketListener):
         self.orders = {}
         self.positions = {}
 
-    def connect(self, url: str, proxy_host: str, proxy_port: int) -> None:
+    def connect(self, url:str, proxy_host: str, proxy_port: int) -> None:
         """"""
+
+        # url = WEBSOCKET_TRADE_HOST
         self.init(url, proxy_host, proxy_port, ping_interval=10)
         self.start()
 
@@ -216,14 +217,14 @@ class BinanceSTradeWebsocketListener(WebsocketListener):
 
     def on_packet(self, packet: dict) -> None:
         """"""
-        if packet["e"] == "ACCOUNT_UPDATE":
+        if packet["e"] == "outboundAccountPosition":
             self.on_account(packet)
-        elif packet["e"] == "ORDER_TRADE_UPDATE":
+        elif packet["e"] == "executionReport":
             self.on_order(packet)
 
     def on_account(self, packet: dict) -> None:
         """"""
-        for acc_data in packet["a"]["B"]:
+        for acc_data in packet["B"]:
             account = AccountData(
                 accountid=acc_data["a"],
                 balance=float(acc_data["f"]) + float(acc_data["l"]),
@@ -288,7 +289,7 @@ class BinanceSTradeWebsocketListener(WebsocketListener):
 
         status = None
 
-        binance_spot_status = order_type['X']
+        binance_spot_status = ord_data['X']
 
         if binance_spot_status == 'NEW':
             status = Status.NOTTRADED
@@ -299,7 +300,7 @@ class BinanceSTradeWebsocketListener(WebsocketListener):
         elif binance_spot_status == 'EXPIRED':
             status = Status.CANCELLED
         elif binance_spot_status == 'TRADE':
-            if float(ord_data['q']) == float(order_type['z']):
+            if float(ord_data['q']) == float(ord_data['z']):
                 status = Status.ALLTRADED
             elif float(ord_data['z']) != 0:
                 status = Status.PARTTRADED
@@ -319,6 +320,7 @@ class BinanceSTradeWebsocketListener(WebsocketListener):
         )
 
         self.gateway.on_order(order)
+
 
         # Round trade volume to minimum trading volume
         trade_volume = float(ord_data["l"])
