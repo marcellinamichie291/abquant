@@ -132,7 +132,7 @@ dmypy.json
 #PyCharm project
 .idea/
 
-.DS_store
-*/.DS_store
+.DS_Store
+*/.DS_Store
 connect_dydx.py
 
