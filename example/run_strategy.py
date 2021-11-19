@@ -5,6 +5,7 @@ import argparse
 from logging import getLevelName
 import time
 from pprint import pprint
+from abquant.gateway.binances.binancegateway import BinanceSGateway
 
 from abquant.trader.tool import BarAccumulater, BarGenerator
 from abquant.trader.common import Exchange, OrderType
@@ -170,7 +171,9 @@ class TheStrategy(StrategyTemplate):
                            volume=trade_volume, order_type=OrderType.LIMIT)
             self.write_log(
                 f"short {self.ab_symbols[1]}, in price {trade_price}, with vol {trade_volume}")
-        # self.write_log(bars)
+
+        if self.trading:
+            self.write_log(bars)
         # pprint({k:v for k, v in bars.items() if v is not None})
         # print("\n\n\n\n")
 
@@ -257,6 +260,8 @@ def main():
     event_dispatcher.register(EventType.EVENT_POSITION, lambda event: print(
         str('POSITION: ') + str(event.data)))
 
+    binance_spot_gateway = BinanceSGateway(event_dispatcher)
+    binance_spot_gateway.connect(binance_setting)
     binance_ubc_gateway = BinanceUBCGateway(event_dispatcher)
     binance_ubc_gateway.connect(binance_setting)
     binance_bbc_gateway = BinanceBBCGateway(event_dispatcher)
@@ -278,6 +283,7 @@ def main():
     )
 
     # 有默认值，默认全订阅, 可以不调用下面两行。
+    binance_spot_gateway.set_subscribe_mode(subscribe_mode)
     binance_ubc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
     binance_bbc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
 
@@ -298,6 +304,10 @@ def main():
     #                              ab_symbols=ab_symbols,
     #                              setting={"param1": 1, "param2": 2}
     #                              )
+
+    from abquant.gateway.binances import symbol_contract_map
+    for k, v in symbol_contract_map.items():
+        print(v)
     strategy_runner.add_strategy(strategy_class=TheStrategy,
                                  strategy_name='the_strategy1',
                                  ab_symbols=["BTCUSDT.BINANCE",
@@ -318,6 +328,15 @@ def main():
                                  setting={"param1": 3, "param2": 4,
                                           "trade_flag": False}
                                  )
+
+    strategy_runner.add_strategy(strategy_class=TheStrategy,
+                                 strategy_name='the_strategy4',
+                                 ab_symbols=["BTCUSDT.BINANCE",
+                                             "btcusdt.BINANCE"],
+                                 # uncommnet for test trade operation.
+                                 setting={"param1": 3, "param2": 4,
+                                          "trade_flag": False}
+                                 )
     strategy_runner.init_all_strategies()
 
     # 策略 start之前 sleepy一段时间， 新的策略实例有可能订阅新的产品行情，这使得abquant需要做一次与交易所的重连操作。
@@ -327,7 +346,7 @@ def main():
 
     import random
     while True:
-        time.sleep(60)
+        time.sleep(300)
         # renew strategy1 setting.
         # edit_strategy 方法用于修改策略的 parameter。 random在这里就是一个示例。
         the_strategy1_setting = {"param1": 2,
