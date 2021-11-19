@@ -60,8 +60,8 @@ if __name__ == '__main__':
     #     str('TICK: ') + str(event.data)))
     event_dispatcher.register(EventType.EVENT_DEPTH, lambda event: print(
         str('DEPTH: ') + str(event.data)))
-    event_dispatcher.register(EventType.EVENT_TRANSACTION, lambda event: print(
-        str('TRANSACTION: ') + str(event.data)))
+    # event_dispatcher.register(EventType.EVENT_TRANSACTION, lambda event: print(
+    #     str('TRANSACTION: ') + str(event.data)))
     # event_dispatcher.register(EventType.EVENT_ENTRUST, lambda event:  print(str('ENTRUST: ') + str(event.data)))
     # event_dispatcher.register_general(lambda event: print(str(event.type) +  str(event.data)))
 
@@ -107,9 +107,9 @@ if __name__ == '__main__':
     for i in range(2):
         ab_order_id: str = gateway.send_order(OrderRequest(symbol='xrpusdt', exchange=Exchange.BINANCE,
                                                            direction=Direction.LONG, type=OrderType.LIMIT, volume=10,
-                                                           price=1.06, offset=Offset.OPEN))
+                                                           price=1, offset=Offset.OPEN))
         print('ab orderid', ab_order_id)
-        time.sleep(0.03)
+        time.sleep(3)
         order_id = ab_order_id.split('.')[-1]
         print('orderid', order_id)
 

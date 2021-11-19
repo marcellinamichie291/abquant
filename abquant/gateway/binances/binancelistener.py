@@ -313,8 +313,9 @@ class BinanceSTradeWebsocketListener(WebsocketListener):
             elif float(ord_data['z']) != 0:
                 status = Status.PARTTRADED
 
+
         order = OrderData(
-            symbol=ord_data["s"],
+            symbol=ord_data["s"].lower(),
             exchange=Exchange.BINANCE,
             orderid=str(ord_data["c"]),
             type=order_type,
