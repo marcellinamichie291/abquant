@@ -6,6 +6,7 @@ import hmac
 import hashlib
 from datetime import datetime
 import uuid
+import decimal
 from requests import Request
 from requests.exceptions import SSLError
 
@@ -15,6 +16,7 @@ from abquant.gateway.basegateway import Gateway
 from abquant.trader.common import Exchange, Product, Status
 from abquant.trader.msg import BarData, OrderData
 from abquant.trader.object import AccountData, CancelRequest, ContractData, HistoryRequest, OrderRequest
+from abquant.trader.utility import round_to
 from .binancelistener import BinanceSTradeWebsocketListener
 
 class BinanceAccessor(RestfulAccessor):
@@ -22,6 +24,7 @@ class BinanceAccessor(RestfulAccessor):
     BINANCE REST API
     """
     ORDER_PREFIX = str(hex(uuid.getnode()))
+    DECIMAL_CTX = decimal.Context()
 
     def __init__(self, gateway: Gateway):
         """"""
@@ -184,13 +187,21 @@ class BinanceAccessor(RestfulAccessor):
             "security": Security.SIGNED
         }
 
+
+        contract = symbol_contract_map[req.symbol]
+        if contract:
+            price_tick = contract.pricetick
+            price = round_to(req.price, price_tick)
+            volume = round_to(req.volume, contract.step_size)
+
+
         params = {
             "symbol": req.symbol.upper(),
             "timeInForce": "GTC",
             "side": DIRECTION_AB2BINANCE[req.direction],
             "type": ORDERTYPE_AB2BINANCE[req.type],
-            "price": str(req.price),
-            "quantity": str(req.volume),
+            "price": format(self.DECIMAL_CTX.create_decimal(repr(price)), 'f'),
+            "quantity": format(self.DECIMAL_CTX.create_decimal(repr(volume)), 'f'),
             "newClientOrderId": orderid,
             "newOrderRespType": "ACK"
         }
