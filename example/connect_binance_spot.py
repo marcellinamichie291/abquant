@@ -87,10 +87,11 @@ if __name__ == '__main__':
     )
 
     gateway.subscribe(SubscribeRequest(
-        symbol='gtcbnb', exchange=Exchange.BINANCE))
+        symbol='shibusdt', exchange=Exchange.BINANCE))
 
     # gateway.connect 之后会更新的 binance合约交易的 合约的dict,  symbol_contract_map是全局的一个单例。
     from abquant.gateway.binances import symbol_contract_map
+    print(symbol_contract_map['shibusdt'])
 
     for i, k in enumerate(symbol_contract_map):
         if i > 3:
@@ -105,16 +106,16 @@ if __name__ == '__main__':
     # 下单撤单， 由框架异步执行。胆大的下单撤单吧。不必担心阻塞和 IO。
     order_map = {}
     for i in range(2):
-        ab_order_id: str = gateway.send_order(OrderRequest(symbol='xrpusdt', exchange=Exchange.BINANCE,
-                                                           direction=Direction.LONG, type=OrderType.LIMIT, volume=10,
-                                                           price=1, offset=Offset.OPEN))
+        ab_order_id: str = gateway.send_order(OrderRequest(symbol='shibusdt', exchange=Exchange.BINANCE,
+                                                           direction=Direction.LONG, type=OrderType.LIMIT, volume=1000000,
+                                                           price=0.000040000000001, offset=Offset.OPEN))
         print('ab orderid', ab_order_id)
         time.sleep(3)
         order_id = ab_order_id.split('.')[-1]
         print('orderid', order_id)
 
         gateway.cancel_order(CancelRequest(
-            order_id, symbol='XRPUSDT', exchange=Exchange.BINANCE))
+            order_id, symbol='shibusdt', exchange=Exchange.BINANCE))
 
         order_map[ab_order_id] = order_id
 
