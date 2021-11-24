@@ -5,6 +5,7 @@ import argparse
 from logging import getLevelName
 import time
 from pprint import pprint
+from abquant.gateway.binances.binancegateway import BinanceSGateway
 
 from abquant.trader.tool import BarAccumulater, BarGenerator
 from abquant.trader.common import Exchange, OrderType
@@ -23,11 +24,11 @@ def parse():
     parser.add_argument('-k', '--key', type=str, required=True,
                         help='api key')
     parser.add_argument('-s', '--secret', type=str, required=True,
-                        help='secret')
+                        help='api secret')
     parser.add_argument('-t', '--strategy', type=str, required=True,
-                        help='strategy')
+                        help='策略分类名称，找@yaqiang添加')
     parser.add_argument('-l', '--log_path', type=str, required=False,
-                        help='log path')
+                        help='监控日志路径，默认本地logs文件夹')
     parser.add_argument('-u', '--proxy_host', type=str,
                         # default='127.0.0.1',
                         help='proxy host')
@@ -88,13 +89,13 @@ class TheStrategy(StrategyTemplate):
         # 即load_bars 方法适用于 需要根据历史k线预热的策略。 比如计算3日均线。使用该方法，可以避免strategy实例，上线后预热3日后正式开始交易。
         n = 1
         self.load_bars(n)
-        self.write_log("策略初始化")
+        self.write_log("Strategy initiated")
 
     def on_start(self):
-        self.write_log("策略启动")
+        self.write_log("Strategy started")
 
     def on_stop(self):
-        self.write_log("策略停止")
+        self.write_log("Strategy stopped")
 
     def on_tick(self, tick: TickData):
         # 以下的代码是根据tick数据，生成 bars数据的代码。如果策略是分钟级，则不要做任何修改。
@@ -108,7 +109,8 @@ class TheStrategy(StrategyTemplate):
                 bars[ab_symbol] = bg.generate()
             # 生成新的k线数据后，主动调用 on_bars。
             # self.write_log("new minutes tick: {}".format(tick))
-            self.on_bars(bars)
+            if all(bars.values()):
+                self.on_bars(bars)
 
         bg: BarGenerator = self.bgs[tick.ab_symbol]
         bg.update_tick(tick)
@@ -169,13 +171,19 @@ class TheStrategy(StrategyTemplate):
                            volume=trade_volume, order_type=OrderType.LIMIT)
             self.write_log(
                 f"short {self.ab_symbols[1]}, in price {trade_price}, with vol {trade_volume}")
-        # self.write_log(bars)
+
+        if self.trading:
+            self.write_log(bars)
         # pprint({k:v for k, v in bars.items() if v is not None})
         # print("\n\n\n\n")
 
     def on_window_bars(self, bars: Dict[str, BarData]):
         # window分钟级策略在这里实现， 注意设置 window参数。方便
-        self.write_log("WINDOW BAR: {}".format(bars))
+        # self.write_log("WINDOW BAR: {}".format(bars))
+
+        # 如果需要报警功能，配置好 monitor后可以通过该方法实现。
+        self.notify_lark("send msg to lark")
+        pass
 
     def on_entrust(self, entrust: EntrustData) -> None:
         pass
@@ -224,13 +232,13 @@ def main():
 
     common_setting = {
         "strategy": args.strategy,
+        "lark_url": None,  # "https://open.larksuite.com/open-apis/bot/v2/hook/2b92f893-83c2-48c1-b366-2e6e38a09efe",
         "log_path": args.log_path,
     }
     # Monitor.init_monitor(common_setting)
     # 初始化 monitor
     monitor = Monitor(common_setting)
     monitor.start()
-    print("监控启动")
 
     event_dispatcher = EventDispatcher(interval=1)
     strategy_runner = LiveStrategyRunner(event_dispatcher)
@@ -251,10 +259,12 @@ def main():
     event_dispatcher.register(EventType.EVENT_POSITION, lambda event: print(
         str('POSITION: ') + str(event.data)))
 
+    binance_spot_gateway = BinanceSGateway(event_dispatcher)
+    binance_spot_gateway.connect(binance_setting)
     binance_ubc_gateway = BinanceUBCGateway(event_dispatcher)
     binance_ubc_gateway.connect(binance_setting)
-    binance_bbc_gateway = BinanceBBCGateway(event_dispatcher)
-    binance_bbc_gateway.connect(binance_setting)
+    # binance_bbc_gateway = BinanceBBCGateway(event_dispatcher)
+    # binance_bbc_gateway.connect(binance_setting)
 
     # 等待连接成功。
     time.sleep(3)
@@ -272,8 +282,9 @@ def main():
     )
 
     # 有默认值，默认全订阅, 可以不调用下面两行。
+    binance_spot_gateway.set_subscribe_mode(subscribe_mode)
     binance_ubc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
-    binance_bbc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
+    # binance_bbc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
 
 
 
@@ -292,6 +303,10 @@ def main():
     #                              ab_symbols=ab_symbols,
     #                              setting={"param1": 1, "param2": 2}
     #                              )
+
+    from abquant.gateway.binances import symbol_contract_map
+    for k, v in symbol_contract_map.items():
+        print(v)
     strategy_runner.add_strategy(strategy_class=TheStrategy,
                                  strategy_name='the_strategy1',
                                  ab_symbols=["BTCUSDT.BINANCE",
@@ -312,15 +327,25 @@ def main():
                                  setting={"param1": 3, "param2": 4,
                                           "trade_flag": False}
                                  )
+
+    strategy_runner.add_strategy(strategy_class=TheStrategy,
+                                 strategy_name='the_strategy4',
+                                 ab_symbols=["BTCUSDT.BINANCE",
+                                             "btcusdt.BINANCE"],
+                                 # uncommnet for test trade operation.
+                                 setting={"param1": 3, "param2": 4,
+                                          "trade_flag": False}
+                                 )
     strategy_runner.init_all_strategies()
 
     # 策略 start之前 sleepy一段时间， 新的策略实例有可能订阅新的产品行情，这使得abquant需要做一次与交易所的重连操作。
     time.sleep(5)
     strategy_runner.start_all_strategies()
+    # monitor.send_notify_lark("11111111", "message for lark", common_setting.get("lark_url"))
 
     import random
     while True:
-        time.sleep(60)
+        time.sleep(300)
         # renew strategy1 setting.
         # edit_strategy 方法用于修改策略的 parameter。 random在这里就是一个示例。
         the_strategy1_setting = {"param1": 2,

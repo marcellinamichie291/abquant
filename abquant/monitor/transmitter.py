@@ -8,7 +8,6 @@ import websocket
 
 from .util import logger
 
-LOGIN_URL = "https://dct-test001.wecash.net/dct-business-api/login"
 WS_URL = "wss://dct-test001-internal.wecash.net/dct-service-abquant/ws/business?strategy="
 MAX_CONNECT_RETRY = 5
 
@@ -30,7 +29,7 @@ class Transmitter:
             'Content-Type': 'application/json; charset=UTF-8'
         }
         if self.strategy is None:
-            logger.debug("监控：初始化：未配置策略名称")
+            logger.debug("Monitor: No strategy config")
             return
         websocket.enableTrace(False)
         try:
@@ -71,11 +70,11 @@ class Transmitter:
             elif isinstance(data, dict):
                 data = json.dumps(data)
             else:
-                pass
+                data = str(data)
         except Exception as e:
             logger.debug(f'Data transform error, use str()')
             data = str(data)
-        # logger.debug(f"监控：发送：{data}")
+        # logger.debug(f"Monitor: send {data}")
         self.client.send(data)
 
     def on_message(self, ws, msg):
@@ -86,14 +85,14 @@ class Transmitter:
 
     def on_open(self, ws):
         self.client = ws
-        logger.info("监控：WebSocket开启")
+        logger.info("Monitor: WebSocket started")
 
     def on_close(self, ws, code, msg):
         self.client = None
         if code is not None and code == 1008:   # WS Error Code: Policy Violation, 具体是strategy参数不对
-            logger.info("监控：未指定正确的strategy，WebSocket关闭")
+            logger.info("Monitor: No strategy config, WebSocket CLOSED")
             return
-        logger.info(f"WebSocket连接断开, code: {code}, msg: {msg}")
+        logger.info(f"WebSocket closed, code: {code}, msg: {msg}")
         i = 1
         time.sleep(3)
         while i <= MAX_CONNECT_RETRY:
@@ -103,9 +102,9 @@ class Transmitter:
                 break
             i += 1
         if self.client is None:
-            logger.info(f"重试{i}次失败，监控服务器断开连接")
+            logger.info(f"Monitor server CLOSED after {i} retry failures")
         else:
-            logger.info(f"重试{i}次后，监控服务器重新连接")
+            logger.info(f"Monitor server RECONNECT after {i} retries")
 
     def on_ping(self, pingMsg, ex):
         # ws._send_ping()
@@ -118,10 +117,11 @@ class Transmitter:
 
 if __name__ == '__main__':
     setting = {
-        "username": "zhanghui",
-        "password": "123456",
+        "strategy": "grid",
+        "lark_url": None,
+        "log_path": None,
     }
-    tx = Transmitter(setting.get("username", None), setting.get("password", None))
+    tx = Transmitter(setting.get("strategy", None))
     client = tx.connect_ws()
     time.sleep(5)
     assert client == tx.client

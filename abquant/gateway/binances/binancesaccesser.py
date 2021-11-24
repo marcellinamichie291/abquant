@@ -6,27 +6,30 @@ import hmac
 import hashlib
 from datetime import datetime
 import uuid
+import decimal
 from requests import Request
 from requests.exceptions import SSLError
 
-from . import DIRECTION_AB2BINANCE, DIRECTION_BINANCE2AB, INTERVAL_AB2BINANCE, ORDERTYPE_AB2BINANCE, ORDERTYPE_BINANCE2AB, STATUS_BINANCE2AB, Security, REST_HOST, TIMEDELTA_MAP, WEBSOCKET_TRADE_HOST, symbol_contract_map
+from abquant.gateway.binances import DIRECTION_BINANCE2AB, DIRECTION_AB2BINANCE, INTERVAL_AB2BINANCE, ORDERTYPE_AB2BINANCE, ORDERTYPE_BINANCE2AB, STATUS_BINANCE2AB, Security, REST_HOST, TIMEDELTA_MAP, WEBSOCKET_TRADE_HOST, symbol_contract_map
 from abquant.gateway.accessor import RestfulAccessor
 from abquant.gateway.basegateway import Gateway
 from abquant.trader.common import Exchange, Product, Status
 from abquant.trader.msg import BarData, OrderData
 from abquant.trader.object import AccountData, CancelRequest, ContractData, HistoryRequest, OrderRequest
-
+from abquant.trader.utility import round_to
+from .binancelistener import BinanceSTradeWebsocketListener
 
 class BinanceAccessor(RestfulAccessor):
     """
     BINANCE REST API
     """
     ORDER_PREFIX = str(hex(uuid.getnode()))
+    DECIMAL_CTX = decimal.Context()
 
     def __init__(self, gateway: Gateway):
         """"""
-        super().__init__()
-        # self.trade_ws_api = self.gateway.trade_ws_api
+        super().__init__(gateway)
+        self.trade_listener = self.gateway.trade_listener
 
         self.key = ""
         self.secret = ""
@@ -41,7 +44,6 @@ class BinanceAccessor(RestfulAccessor):
         self.connect_time = 0
 
     def sign(self, request):
-
         security = request.data["security"]
         if security == Security.NONE:
             request.data = None
@@ -112,6 +114,8 @@ class BinanceAccessor(RestfulAccessor):
 
         self.query_time()
         self.query_account()
+        # 没有position
+        # self.query_position()
         self.query_order()
         self.query_contract()
         self.start_user_stream()
@@ -183,13 +187,21 @@ class BinanceAccessor(RestfulAccessor):
             "security": Security.SIGNED
         }
 
+
+        contract = symbol_contract_map[req.symbol]
+        if contract:
+            price_tick = contract.pricetick
+            price = round_to(req.price, price_tick)
+            volume = round_to(req.volume, contract.step_size)
+
+
         params = {
             "symbol": req.symbol.upper(),
             "timeInForce": "GTC",
             "side": DIRECTION_AB2BINANCE[req.direction],
             "type": ORDERTYPE_AB2BINANCE[req.type],
-            "price": str(req.price),
-            "quantity": str(req.volume),
+            "price": format(self.DECIMAL_CTX.create_decimal(repr(price)), 'f'),
+            "quantity": format(self.DECIMAL_CTX.create_decimal(repr(volume)), 'f'),
             "newClientOrderId": orderid,
             "newOrderRespType": "ACK"
         }
@@ -314,11 +326,13 @@ class BinanceAccessor(RestfulAccessor):
             pricetick = 1
             min_volume = 1
 
+
             for f in d["filters"]:
                 if f["filterType"] == "PRICE_FILTER":
                     pricetick = float(f["tickSize"])
                 elif f["filterType"] == "LOT_SIZE":
-                    min_volume = float(f["stepSize"])
+                    stepSize = float(f["stepSize"])
+                    min_volume = float(f["minQty"])
 
             contract = ContractData(
                 symbol=d["symbol"].lower(),
@@ -326,9 +340,12 @@ class BinanceAccessor(RestfulAccessor):
                 name=name,
                 pricetick=pricetick,
                 size=1,
+                step_size = stepSize,
                 min_volume=min_volume,
                 product=Product.SPOT,
                 history_data=True,
+                net_position=True,
+                # on_board=datetime.fromtimestamp(d["onboardDate"] / 1000),
                 gateway_name=self.gateway_name,
             )
             self.gateway.on_contract(contract)

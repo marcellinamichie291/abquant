@@ -4,9 +4,6 @@ from enum import Enum
 from typing import Dict
 from abquant.trader.msg import Status, OrderType, Direction, Interval
 from abquant.trader.object import ContractData
-from .binancesaccesser import BinanceAccessor
-
-from .binancegateway import BinanceGateway
 
 
 REST_HOST = "https://www.binance.com"
@@ -20,6 +17,7 @@ STATUS_BINANCE2AB = {
     "CANCELED": Status.CANCELLED,
     "REJECTED": Status.REJECTED
 }
+
 
 ORDERTYPE_AB2BINANCE = {
     OrderType.LIMIT: "LIMIT",
