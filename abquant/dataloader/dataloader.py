@@ -46,12 +46,14 @@ class Dataset(ABC):
 
     @abstractmethod
     def copy(self) -> "Dataset":
-        # generator is not copiable, so copy first before iter may be a good solution.
-        # 在backtestrunnner中的调用方式为:
-        # dataset_copy = dataset.copy():
-        # for bar in dataset_copy:
-        #     do something
-        # 该设计的原因是， 迭代可能反复进行。然而generator作为迭代器，不能被复制，且只能调用一次，因此dataset类需实现copy方法。该方法最好为浅拷贝。 
+        """
+        generator is not copiable, so copy first before iter may be a good solution.
+        在backtestrunnner中的调用方式为:
+        dataset_copy = dataset.copy():
+        for bar in dataset_copy:
+        #  do something
+        该设计的原因是， 迭代可能反复进行。然而generator作为迭代器，不能被复制，且只能调用一次，因此dataset类需实现copy方法。该方法最好为浅拷贝。 
+         """
 
         pass
 
