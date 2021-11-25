@@ -130,13 +130,8 @@ dmypy.json
 
 # MODIFIED SECITON
 #PyCharm project
+.idea/
 
 .DS_Store
-basis_dydx.json
-.gitignore
-parameters.json
-connectbinancec copy.py
-
+*/.DS_Store
 connect_dydx.py
-basis_dydx.py
-basis.py

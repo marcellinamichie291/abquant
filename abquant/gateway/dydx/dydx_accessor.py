@@ -169,7 +169,6 @@ class DydxAccessor(RestfulAccessor):
         expiration_epoch_seconds: int = int(time.time() + 86400)
         
         order_type, timeInForce = ORDERTYPE_AB2DYDX[req.type]
-        price = req.price
 
         hash_namber: int = generate_hash_number(
             server=self.server,
@@ -178,7 +177,7 @@ class DydxAccessor(RestfulAccessor):
             market=req.symbol,
             side=DIRECTION_AB2DYDX[req.direction],
             human_size=str(req.volume),
-            human_price=str(price),
+            human_price=str(req.price),
             limit_fee=str(self.limitFee),
             expiration_epoch_seconds=expiration_epoch_seconds
         )
@@ -194,7 +193,7 @@ class DydxAccessor(RestfulAccessor):
             "type": order_type,
             "timeInForce": timeInForce,
             "size": str(req.volume),
-            "price": str(price),
+            "price": str(req.price),
             "limitFee": str(self.limitFee),
             "expiration": epoch_seconds_to_iso(expiration_epoch_seconds),
             "postOnly": False,
