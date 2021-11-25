@@ -43,6 +43,7 @@ from .dydx_util import (
     order_to_sign,
     epoch_seconds_to_iso
 )
+from abquant.trader.utility import round_to
 
 
 class DydxAccessor(RestfulAccessor):
@@ -154,7 +155,6 @@ class DydxAccessor(RestfulAccessor):
 
     def send_order(self, req: OrderRequest) -> str:
         """委托下单"""
-        # TODO market 单有点问题
         # 生成本地委托号
         orderid = self.ORDER_PREFIX + \
             str(self.connect_time + self._new_order_id())
@@ -169,6 +169,10 @@ class DydxAccessor(RestfulAccessor):
         expiration_epoch_seconds: int = int(time.time() + 86400)
         
         order_type, timeInForce = ORDERTYPE_AB2DYDX[req.type]
+        contract = symbol_contract_map.get(req.symbol)
+        if contract:
+            price = round_to(req.price, contract.pricetick)
+            volume = round_to(req.volume, contract.step_size)
 
         hash_namber: int = generate_hash_number(
             server=self.server,
@@ -192,8 +196,8 @@ class DydxAccessor(RestfulAccessor):
             "side": DIRECTION_AB2DYDX[req.direction],
             "type": order_type,
             "timeInForce": timeInForce,
-            "size": str(req.volume),
-            "price": str(req.price),
+            "size": str(volume),
+            "price": str(price),
             "limitFee": str(self.limitFee),
             "expiration": epoch_seconds_to_iso(expiration_epoch_seconds),
             "postOnly": False,
