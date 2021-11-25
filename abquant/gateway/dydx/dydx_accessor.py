@@ -180,8 +180,8 @@ class DydxAccessor(RestfulAccessor):
             client_id=orderid,
             market=req.symbol,
             side=DIRECTION_AB2DYDX[req.direction],
-            human_size=str(req.volume),
-            human_price=str(req.price),
+            human_size=str(volume),
+            human_price=str(price),
             limit_fee=str(self.limitFee),
             expiration_epoch_seconds=expiration_epoch_seconds
         )
