@@ -10,20 +10,19 @@ from abquant.trader.msg import BarData, Interval
 from abquant.dataloader.dataloader import DataLoader, Dataset
 
 
-class DatasetK(Dataset):
+class DatasetKline(Dataset):
     def __init__(self, start, end, ab_symbol, interval):
         """
         子类须调用该方法初始化
         super().__init__(start, end, ab_symbol, interval)
         """
-        self.start: datetime = start
-        self.end: datetime = end
-        self.ab_symbol:str = ab_symbol
-        self.interval: Interval = interval
-    
-    def __iter__(self) -> Iterable(BarData):
+        super().__init__(start, end, ab_symbol, interval)
+        self.bars: Dict = {}
+        self.cur_pos = -1
+
+    def __iter__(self):
         """
-         返回可迭代对象。
+         返回可迭代对象  -> Iterable(BarData)
          for bar in dataset:
              do something
          等价于
@@ -35,7 +34,14 @@ class DatasetK(Dataset):
              except StopIteration
                  break
         """
-        pass
+        return self.bars
+
+    def __next__(self) -> BarData:
+        self.cur_pos += 1
+        if self.cur_pos < self.len:
+            return self.list[self.cur_pos]
+        else:
+            raise StopIteration()
 
     def __len__(self) -> int:
         """返回数据集的长度

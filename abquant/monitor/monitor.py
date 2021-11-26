@@ -132,6 +132,7 @@ class Monitor(Thread):
         info['payload'] = payload
         self.send(info)
 
+
     def send_status(self, run_id, status_type: str, ab_symbols: List[str]):
         info = self.default_info(run_id, "status_report")
         payload = {"type": status_type,

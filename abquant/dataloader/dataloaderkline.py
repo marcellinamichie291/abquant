@@ -10,19 +10,32 @@ from abquant.trader.msg import BarData, Interval
 from abquant.dataloader.dataloader import DataLoader, Dataset
 
 
-class DataLoaderK(DataLoader):
+class DataLoaderKline(DataLoader):
     def __init__(self, config: Dict):
         """
         子类须调用该方法初始化
         super().__init__(config)
         """
-        self.history_data: Dict[str, DataFrame] = {}
-        self.set_config(config)
-    
-    def set_config(setting):
+        super().__init__(config)
+        self.exchange = None
+        self.symbol = None
+        self.start_time = None
+        self.end_time = None
+
+    def set_config(self, setting):
         """
         子类须实现该方法
         """
+        super().set_config(setting)
+        try:
+            self.exchange = setting.get("exchange")
+            self.symbol = setting.get("symbol")
+            self.start_time = datetime.strptime(setting.get("start_time"), '%Y-%m-%d %H:%M:%S')
+            self.end_time = datetime.strptime(setting.get("end_time"), '%Y-%m-%d %H:%M:%S')
+        except Exception as e:
+            print(e)
+
+    def regular_time(self):
         pass
 
     def load_data(self, ab_symbol: str, start: datetime, end: datetime, interval: Interval=Interval.MINUTE) -> Dataset:
@@ -33,6 +46,8 @@ class DataLoaderK(DataLoader):
         4. 缓存可以考虑在该方法中检测以及建立。
 
         """
+        assert interval == Interval.MINUTE
+
         pass
     
     

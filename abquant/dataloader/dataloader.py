@@ -20,7 +20,7 @@ class Dataset(ABC):
         self.interval: Interval = interval
     
     @abstractmethod
-    def __iter__(self) -> Iterable(BarData):
+    def __iter__(self):
         """
          返回可迭代对象。
          for bar in dataset:
@@ -57,8 +57,15 @@ class Dataset(ABC):
 
         pass
 
+    @abstractmethod
+    def check(self) -> bool:
+        pass
+
 
 class DataLoader(ABC):
+
+    _config = None
+
     def __init__(self, config: Dict):
         """
         子类须调用该方法初始化
@@ -68,11 +75,11 @@ class DataLoader(ABC):
         self.set_config(config)
     
     @abstractmethod
-    def set_config(setting):
+    def set_config(self, setting):
         """
         子类须实现该方法
         """
-        pass
+        self._config = setting
 
     @abstractmethod
     def load_data(self, ab_symbol: str, start: datetime, end: datetime, interval: Interval=Interval.MINUTE) -> Dataset:
