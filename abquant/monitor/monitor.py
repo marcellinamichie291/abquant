@@ -52,7 +52,7 @@ class Monitor(Thread):
                 time.sleep(1)
                 # self.txmt.client.send("test: websocket start")
         except Exception as e:
-            logger.error(f"Error: {e}")
+            logger.debug(f"Error: {e}")
         try:
             self.consumer()
             # asyncio.run(self.consumer())
@@ -64,7 +64,7 @@ class Monitor(Thread):
         #     logger.error("Error: websocket client is None.")
         #     return
         if self.queue.full():
-            logger.error("Monitor: queue is full")
+            logger.debug("Monitor: queue is full")
             return
         self.queue.put_nowait(data)
         # logger.debug(f"Monitor: put to queue: {data}, current queue length: {self.queue.qsize()}")
@@ -159,7 +159,7 @@ class Monitor(Thread):
         # self.queue.put((1, 2))
         # logger.debug("Monitor: test data ok")
         if self.queue is None:
-            logger.error("Error: qu: queue is none.")
+            logger.debug("Error: qu: queue is none.")
             return
         # if self.txmt is None or self.txmt.client is None:
         #     logger.error("Error: tx: ws client is none.")
@@ -170,7 +170,7 @@ class Monitor(Thread):
             try:
                 self.send_buffer()
             except Exception as e:
-                logger.error(f'Error: buffer: {e}')
+                logger.debug(f'Error: buffer: {e}')
 
             try:
                 size = self.queue.qsize()
