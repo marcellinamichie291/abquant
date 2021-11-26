@@ -7,8 +7,10 @@ from copy import copy
 from pandas.core.frame import DataFrame
 
 from abquant.trader.msg import BarData, Interval
+from abquant.dataloader.dataloader import DataLoader, Dataset
 
-class Dataset(ABC):
+
+class DatasetK(Dataset):
     def __init__(self, start, end, ab_symbol, interval):
         """
         子类须调用该方法初始化
@@ -19,7 +21,6 @@ class Dataset(ABC):
         self.ab_symbol:str = ab_symbol
         self.interval: Interval = interval
     
-    @abstractmethod
     def __iter__(self) -> Iterable(BarData):
         """
          返回可迭代对象。
@@ -35,16 +36,13 @@ class Dataset(ABC):
                  break
         """
         pass
-    
 
-    @abstractmethod
     def __len__(self) -> int:
         """返回数据集的长度
             len(dataset) 时会调用此方法
         """
         pass
 
-    @abstractmethod
     def copy(self) -> "Dataset":
         """
         generator is not copiable, so copy first before iter may be a good solution.
@@ -57,34 +55,5 @@ class Dataset(ABC):
 
         pass
 
-
-class DataLoader(ABC):
-    def __init__(self, config: Dict):
-        """
-        子类须调用该方法初始化
-        super().__init__(config)
-        """
-        self.history_data: Dict[str, DataFrame] = {}
-        self.set_config(config)
-    
-    @abstractmethod
-    def set_config(setting):
-        """
-        子类须实现该方法
-        """
-        pass
-
-    @abstractmethod
-    def load_data(self, ab_symbol: str, start: datetime, end: datetime, interval: Interval=Interval.MINUTE) -> Dataset:
-        """
-        1. 子类须实现该方法，
-        2. assert, interval是分钟级的
-        3. 返回相应规格的DataSet， 该方法会在backtestrunnner中被调用。
-        4. 缓存可以考虑在该方法中检测以及建立。
-
-        """
-        pass
-    
-    
 
 
