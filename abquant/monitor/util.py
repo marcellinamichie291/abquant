@@ -102,6 +102,9 @@ def print_log_format(data):
                     logger.debug(formatStr)
                     return
                 elif event_type == 'log':
+                    gateway_name = data.get("gateway_name")
+                    if gateway_name is not None:
+                        formatStr += f'[{gateway_name}] '
                     ltype = payload.get("type")
                     if ltype == 'system':
                         formatStr += f'SYSTEM LOG: {payload.get("level")} {payload.get("msg")}'
