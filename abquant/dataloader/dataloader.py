@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Iterable
 from datetime import datetime
 from copy import copy
+from enum import Enum
 
 from pandas.core.frame import DataFrame
 
@@ -92,6 +93,12 @@ class DataLoader(ABC):
         """
         pass
     
-    
+
+class DataType(Enum):
+    """
+    Backtest Data Type.
+    """
+    LOCAL = "LOCAL"
+    REMOTE = "REMOTE"
 
 
