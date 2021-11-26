@@ -134,5 +134,3 @@ dmypy.json
 
 .DS_Store
 */.DS_Store
-connect_dydx.py
-
