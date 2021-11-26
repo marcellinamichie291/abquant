@@ -20,11 +20,6 @@ def parse():
                         help='End time of the backtest data')
     parser.add_argument('-f', '--data_file', type=str, required=False,
                         help='Full dir of your own data file')
-    parser.add_argument('-h', '--proxy_host', type=str,
-                        # default='127.0.0.1',
-                        help='proxy host')
-    parser.add_argument('-p', '--proxy_port', type=int,
-                        help='proxy port')
     args = parser.parse_args()
     return args
 
@@ -33,13 +28,13 @@ def main():
     args = parse()
 
     common_setting = {
-        "strategy": args.strategy,
+        "strategy": "grid",
         "lark_url": None,  # "https://open.larksuite.com/open-apis/bot/v2/hook/2b92f893-83c2-48c1-b366-2e6e38a09efe",
-        "log_path": args.log_path,
+        "log_path": None,
     }
 
     dt_setting = {
-        "exchange": args.key,
+        "exchange": args.exchange,
         "symbol": args.symbol,
         "start_time": "2021-11-20 00:00:00",
         "end_time": "2021-11-26 00:00:00",

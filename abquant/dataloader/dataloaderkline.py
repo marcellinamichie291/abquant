@@ -3,8 +3,10 @@ from abc import ABC, abstractmethod
 from typing import Dict, Iterable
 from datetime import datetime
 from copy import copy
+import os
 
 from pandas.core.frame import DataFrame
+import pathlib
 
 from abquant.trader.msg import BarData, Interval
 from abquant.dataloader.dataloader import DataLoader, Dataset, DataType
@@ -19,10 +21,16 @@ class DataLoaderKline(DataLoader):
         super().__init__(config)
         self.exchange = None
         self.symbol = None
+        self.interval = None
         self.start_time = None
         self.end_time = None
         self.data_file = None
         self.data_type = None
+        self.set_config(config)
+        home_dir = os.environ['HOME']
+        if not os.path.exists(self.home_dir + '/.abquant/data'):
+            os.makedirs(self.home_dir + '/.abquant/data')
+        self.cache_dir = home_dir + '/.abquant/data'
 
     def set_config(self, setting):
         """
@@ -32,6 +40,7 @@ class DataLoaderKline(DataLoader):
         try:
             self.exchange = setting.get("exchange")
             self.symbol = setting.get("symbol")
+            self.interval = setting.get("interval")
             self.start_time = datetime.strptime(setting.get("start_time"), '%Y-%m-%d %H:%M:%S')
             self.end_time = datetime.strptime(setting.get("end_time"), '%Y-%m-%d %H:%M:%S')
             self.data_file = setting.get("data_file")
@@ -53,9 +62,14 @@ class DataLoaderKline(DataLoader):
         4. 缓存可以考虑在该方法中检测以及建立。
 
         """
-        assert self.interval == Interval.MINUTE
+        assert self.interval == Interval.MINUTE or self.interval == "1m"
+
+        # todo: 检查缓存
+
         if self.data_type == DataType.LOCAL:
-            pass
+            path = pathlib.Path(self.data_file)
+            if path.is_absolute() and path.is_file():
+                df_01 = DataFrame.read_csv(self.data_file)
         elif self.data_type == DataType.REMOTE:
             pass
         pass
