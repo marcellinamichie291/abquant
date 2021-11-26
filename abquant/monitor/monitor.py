@@ -126,6 +126,7 @@ class Monitor(Thread):
 
     def send_log(self, run_id, log: LogData, log_type: str='custom'):
         info = self.default_info(run_id, "log")
+        info['gateway_name'] = log.gateway_name
         payload = object_as_dict(log)
         payload['level'] = logging.getLevelName(payload['level'])
         payload['type'] = log_type
