@@ -25,3 +25,6 @@ class DummyMonitor:
 
     def send_status(self, run_id, status_type: str, ab_symbols: List[str]):
         pass
+
+    def send_notify_lark(self, run_id, msg: str):
+        pass
