@@ -37,7 +37,7 @@ class Transmitter:
                                         on_close=self.on_close, on_open=self.on_open,
                                         on_ping=self.on_ping, on_pong=self.on_pong)
         except Exception as e:
-            logger.error(e)
+            logger.debug(e)
             return
         self.client = ws
         # ws.run_forever(ping_interval=30, ping_timeout=5)
@@ -92,7 +92,7 @@ class Transmitter:
         if code is not None and code == 1008:   # WS Error Code: Policy Violation, 具体是strategy参数不对
             logger.info("Monitor: No strategy config, WebSocket CLOSED")
             return
-        logger.info(f"WebSocket closed, code: {code}, msg: {msg}")
+        logger.debug(f"WebSocket closed, code: {code}, msg: {msg}")
         i = 1
         time.sleep(3)
         while i <= MAX_CONNECT_RETRY:

@@ -47,7 +47,7 @@ class DatasetKline(Dataset):
         """返回数据集的长度
             len(dataset) 时会调用此方法
         """
-        pass
+        return len(self.bars)
 
     def copy(self) -> "Dataset":
         """
@@ -59,7 +59,9 @@ class DatasetKline(Dataset):
         该设计的原因是， 迭代可能反复进行。然而generator作为迭代器，不能被复制，且只能调用一次，因此dataset类需实现copy方法。该方法最好为浅拷贝。 
          """
 
-        pass
+        return True, ''
 
+    def check(self) -> (bool, str):
+        pass
 
 

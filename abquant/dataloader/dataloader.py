@@ -9,6 +9,7 @@ from pandas.core.frame import DataFrame
 
 from abquant.trader.msg import BarData, Interval
 
+
 class Dataset(ABC):
     def __init__(self, start, end, ab_symbol, interval):
         """
@@ -83,7 +84,7 @@ class DataLoader(ABC):
         self._config = setting
 
     @abstractmethod
-    def load_data(self, ab_symbol: str, start: datetime, end: datetime, interval: Interval=Interval.MINUTE) -> Dataset:
+    def load_data(self) -> Dataset:
         """
         1. 子类须实现该方法，
         2. assert, interval是分钟级的
@@ -94,7 +95,7 @@ class DataLoader(ABC):
         pass
     
 
-class DataType(Enum):
+class DataLocation(Enum):
     """
     Backtest Data Type.
     """

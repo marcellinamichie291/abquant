@@ -36,10 +36,11 @@ def main():
     dt_setting = {
         "exchange": args.exchange,
         "symbol": args.symbol,
+        "type": "spot",
         "start_time": "2021-11-20 00:00:00",
         "end_time": "2021-11-26 00:00:00",
-        "type": "local",
-        "local_dir": args.data_file,
+        "location": "local",
+        "data_file": args.data_file,
         "interval": "1m",
     }
     # 初始化 monitor
