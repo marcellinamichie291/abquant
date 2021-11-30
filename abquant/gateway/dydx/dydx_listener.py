@@ -2,7 +2,6 @@ from typing import Dict, List
 from datetime import datetime
 from copy import copy
 
-from abquant import gateway
 from . import (
     DIRECTION_DYDX2AB,
     WEBSOCKET_HOST,
@@ -15,8 +14,10 @@ from . import (
 from ..listener import WebsocketListener
 from .dydx_getway import Gateway
 from ...trader.object import (
+    AccountData,
     OrderData,
     HistoryRequest,
+    PositionData,
     SubscribeRequest,
     HistoryRequest,
     Status,
@@ -25,7 +26,7 @@ from ...trader.object import (
 from ...trader.msg import BarData, TickData, TradeData, DepthData
 from ...trader.common import Exchange, Interval
 
-from .dydx_util import generate_datetime, api_key_credentials_map, generate_datetime_iso, sign, generate_now_iso, UTC_TZ
+from .dydx_util import generate_datetime, api_key_credentials_map, sign, generate_now_iso, UTC_TZ
 
 
 class DydxWebsocketListener(WebsocketListener):
@@ -127,11 +128,6 @@ class DydxWebsocketListener(WebsocketListener):
         }
         self.send_packet(req)
 
-        # req: dict = {
-        #     "type": "subscribe",
-        #     "channel": "v3_markets"
-        # }
-        # self.send_packet(req)
 
     def on_packet(self, packet: dict) -> None:
         """推送数据回报"""
@@ -159,10 +155,8 @@ class DydxWebsocketListener(WebsocketListener):
         """Websocket账户更新推送"""
         for order_data in packet["contents"]["orders"]:
             # 绑定本地和系统委托号映射
-            self.gateway.local_sys_map[order_data["clientId"]
-                                       ] = order_data["id"]
-            self.gateway.sys_local_map[order_data["id"]
-                                       ] = order_data["clientId"]
+            self.gateway.local_sys_map[order_data["clientId"]] = order_data["id"]
+            self.gateway.sys_local_map[order_data["id"]] = order_data["clientId"]
             order: OrderData = OrderData(
                 symbol=order_data["market"],
                 exchange=Exchange.DYDX,
@@ -182,33 +176,78 @@ class DydxWebsocketListener(WebsocketListener):
             if 0 < order.traded < order.volume:
                 order.status = Status.PARTTRADED
             self.gateway.on_order(order)
-
+        
+        
         if packet["type"] == "subscribed":
             self.gateway.posid = packet["contents"]["account"]["positionId"]
             self.gateway.id = packet["id"]
-            self.gateway.init_query()
+            # self.gateway.init_query()
+        if "account" in packet["contents"]:
+            d: dict = packet["contents"]["accounts"][0] if "accounts" in packet["contents"] else packet["contents"]["account"]
+            self.position_id = d["positionId"]
+            balance: float = float(d["equity"])
+            available: float = float(d["freeCollateral"])
+
+            account: AccountData = AccountData(
+                accountid=d["id"],
+                balance=balance,
+                frozen=balance - available,
+                gateway_name=self.gateway_name
+            )
+
+            self.gateway.on_account(account)
+            
+            if "openPositions" in d:
+                for keys in d["openPositions"]:
+                    position: PositionData = PositionData(
+                        symbol=keys,
+                        exchange=Exchange.DYDX,
+                        direction=Direction.NET,
+                        volume=float(d["openPositions"][keys]["size"]),
+                        price=float(d["openPositions"][keys]["entryPrice"]),
+                        pnl=float(d["openPositions"][keys]["unrealizedPnl"]),
+                        gateway_name=self.gateway_name
+                    )
+                    self.gateway.on_position(position)
+            
             self.gateway.write_log("账户资金查询成功")
 
         else:
             fills = packet["contents"].get("fills", None)
-            if not fills:
-                return
+            position = packet["contents"].get("positions", None)
 
-            for fill_data in packet["contents"]["fills"]:
-                orderid: str = self.gateway.sys_local_map[fill_data["orderId"]]
+            if fills:
+                for fill_data in packet["contents"]["fills"]:
+                    orderid: str = self.gateway.sys_local_map[fill_data["orderId"]]
 
-                trade: TradeData = TradeData(
-                    symbol=fill_data["market"],
-                    exchange=Exchange.DYDX,
-                    orderid=orderid,
-                    tradeid=fill_data["id"],
-                    direction=DIRECTION_DYDX2AB[fill_data["side"]],
-                    price=float(fill_data["price"]),
-                    volume=float(fill_data["size"]),
-                    datetime=generate_datetime(fill_data["createdAt"]),
-                    gateway_name=self.gateway_name
-                )
-                self.gateway.on_trade(trade)
+                    trade: TradeData = TradeData(
+                        symbol=fill_data["market"],
+                        exchange=Exchange.DYDX,
+                        orderid=orderid,
+                        tradeid=fill_data["id"],
+                        direction=DIRECTION_DYDX2AB[fill_data["side"]],
+                        price=float(fill_data["price"]),
+                        volume=float(fill_data["size"]),
+                        datetime=generate_datetime(fill_data["createdAt"]),
+                        gateway_name=self.gateway_name
+                    )
+                    self.gateway.on_trade(trade)
+            if position:
+                position.reverse()
+                for position_data in position:
+                    position: PositionData = PositionData(
+                        symbol=position_data["market"],
+                        exchange=Exchange.DYDX,
+                        direction=Direction.NET,
+                        volume=float(position_data["size"]),
+                        price=float(position_data["entryPrice"]),
+                        pnl=float(position_data["realizedPnl"]),
+                        gateway_name=self.gateway_name
+                    )
+
+                    self.gateway.on_position(position)
+                    
+                    
 
 
 class OrderBook():
