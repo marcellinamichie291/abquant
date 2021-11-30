@@ -119,7 +119,7 @@ class DydxAccessor(RestfulAccessor):
 
         self.start()
         self.query_contract()
-        # self.query_account()
+        self.query_account()
 
         self.gateway.write_log("REST API启动成功")
 

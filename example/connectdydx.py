@@ -105,13 +105,13 @@ if __name__ == '__main__':
 
     # 下单撤单
     # for i in range(1):
-        # ab_order_id = dydx_gateway.send_order(OrderRequest(symbol="BTC-USD", exchange=Exchange.DYDX,
-        #                             direction=Direction.SHORT, type=OrderType.LIMIT, 
-        #                             price=60000, volume=0.001, offset=Offset.OPEN))
-    #     order_id = ab_order_id.split('.')[-1]
-    #     print("------open_long",order_id)
-        # time.sleep(1)
-        # dydx_gateway.cancel_order(CancelRequest(order_id, symbol="BTC-USD",exchange=Exchange.DYDX))
+    ab_order_id = dydx_gateway.send_order(OrderRequest(symbol="BTC-USD", exchange=Exchange.DYDX,
+                                    direction=Direction.SHORT, type=OrderType.LIMIT, 
+                                    price=50000, volume=0.001, offset=Offset.OPEN))
+    order_id = ab_order_id.split('.')[-1]
+    print("------open_long",order_id)
+    time.sleep(1)
+    dydx_gateway.cancel_order(CancelRequest(order_id, symbol="BTC-USD",exchange=Exchange.DYDX))
 
     # # cancel all
     # print("----------orders",dydx_gateway.orders)
