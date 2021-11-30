@@ -143,8 +143,7 @@ class DataLoaderKline(DataLoader):
                 # df_02.rename(columns=rename_hs, inplace=True)
                 df_02['exchange'] = self.exchange
                 df_02['interval'] = self.interval
-                df_02['datetime'] = df_02['datetime'] * 1000
-                df_02['datetime'] = pd.to_datetime(df_02['datetime'])
+                df_02['datetime'] = pd.to_datetime(df_02['datetime'], unit='ms')
                 print(df_02.head(1))
 
                 dataset.bars = df_02.to_dict(orient="records")
@@ -157,6 +156,8 @@ class DataLoaderKline(DataLoader):
                 # todo:cache
                 if cache_file is not None and len(cache_file) > 0:
                     df_02.to_csv(self.cache_dir + '/' + cache_file)
+                else:
+                    pass
 
                 return dataset
         elif self.data_location == DataLocation.REMOTE:

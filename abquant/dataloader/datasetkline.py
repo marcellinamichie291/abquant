@@ -59,9 +59,9 @@ class DatasetKline(Dataset):
         该设计的原因是， 迭代可能反复进行。然而generator作为迭代器，不能被复制，且只能调用一次，因此dataset类需实现copy方法。该方法最好为浅拷贝。 
          """
 
-        return True, ''
+        pass
 
     def check(self) -> (bool, str):
-        pass
+        return True, 'pass'
 
 
