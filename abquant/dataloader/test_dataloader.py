@@ -36,7 +36,7 @@ def main():
     dt_setting = {
         "exchange": args.exchange,
         "symbol": args.symbol,
-        "type": "spot",
+        "trade_type": "spot",
         "start_time": "2021-11-20 00:00:00",
         "end_time": "2021-11-26 00:00:00",
         "location": "local",

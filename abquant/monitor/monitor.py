@@ -12,7 +12,7 @@ from abquant.trader.msg import OrderData, TradeData
 from abquant.trader.object import LogData
 from abquant.trader.utility import extract_ab_symbol, object_as_dict
 from .transmitter import Transmitter
-from .util import logger, config_logger, print_log_format
+from .logger import logger, config_logger, print_log_format
 
 MAX_QUEUE_SIZE = 10000
 MAX_BUFFER_SIZE = 100000
