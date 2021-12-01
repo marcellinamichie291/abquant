@@ -11,7 +11,7 @@ from . import DIRECTION_BINANCEC2AB, D_TESTNET_WEBSOCKET_DATA_HOST, D_WEBSOCKET_
 from ..basegateway import Gateway
 from ..listener import WebsocketListener
 from abquant.trader.exception import MarketException
-from abquant.trader.common import Direction, Exchange
+from abquant.trader.common import Direction, Exchange, OrderType
 from abquant.trader.object import AccountData, PositionData, SubscribeRequest
 from abquant.trader.msg import DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
 
@@ -267,6 +267,9 @@ class BinanceCTradeWebsocketListener(WebsocketListener):
         order_type = ORDERTYPE_BINANCEC2AB.get(key, None)
         if not order_type:
             return
+        # such an ugly code due to multi gateway consistency.
+        elif order_type == OrderType.POSTONLYLIMIT:
+            order_type = OrderType.LIMIT
 
         order = OrderData(
             symbol=ord_data["s"],
