@@ -123,7 +123,18 @@ class ContractsDailyResult:
         contract_result = self.contract_results[trade.ab_symbol]
         contract_result.add_trade(trade)
     
-
+    def __add__(self, result: "ContractsDailyResult") -> "ContractsDailyResult":
+        assert(self.date==result.date)
+        sum_result = ContractsDailyResult(self.date, None)
+        sum_result.trade_count = self.trade_count + result.trade_count
+        sum_result.turnover = self.turnover + result.turnover
+        sum_result.commission = self.commission + result.commission
+        sum_result.slippage = self.slippage + result.slippage
+        sum_result.trading_pnl = self.trading_pnl + result.trading_pnl
+        sum_result.holding_pnl = self.holding_pnl + result.holding_pnl
+        sum_result.total_pnl = self.total_pnl + result.total_pnl
+        sum_result.net_pnl = self.net_pnl + result.net_pnl
+        return sum_result
         
 
     def calculate_pnl(
