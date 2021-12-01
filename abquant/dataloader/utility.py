@@ -23,6 +23,8 @@ def regular_time(untime) -> datetime:
         return None
     suntime = str(untime).strip()
     if is_number(suntime) and untime >= 1E9 and untime <= 1E16:  # after year 2001
+        untime = round(untime)
+        suntime = str(untime).strip()
         div = 10 ** (len(suntime) - 10)
         untime = round(untime / div)    # degrade to second
         return datetime.fromtimestamp(untime, timezone.utc)
@@ -68,6 +70,7 @@ if __name__ == '__main__':
     print(regular_time(1619007011))
     print(regular_time(1619007011000))
     print(regular_time(1619007011123456))
+    print(regular_time(1619007011.123456))
     print(regular_time('21-4-21 12 '))
     print(regular_time('2021-4-21'))
     print(regular_time(' 2021-4-21 12:10'))

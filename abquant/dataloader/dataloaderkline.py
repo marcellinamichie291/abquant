@@ -97,7 +97,7 @@ class DataLoaderKline(DataLoader):
                 df_03 = pd.read_csv(self.cache_dir + '/' + cache_file, index_col=0)
                 absymbol = generate_ab_symbol(self.symbol, self.exchange)
                 dataset: DatasetKline = DatasetKline(self.start_time, self.end_time, absymbol, self.interval)
-                dataset.set_data(df_03.to_dict(orient="records"))
+                dataset.set_data(df_03.to_dict(orient="records"), df_03, df_03.shape[0])
                 return dataset
 
         if self.data_location == DataLocation.LOCAL:
@@ -107,7 +107,7 @@ class DataLoaderKline(DataLoader):
                 print(df_01.head(1))
                 headers = df_01.columns.values.tolist()
                 select_hs, rename_hs = make_columns(headers)
-                if len(select_hs) != 7:
+                if select_hs is not None and len(select_hs) != 7:
                     self.write_log("Error: data headers not correct, cannot load")
                     return None
                 df_02 = df_01[select_hs]
@@ -131,7 +131,7 @@ class DataLoaderKline(DataLoader):
                 absymbol = generate_ab_symbol(self.symbol, self.exchange)
                 dataset: DatasetKline = DatasetKline(self.start_time, self.end_time, absymbol, self.interval)
 
-                dataset.set_data(df_02.to_dict(orient="records"))
+                dataset.set_data(df_02.to_dict(orient="records"), df_02, rn)
 
                 # todo:check
                 result, msg = dataset.check()
@@ -146,6 +146,7 @@ class DataLoaderKline(DataLoader):
                         f"-{str(self.start_time)[:19].replace(' ','-')}-{str(self.end_time)[:19].replace(' ','-')}.csv"
                     df_02.to_csv(self.cache_dir + '/' + cache_file, index=False)
 
+                print(f"Loaded k-line bars {rn}")
                 return dataset
         elif self.data_location == DataLocation.REMOTE:
             pass
