@@ -265,7 +265,7 @@ class OrderBook():
             symbol=symbol,
             exchange=exchange,
             # name=symbol_contract_map[symbol].name,
-            datetime=datetime.now(UTC_TZ),
+            datetime=datetime.now(),
             gateway_name=gateway.gateway_name,
         )
 
@@ -273,7 +273,7 @@ class OrderBook():
         self.depth: DepthData = DepthData(
             symbol=symbol,
             exchange=exchange,
-            datetime=datetime.now(UTC_TZ),
+            datetime=datetime.now(),
             gateway_name=gateway.gateway_name,
         )
 
@@ -288,7 +288,7 @@ class OrderBook():
         """Websocket订单簿更新推送"""
         type: str = d["type"]
         channel: str = d["channel"]
-        dt: datetime = datetime.now(UTC_TZ)
+        dt: datetime = datetime.now()
         if type == "subscribed" and channel == "v3_orderbook":
             self.on_snapshot(d["contents"]["asks"], d["contents"]["bids"], dt)
         elif type == "channel_batch_data" and channel == "v3_orderbook":

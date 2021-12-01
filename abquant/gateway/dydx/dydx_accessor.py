@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List
 import json
 import time
@@ -35,7 +35,7 @@ from . import (
 from ..basegateway import Gateway
 from ..accessor import Request, RestfulAccessor
 from .dydx_util import (
-    UTC_TZ,
+    TZ_DELTA,
     generate_datetime,
     api_key_credentials_map,
     generate_datetime_iso,
@@ -308,9 +308,9 @@ class DydxAccessor(RestfulAccessor):
                 
                 if len(bars["candles"]) < limit:
                     break
-                if begin < UTC_TZ.localize(start_dt):
+                if begin < start_dt:
                     break
-                end_dt = bar.datetime
+                end_dt = bar.datetime - TZ_DELTA
                 
 
         return list(reversed(history))
