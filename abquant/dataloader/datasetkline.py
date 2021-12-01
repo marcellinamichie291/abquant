@@ -40,9 +40,10 @@ class DatasetKline(Dataset):
     def __next__(self) -> BarData:
         self.cur_pos += 1
         if self.cur_pos < self.len:
-            return self.list[self.cur_pos]
+            return self.list[self.cur_pos]  # todo: return BarData
         else:
-            raise StopIteration()
+            return None
+            # raise StopIteration()
 
     def __len__(self) -> int:
         """返回数据集的长度
@@ -66,8 +67,11 @@ class DatasetKline(Dataset):
         #  do something
         该设计的原因是， 迭代可能反复进行。然而generator作为迭代器，不能被复制，且只能调用一次，因此dataset类需实现copy方法。该方法最好为浅拷贝。 
          """
-
-        pass
+        newds = DatasetKline(self.start, self.end, self.ab_symbol, self.interval)
+        newds.bars = self.bars   # 数据只读情况下，共用一份，节省内存
+        newds.cur_pos = -1
+        newds.len = 0
+        return newds
 
     def check(self) -> (bool, str):
         return True, 'pass'

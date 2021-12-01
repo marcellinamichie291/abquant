@@ -50,10 +50,22 @@ def main():
     dataloader: DataLoaderKline = DataLoaderKline(dt_setting)
     dataset: DatasetKline = dataloader.load_data()
     diter = iter(dataset)
-    for i in range(0, 10):
-        d = next(diter)
-        print(d)
-
+    for d in diter:
+        pass
+    try:
+        while True:
+            dt = next(diter, None)
+            if not dt:
+                break
+        for i in range(0, 10):
+            d = next(diter)
+            print(d)
+    except Exception:
+        newds = dataset.copy()
+        newiter = iter(newds)
+        for i in range(0, 10):
+            d = next(newiter)
+            print(d)
 
 if __name__ == '__main__':
     main()
