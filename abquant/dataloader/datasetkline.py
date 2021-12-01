@@ -17,8 +17,9 @@ class DatasetKline(Dataset):
         super().__init__(start, end, ab_symbol, interval)
         """
         super().__init__(start, end, ab_symbol, interval)
-        self.bars: Dict = {}
+        self.bars: list = []
         self.cur_pos = -1
+        self.len = 0
 
     def __iter__(self):
         """
@@ -34,7 +35,7 @@ class DatasetKline(Dataset):
              except StopIteration
                  break
         """
-        return self.bars
+        return iter(self.bars)
 
     def __next__(self) -> BarData:
         self.cur_pos += 1
@@ -48,6 +49,13 @@ class DatasetKline(Dataset):
             len(dataset) 时会调用此方法
         """
         return len(self.bars)
+
+    def set_data(self, data):
+        if not isinstance(data, list):
+            print(f'Error: data is not list: {str(data)[:50]}  ...')
+            return
+        self.bars = data
+        self.len = len(self.bars)
 
     def copy(self) -> "Dataset":
         """

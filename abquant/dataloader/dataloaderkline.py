@@ -7,10 +7,12 @@ import pandas as pd
 from pandas.core.frame import DataFrame
 from pathlib import Path
 
-from abquant.trader.msg import BarData, Interval
+from abquant.trader.msg import Interval
 from abquant.dataloader.dataloader import DataLoader, Dataset, DataLocation
 from abquant.dataloader.datasetkline import DatasetKline
 from abquant.dataloader.utility import regular_time
+from abquant.trader.utility import generate_ab_symbol
+from abquant.trader.common import Exchange
 
 
 class DataLoaderKline(DataLoader):
@@ -20,7 +22,7 @@ class DataLoaderKline(DataLoader):
         super().__init__(config)
         """
         super().__init__(config)
-        self.exchange = None
+        self.exchange: Exchange = None
         self.symbol = None
         self.trade_type = None
         self.interval = None
@@ -40,7 +42,10 @@ class DataLoaderKline(DataLoader):
         """
         super().set_config(setting)
         try:
-            self.exchange = setting.get("exchange")
+            try:
+                self.exchange = Exchange(setting.get("exchange"))
+            except ValueError:
+                raise Exception(f'Dataloader config: exchange incorrect: {setting.get("exchange")}')
             self.symbol = setting.get("symbol")
             self.trade_type = setting.get("trade_type")
             self.interval = setting.get("interval")
@@ -49,7 +54,7 @@ class DataLoaderKline(DataLoader):
             elif self.interval == "1m":
                 pass
             else:
-                raise Exception(f'Dataloader config: interval incorrect: {stime}')
+                raise Exception(f'Dataloader config: interval incorrect: {self.interval}')
             stime = setting.get("start_time")
             etime = setting.get("end_time")
             self.start_time = regular_time(stime)
@@ -79,17 +84,21 @@ class DataLoaderKline(DataLoader):
         """
         assert self.interval == Interval.MINUTE or self.interval == "1m"
 
-        dataset: DatasetKline = DatasetKline(self.start_time, self.end_time, self.symbol, self.interval)
         cache_file = ''
 
-        # todo: 检查缓存
+        # 检查缓存  todo: 数据合并
         if self.exchange is not None and self.symbol is not None and self.start_time is not None \
                 and self.end_time is not None and self.trade_type is not None:
-            cache_file = f"{self.exchange.lower()}-{self.trade_type.lower()}-{self.symbol.lower()}-1m" \
+            cache_file = f"{self.exchange.value.lower()}-{self.trade_type.lower()}-{self.symbol.lower()}-1m" \
                        f"-{str(self.start_time)[:19].replace(' ','-')}-{str(self.end_time)[:19].replace(' ','-')}.csv"
             if Path(self.cache_dir + '/' + cache_file).is_file():
                 # load from cache
-                pass
+                print(f"Load from cache: {self.cache_dir + '/' + cache_file}")
+                df_03 = pd.read_csv(self.cache_dir + '/' + cache_file, index_col=0)
+                absymbol = generate_ab_symbol(self.symbol, self.exchange)
+                dataset: DatasetKline = DatasetKline(self.start_time, self.end_time, absymbol, self.interval)
+                dataset.set_data(df_03.to_dict(orient="records"))
+                return dataset
 
         if self.data_location == DataLocation.LOCAL:
             # path = Path(self.data_file)
@@ -104,13 +113,25 @@ class DataLoaderKline(DataLoader):
                 df_02 = df_01[select_hs]
                 df_02.set_axis(rename_hs, axis='columns', inplace=True)
                 # df_02.rename(columns=rename_hs, inplace=True)
-                df_02['exchange'] = self.exchange
+                df_02.sort_values(by=['datetime'], ascending=True)
+                df_02['exchange'] = self.exchange.value
                 df_02['interval'] = self.interval
                 df_02['datetime'] = pd.to_datetime(df_02['datetime'], unit='ms')
                 print(df_02.head(1))
                 print(df_02.shape)
 
-                dataset.bars = df_02.to_dict(orient="records")
+                rn, cn = df_02.shape
+                if self.symbol is None:
+                    self.symbol = df_02.iloc[0]['symbol']
+                if self.start_time is None:
+                    self.start_time = df_02.iloc[0]['datetime']
+                if self.end_time is None:
+                    self.end_time = df_02.iloc[rn - 1]['datetime']
+
+                absymbol = generate_ab_symbol(self.symbol, self.exchange)
+                dataset: DatasetKline = DatasetKline(self.start_time, self.end_time, absymbol, self.interval)
+
+                dataset.set_data(df_02.to_dict(orient="records"))
 
                 # todo:check
                 result, msg = dataset.check()
@@ -121,16 +142,9 @@ class DataLoaderKline(DataLoader):
                 if cache_file is not None and len(cache_file) > 0:
                     df_02.to_csv(self.cache_dir + '/' + cache_file)
                 else:
-                    rn, cn = df_02.shape
-                    if self.symbol is None:
-                        self.symbol = df_02.iloc[0]['symbol']
-                    if self.start_time is None:
-                        self.start_time = df_02.iloc[0]['datetime']
-                    if self.end_time is None:
-                        self.end_time = df_02.iloc[rn-1]['datetime']
-                    cache_file = f"{self.exchange.lower()}-{self.trade_type.lower()}-{self.symbol.lower()}-1m" \
+                    cache_file = f"{self.exchange.value.lower()}-{self.trade_type.lower()}-{self.symbol.lower()}-1m" \
                         f"-{str(self.start_time)[:19].replace(' ','-')}-{str(self.end_time)[:19].replace(' ','-')}.csv"
-                    df_02.to_csv(self.cache_dir + '/' + cache_file)
+                    df_02.to_csv(self.cache_dir + '/' + cache_file, index=False)
 
                 return dataset
         elif self.data_location == DataLocation.REMOTE:

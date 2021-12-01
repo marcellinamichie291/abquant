@@ -12,8 +12,8 @@ def parse():
     parser = argparse.ArgumentParser()
     parser.add_argument('-x', '--exchange', type=str, required=True,
                         help='Exchange that backtest data is from')
-    parser.add_argument('-m', '--symbol', type=str, required=False,
-                        help='Coin pair symbol name')
+    parser.add_argument('-y', '--symbol', type=str, required=False,
+                        help='Coin pair symbol name, no slash, eg. BTCUSDT')
     parser.add_argument('-s', '--start_time', type=str, required=False,
                         help='Start time of the backtest data')
     parser.add_argument('-e', '--end_time', type=str, required=False,
@@ -44,8 +44,8 @@ def main():
         "interval": "1m",
     }
     # 初始化 monitor
-    monitor = Monitor(common_setting)
-    monitor.start()
+    # monitor = Monitor(common_setting)
+    # monitor.start()
 
     dataloader: DataLoaderKline = DataLoaderKline(dt_setting)
     dataset: DatasetKline = dataloader.load_data()

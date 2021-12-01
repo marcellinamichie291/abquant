@@ -18,7 +18,7 @@ class Dataset(ABC):
         """
         self.start: datetime = start
         self.end: datetime = end
-        self.ab_symbol:str = ab_symbol
+        self.ab_symbol: str = ab_symbol
         self.interval: Interval = interval
     
     @abstractmethod
