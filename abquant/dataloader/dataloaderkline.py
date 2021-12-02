@@ -86,58 +86,64 @@ class DataLoaderKline(DataLoader):
                 dataset.set_data(df_03.to_dict(orient="records"), df_03, df_03.shape[0])
                 return dataset
 
+        df_01 = None
         if self.data_location == DataLocation.LOCAL:
             # path = Path(self.data_file)
             if self.data_file is not None and os.path.isfile(self.data_file):
                 df_01 = pd.read_csv(self.data_file)
                 print(df_01.head(1))
-                headers = df_01.columns.values.tolist()
-                select_hs, rename_hs = make_columns(headers)
-                if select_hs is not None and len(select_hs) != 7:
-                    print("Error: data headers not correct, cannot load")
-                    return None
-                df_02 = df_01[select_hs]
-                df_02.set_axis(rename_hs, axis='columns', inplace=True)
-                # df_02.rename(columns=rename_hs, inplace=True)
-                df_02.sort_values(by=['datetime'], ascending=True)
-                df_02['exchange'] = self.exchange.value
-                df_02['interval'] = self.interval
-                df_02['datetime'] = pd.to_datetime(df_02['datetime'], unit='ms')
-                print(df_02.head(1))
-                print(df_02.shape)
 
-                rn, cn = df_02.shape
-                if self.symbol is None:
-                    self.symbol = df_02.iloc[0]['symbol']
-                if self.start_time is None:
-                    self.start_time = df_02.iloc[0]['datetime']
-                if self.end_time is None:
-                    self.end_time = df_02.iloc[rn - 1]['datetime']
-
-                absymbol = generate_ab_symbol(self.symbol, self.exchange)
-                dataset: DatasetKline = DatasetKline(self.start_time, self.end_time, absymbol, self.interval)
-
-                dataset.set_data(df_02.to_dict(orient="records"), df_02, rn)
-
-                # check
-                result, msg = dataset.check()
-                if not result:
-                    print(f"Error: data check: {msg}, cannot load")
-                    return None
-
-                # cache
-                if cache_file is not None and len(cache_file) > 0:
-                    df_02.to_csv(self.cache_dir + '/' + cache_file)
-                else:
-                    cache_file = f"{self.exchange.value.lower()}-{self.trade_type.lower()}-{self.symbol.lower()}-1m" \
-                        f"-{str(self.start_time)[:19].replace(' ','-')}-{str(self.end_time)[:19].replace(' ','-')}.csv"
-                    df_02.to_csv(self.cache_dir + '/' + cache_file, index=False)
-
-                print(f"Loaded k-line bars {rn}")
-                return dataset
         elif self.data_location == DataLocation.REMOTE:
             pass
-        pass
+
+        if df_01 is None:
+            print('No data loaded, exit')
+            return None
+
+        headers = df_01.columns.values.tolist()
+        select_hs, rename_hs = make_columns(headers)
+        if select_hs is not None and len(select_hs) != 7:
+            print("Error: data headers not correct, cannot load")
+            return None
+        df_02 = df_01[select_hs]
+        df_02.set_axis(rename_hs, axis='columns', inplace=True)
+        # df_02.rename(columns=rename_hs, inplace=True)
+        df_02.sort_values(by=['datetime'], ascending=True)
+        df_02['exchange'] = self.exchange.value
+        df_02['interval'] = self.interval
+        df_02['datetime'] = pd.to_datetime(df_02['datetime'], unit='ms')
+        print(df_02.head(1))
+        print(df_02.shape)
+
+        rn, cn = df_02.shape
+        if self.symbol is None:
+            self.symbol = df_02.iloc[0]['symbol']
+        if self.start_time is None:
+            self.start_time = df_02.iloc[0]['datetime']
+        if self.end_time is None:
+            self.end_time = df_02.iloc[rn - 1]['datetime']
+
+        absymbol = generate_ab_symbol(self.symbol, self.exchange)
+        dataset: DatasetKline = DatasetKline(self.start_time, self.end_time, absymbol, self.interval)
+
+        dataset.set_data(df_02.to_dict(orient="records"), df_02, rn)
+
+        # check
+        result, msg = dataset.check()
+        if not result:
+            print(f"Error: data check: {msg}, cannot load")
+            return None
+
+        # cache
+        if cache_file is not None and len(cache_file) > 0:
+            df_02.to_csv(self.cache_dir + '/' + cache_file)
+        else:
+            cache_file = f"{self.exchange.value.lower()}-{self.trade_type.lower()}-{self.symbol.lower()}-1m" \
+                         f"-{str(self.start_time)[:19].replace(' ', '-')}-{str(self.end_time)[:19].replace(' ', '-')}.csv"
+            df_02.to_csv(self.cache_dir + '/' + cache_file, index=False)
+
+        print(f"Loaded k-line bars {rn}")
+        return dataset
 
 
 def make_columns(headers: list) -> (list, list):
