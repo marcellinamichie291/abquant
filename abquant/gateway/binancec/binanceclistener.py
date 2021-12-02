@@ -45,6 +45,7 @@ class BinanceCDataWebsocketListener(WebsocketListener):
     def on_connected(self) -> None:
         """"""
         self.gateway.write_log("行情Websocket API连接")
+        # TODO  query the active order while reconnect.
 
     def on_disconnected(self):
         """"""
@@ -293,7 +294,7 @@ class BinanceCTradeWebsocketListener(WebsocketListener):
 
         contract = symbol_contract_map.get(order.symbol, None)
         if contract:
-            trade_volume = round_to(trade_volume, contract.size)
+            trade_volume = round_to(trade_volume, contract.step_size)
 
         if not trade_volume:
             return

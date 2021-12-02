@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 from threading import Lock
 from typing import Dict
 from urllib.parse import urlencode
-import pytz
 from requests import ConnectionError
 
 from abquant.trader.object import ContractData
