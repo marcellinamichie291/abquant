@@ -71,8 +71,8 @@ class DydxGateway(Gateway):
         self.rest_accessor.connect(server, proxy_host, proxy_port, limitFee)
         self.market_listener.connect(
             proxy_host, proxy_port, server, accountNumber)
-        self.event_dispatcher.register(
-            EventType.EVENT_TIMER, self.process_timer_event)
+        # self.event_dispatcher.register(
+        #     EventType.EVENT_TIMER, self.process_timer_event)
         self.on_gateway(self)
 
     def start(self):
@@ -137,3 +137,6 @@ class DydxGateway(Gateway):
         self.count: int = 0
         self.event_dispatcher.register(
             EventType.EVENT_TIMER, self.process_timer_event)
+
+    def get_testnet_token(self) -> None:
+        return self.rest_accessor.testnet_token()
