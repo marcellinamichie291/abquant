@@ -108,7 +108,7 @@ class DataLoaderKline(DataLoader):
         df_02 = df_01[select_hs]
         df_02.set_axis(rename_hs, axis='columns', inplace=True)
         # df_02.rename(columns=rename_hs, inplace=True)
-        df_02.sort_values(by=['datetime'], ascending=True)
+        df_02.sort_values(by=['datetime'], ascending=True, inplace=True)
         df_02['exchange'] = self.exchange.value
         df_02['interval'] = self.interval
         df_02['datetime'] = pd.to_datetime(df_02['datetime'], unit='ms')

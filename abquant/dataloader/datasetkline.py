@@ -93,13 +93,17 @@ class DatasetKline(Dataset):
             r2 = random.uniform(0, 1)
             rmin = int(self.len * min(r1, r2))
             rmax = int(min(self.len * min(r1, r2) + 100, self.len * max(r1, r2)))
+            gap = 0.0
             for i in range(rmin, rmax):
                 df_i = df_01.iloc[i]
                 df_i1 = df_01.iloc[i+1]
-                if df_i['close_price'] != df_i1['open_price']:
-                    print(df_i)
-                    print(df_i1)
-                    return False, f'kline lack at: {df_i["datetime"]}'
+                if abs(df_i['close_price'] - df_i1['open_price']) > gap:
+                    gap = abs(df_i['close_price'] - df_i1['open_price'])
+                # if abs(df_i['close_price'] - df_i1['open_price']) > df_i['close_price'] * 0.001:
+                #     print(df_i)
+                #     print(df_i1)
+                #     return False, f'kline lack at: {df_i["datetime"]}'
+            print(gap)
         except Exception as e:
             return False, 'wrong'
         return True, 'pass'

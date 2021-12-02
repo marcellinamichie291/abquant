@@ -35,7 +35,7 @@ def main():
         "exchange": args.exchange,
         "symbol": args.symbol,
         "trade_type": "spot",
-        "start_time": "2021-11-20 ",
+        "start_time": "2021-06-20 ",
         "end_time": "2021-11-30 00:00:00",
         "location": "local",
         "data_file": args.data_file,
