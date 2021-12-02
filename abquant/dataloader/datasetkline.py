@@ -103,7 +103,7 @@ class DatasetKline(Dataset):
                 #     print(df_i)
                 #     print(df_i1)
                 #     return False, f'kline lack at: {df_i["datetime"]}'
-            print(gap)
+            print(f'dataloader check: max gap between minutes for {self.ab_symbol}: {gap}')
         except Exception as e:
             return False, 'wrong'
         return True, 'pass'

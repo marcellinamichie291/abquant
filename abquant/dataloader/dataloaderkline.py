@@ -64,9 +64,6 @@ class DataLoaderKline(DataLoader):
         except Exception as e:
             print(e)
 
-    def regular_time(self):
-        pass
-
     def load_data(self) -> Dataset:
         assert self.interval == Interval.MINUTE or self.interval == "1m"
 
