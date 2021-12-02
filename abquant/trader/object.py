@@ -25,7 +25,7 @@ class PositionData(BaseData):
     def __post_init__(self):
         """"""
         self.ab_symbol = f"{self.symbol}.{self.exchange.value}"
-        self.ab_positionid = f"{self.ab_symbol}.{self.direction.value}"
+        self.ab_positionid = f"{self.ab_symbol}.{self.direction.name}"
 
 
 @dataclass

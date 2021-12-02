@@ -222,6 +222,7 @@ class BinanceCTradeWebsocketListener(WebsocketListener):
 
     def on_packet(self, packet: dict) -> None:  
         """"""
+        self.gateway.on_raw(packet)
         if packet["e"] == "ACCOUNT_UPDATE":
             self.on_account(packet)
         elif packet["e"] == "ORDER_TRADE_UPDATE":

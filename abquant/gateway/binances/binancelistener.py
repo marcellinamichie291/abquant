@@ -219,6 +219,7 @@ class BinanceSTradeWebsocketListener(WebsocketListener):
 
     def on_packet(self, packet: dict) -> None:
         """"""
+        self.gateway.on_raw(packet)
         if packet["e"] == "outboundAccountPosition":
             self.on_account(packet)
         elif packet["e"] == "executionReport":

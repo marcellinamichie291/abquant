@@ -3,7 +3,7 @@ import sys
 import traceback
 from datetime import datetime
 from enum import Enum, IntEnum, auto
-from multiprocessing.dummy import Pool
+from concurrent.futures import ThreadPoolExecutor
 from queue import Empty, Queue
 from typing import Any, Callable, Optional, Union, Type
 from types import TracebackType
@@ -95,7 +95,7 @@ class RestfulAccessor(ABC):
         self._active: bool = False
 
         self._queue: Queue = Queue()
-        self._pool: Pool = None
+        self._pool: ThreadPoolExecutor = None
 
         self.proxies: dict = None
     
@@ -121,9 +121,9 @@ class RestfulAccessor(ABC):
             return
 
         self._active = True
-        self._pool = Pool(n)
+        self._pool = ThreadPoolExecutor(n)
         for _ in range(n):
-            self._pool.apply_async(self._run)
+            self._pool.submit(self._run)
 
     def stop(self) -> None:
         self._active = False
