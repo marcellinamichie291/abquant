@@ -1,8 +1,6 @@
-from datetime import datetime
+
 import argparse
 
-from abquant.monitor import Monitor
-from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
 from abquant.dataloader.dataloaderkline import DataLoaderKline
 from abquant.dataloader.datasetkline import DatasetKline
 
@@ -37,8 +35,8 @@ def main():
         "exchange": args.exchange,
         "symbol": args.symbol,
         "trade_type": "spot",
-        "start_time": "2021-11-20 00:00:00",
-        "end_time": "2021-11-26 00:00:00",
+        "start_time": "2021-11-20 ",
+        "end_time": "2021-11-30 00:00:00",
         "location": "local",
         "data_file": args.data_file,
         "interval": "1m",
@@ -49,6 +47,8 @@ def main():
 
     dataloader: DataLoaderKline = DataLoaderKline(dt_setting)
     dataset: DatasetKline = dataloader.load_data()
+    if dataset is None:
+        return
     diter = iter(dataset)
     for d in diter:
         pass

@@ -1,8 +1,4 @@
 
-from abc import ABC, abstractmethod
-from typing import Dict, Iterable
-from datetime import datetime
-from copy import copy
 import random
 from pandas.core.frame import DataFrame
 
@@ -64,14 +60,6 @@ class DatasetKline(Dataset):
             self.len = dlen
 
     def copy(self) -> "Dataset":
-        """
-        generator is not copiable, so copy first before iter may be a good solution.
-        在backtestrunnner中的调用方式为:
-        dataset_copy = dataset.copy():
-        for bar in dataset_copy:
-        #  do something
-        该设计的原因是， 迭代可能反复进行。然而generator作为迭代器，不能被复制，且只能调用一次，因此dataset类需实现copy方法。该方法最好为浅拷贝。 
-         """
         newds = DatasetKline(self.start, self.end, self.ab_symbol, self.interval)
         newds.bars = self.bars   # 数据只读情况下，共用一份，节省内存
         newds.dataframe = self.dataframe

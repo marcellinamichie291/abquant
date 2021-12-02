@@ -17,10 +17,6 @@ from abquant.trader.common import Exchange
 
 class DataLoaderKline(DataLoader):
     def __init__(self, config: Dict):
-        """
-        子类须调用该方法初始化
-        super().__init__(config)
-        """
         super().__init__(config)
         self.exchange: Exchange = None
         self.symbol = None
@@ -30,16 +26,13 @@ class DataLoaderKline(DataLoader):
         self.end_time = None
         self.data_file = None
         self.data_location = None
-        self.set_config(config)
         home_dir = os.environ['HOME']
         self.cache_dir = home_dir + '/.abquant/data'
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
+        self.set_config(config)
 
     def set_config(self, setting):
-        """
-        子类须实现该方法
-        """
         super().set_config(setting)
         try:
             try:
@@ -75,13 +68,6 @@ class DataLoaderKline(DataLoader):
         pass
 
     def load_data(self) -> Dataset:
-        """
-        1. 子类须实现该方法，
-        2. assert, interval是分钟级的
-        3. 返回相应规格的DataSet， 该方法会在backtestrunnner中被调用。
-        4. 缓存可以考虑在该方法中检测以及建立。
-
-        """
         assert self.interval == Interval.MINUTE or self.interval == "1m"
 
         cache_file = ''
@@ -108,7 +94,7 @@ class DataLoaderKline(DataLoader):
                 headers = df_01.columns.values.tolist()
                 select_hs, rename_hs = make_columns(headers)
                 if select_hs is not None and len(select_hs) != 7:
-                    self.write_log("Error: data headers not correct, cannot load")
+                    print("Error: data headers not correct, cannot load")
                     return None
                 df_02 = df_01[select_hs]
                 df_02.set_axis(rename_hs, axis='columns', inplace=True)
@@ -133,12 +119,13 @@ class DataLoaderKline(DataLoader):
 
                 dataset.set_data(df_02.to_dict(orient="records"), df_02, rn)
 
-                # todo:check
+                # check
                 result, msg = dataset.check()
                 if not result:
-                    self.write_log(f"Error: data check: {msg}, cannot load")
+                    print(f"Error: data check: {msg}, cannot load")
+                    return None
 
-                # todo:cache
+                # cache
                 if cache_file is not None and len(cache_file) > 0:
                     df_02.to_csv(self.cache_dir + '/' + cache_file)
                 else:
