@@ -28,12 +28,14 @@ from . import (
     TESTNET_REST_HOST,
     INTERVAL_AB2DYDX,
     ORDERTYPE_AB2DYDX,
+    TIMEDELTA_MAP,
     symbol_contract_map,
     Security
 )
 from ..basegateway import Gateway
 from ..accessor import Request, RestfulAccessor
 from .dydx_util import (
+    TZ_DELTA,
     generate_datetime,
     api_key_credentials_map,
     generate_datetime_iso,
@@ -43,6 +45,7 @@ from .dydx_util import (
     order_to_sign,
     epoch_seconds_to_iso
 )
+from abquant.trader.utility import round_to
 
 
 class DydxAccessor(RestfulAccessor):
@@ -154,7 +157,6 @@ class DydxAccessor(RestfulAccessor):
 
     def send_order(self, req: OrderRequest) -> str:
         """委托下单"""
-        # TODO market 单有点问题
         # 生成本地委托号
         orderid = self.ORDER_PREFIX + \
             str(self.connect_time + self._new_order_id())
@@ -167,6 +169,12 @@ class DydxAccessor(RestfulAccessor):
         self.gateway.on_order(order)
 
         expiration_epoch_seconds: int = int(time.time() + 86400)
+        
+        order_type, timeInForce = ORDERTYPE_AB2DYDX[req.type]
+        contract = symbol_contract_map.get(req.symbol)
+        if contract:
+            price = round_to(req.price, contract.pricetick)
+            volume = round_to(req.volume, contract.step_size)
 
         hash_namber: int = generate_hash_number(
             server=self.server,
@@ -174,8 +182,8 @@ class DydxAccessor(RestfulAccessor):
             client_id=orderid,
             market=req.symbol,
             side=DIRECTION_AB2DYDX[req.direction],
-            human_size=str(req.volume),
-            human_price=str(req.price),
+            human_size=str(volume),
+            human_price=str(price),
             limit_fee=str(self.limitFee),
             expiration_epoch_seconds=expiration_epoch_seconds
         )
@@ -188,10 +196,10 @@ class DydxAccessor(RestfulAccessor):
             "security": Security.PRIVATE,
             "market": req.symbol,
             "side": DIRECTION_AB2DYDX[req.direction],
-            "type": ORDERTYPE_AB2DYDX[req.type],
-            # "timeInForce": "GTT",
-            "size": str(req.volume),
-            "price": str(req.price),
+            "type": order_type,
+            "timeInForce": timeInForce,
+            "size": str(volume),
+            "price": str(price),
             "limitFee": str(self.limitFee),
             "expiration": epoch_seconds_to_iso(expiration_epoch_seconds),
             "postOnly": False,
@@ -239,6 +247,7 @@ class DydxAccessor(RestfulAccessor):
 
     def query_history(self, req: HistoryRequest) -> List[BarData]:
         """查询历史数据"""
+        limit = 100
         history: List[BarData] = []
         data: dict = {
             "security": Security.PUBLIC
@@ -246,53 +255,65 @@ class DydxAccessor(RestfulAccessor):
 
         params: dict = {
             "resolution": INTERVAL_AB2DYDX[req.interval],
+            "limit": limit
         }
-        if req.start:
-            params["fromISO"] = generate_datetime_iso(req.start)
-        if req.end:
-            params["toISO"] = generate_datetime_iso(req.end)
 
-        resp = self.request(
-            method="GET",
-            path=f"/v3/candles/{req.symbol}",
-            data=data,
-            params=params
-        )
+        end_dt = req.end if req.end else datetime.now()
+        start_dt = req.start if req.start else end_dt - limit * TIMEDELTA_MAP[req.interval]
 
-        if resp.status_code // 100 != 2:
-            msg: str = f"获取历史数据失败，状态码：{resp.status_code}，信息：{resp.text}"
-            self.gateway.write_log(msg)
+        while 1:
+            
+            buf = []
+            if end_dt:
+                params["toISO"] = generate_datetime_iso(end_dt)
 
-        else:
-            data: dict = resp.json()
-            if not data:
-                self.gateway.write_log("获取历史数据为空")
+            resp = self.request(
+                method="GET",
+                path=f"/v3/candles/{req.symbol}",
+                data=data,
+                params=params
+            )
 
-            for d in data["candles"]:
+            if resp.status_code // 100 != 2:
+                msg: str = f"获取历史数据失败，状态码：{resp.status_code}，信息：{resp.text}"
+                self.gateway.write_log(msg)
 
-                bar: BarData = BarData(
-                    symbol=req.symbol,
-                    exchange=req.exchange,
-                    datetime=generate_datetime(d["startedAt"]),
-                    interval=req.interval,
-                    volume=float(d["baseTokenVolume"]),
-                    open_price=float(d["open"]),
-                    high_price=float(d["high"]),
-                    low_price=float(d["low"]),
-                    close_price=float(d["close"]),
-                    # turnover=float(d["usdVolume"]),
-                    # open_interest=float(d["startingOpenInterest"]),
-                    gateway_name=self.gateway_name
-                )
-                history.append(bar)
+            else:
+                bars: dict = resp.json()
+                if not bars:
+                    self.gateway.write_log("获取历史数据为空")
 
-            begin: datetime = history[-1].datetime
-            end: datetime = history[0].datetime
+                for d in bars["candles"]:
 
-            msg: str = f"获取历史数据成功，{req.symbol} - {req.interval.value}，{begin} - {end}"
-            self.gateway.write_log(msg)
+                    bar: BarData = BarData(
+                        symbol=req.symbol,
+                        exchange=req.exchange,
+                        datetime=generate_datetime(d["startedAt"]),
+                        interval=req.interval,
+                        volume=float(d["baseTokenVolume"]),
+                        open_price=float(d["open"]),
+                        high_price=float(d["high"]),
+                        low_price=float(d["low"]),
+                        close_price=float(d["close"]),
+                        gateway_name=self.gateway_name
+                    )
+                    buf.append(bar)
+                history.extend(buf)
+                
+                begin: datetime = buf[-1].datetime
+                end: datetime = buf[0].datetime
 
-        return history
+                msg: str = f"获取历史数据成功，{req.symbol} - {req.interval.value}，{begin} - {end}"
+                self.gateway.write_log(msg)
+                
+                if len(bars["candles"]) < limit:
+                    break
+                if begin < start_dt:
+                    break
+                end_dt = bar.datetime - TZ_DELTA
+                
+
+        return list(reversed(history))
 
     def on_query_contract(self, data: dict, request: Request) -> None:  # ok
         """合约信息查询回报"""
@@ -302,7 +323,8 @@ class DydxAccessor(RestfulAccessor):
                 exchange=Exchange.DYDX,
                 name=d,
                 pricetick=data["markets"][d]["tickSize"],
-                size=data["markets"][d]["stepSize"],
+                size=1,
+                step_size=data["markets"][d]["stepSize"],
                 min_volume=data["markets"][d]["minOrderSize"],
                 product=Product.FUTURES,
                 net_position=True,
@@ -330,7 +352,6 @@ class DydxAccessor(RestfulAccessor):
         )
 
         self.gateway.on_account(account)
-
         for keys in d["openPositions"]:
             position: PositionData = PositionData(
                 symbol=keys,
@@ -382,3 +403,16 @@ class DydxAccessor(RestfulAccessor):
 
         msg: str = f"撤单失败，状态码：{status_code}，信息：{request.response.text}"
         self.gateway.write_log(msg)
+
+    def testnet_token(self) -> None:
+        """测试网络获取测试币"""
+        data: dict = {
+            "security": Security.PRIVATE
+        }
+
+        self.add_request(
+            method="POST",
+            path=f"/v3/testnet/tokens",
+            callback=self.gateway.write_log,
+            data=data
+        )

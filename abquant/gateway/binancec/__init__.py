@@ -34,11 +34,14 @@ STATUS_BINANCEC2AB: Dict[str, Status] = {
 ORDERTYPE_AB2BINANCEC: Dict[OrderType, Tuple[str, str]] = {
     OrderType.LIMIT: ("LIMIT", "GTC"),
     OrderType.MARKET: ("MARKET", "GTC"),
-    # TODO
+    OrderType.POSTONLYLIMIT: ("LIMIT", "GTX")
+     # TODO
     # fak: ("LIMIT", "IOC"),
     # fok: ("LIMIT", "FOK"),
 }
+# ORDERTYPE_AB2BINANCEC.pop(OrderType.POSTONLYLIMIT)
 ORDERTYPE_BINANCEC2AB: Dict[Tuple[str, str], OrderType] = {v: k for k, v in ORDERTYPE_AB2BINANCEC.items()}
+# ORDERTYPE_AB2BINANCEC[OrderType.POSTONLYLIMIT] = ("LIMIT", "GTX")
 
 DIRECTION_AB2BINANCEC: Dict[Direction, str] = {
     Direction.LONG: "BUY",

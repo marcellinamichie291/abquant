@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from logging import INFO, WARNING
-from typing import Iterable, Any, Set
+from typing import Dict, Iterable, Any, Set
 from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
 from abquant.event import EventDispatcher, Event, EventType
 from abquant.trader.common import Exchange, OrderType
@@ -118,3 +118,6 @@ class Gateway(ABC):
         
     def on_log(self, log: LogData) -> None:
         self.on_event(EventType.EVENT_LOG, log)
+
+    def on_raw(self, packet: Dict) -> None:
+        self.on_event(EventType.EVENT_RAW, packet)

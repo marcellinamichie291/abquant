@@ -2,7 +2,7 @@ from setuptools import PackageFinder, setup, find_packages
 
 setup(
     name='abquant',
-    version='0.5.4',
+    version='0.5.5',
     description='event-driven quant dev tools',
     author='independent regime',
     # package_dir={"":"./abquant"},

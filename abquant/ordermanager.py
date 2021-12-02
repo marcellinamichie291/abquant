@@ -39,8 +39,8 @@ class OrderManager:
             EventType.EVENT_ENTRUST, self.process_entrust_event)
         self.event_dispatcher.register(
             EventType.EVENT_ORDER, self.process_order_event)
-        self.event_dispatcher.register(
-            EventType.EVENT_TRADE, self.process_trade_event)
+        # self.event_dispatcher.register(
+        #     EventType.EVENT_TRADE, self.process_trade_event)
         self.event_dispatcher.register(
             EventType.EVENT_POSITION, self.process_position_event)
         self.event_dispatcher.register(
@@ -78,6 +78,7 @@ class OrderManager:
         # Otherwise, pop inactive order from in dict
         elif order.ab_orderid in self.active_orders:
             self.active_orders.pop(order.ab_orderid)
+            self.orders.pop(order.ab_orderid)
 
     def process_trade_event(self, event: Event) -> None:
         """"""
