@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 from threading import Lock
 from typing import Dict
 from urllib.parse import urlencode
-import pytz
 from requests import ConnectionError
 
 from abquant.trader.object import ContractData
@@ -36,6 +35,7 @@ ORDERTYPE_AB2BITMEX = {
     # stop order?: "Stop"
 }
 ORDERTYPE_BITMEX2AB = {v: k for k, v in ORDERTYPE_AB2BITMEX.items()}
+ORDERTYPE_AB2BITMEX[OrderType.POSTONLYLIMIT] = "Limit"
 
 INTERVAL_AB2BITMEX = {
     Interval.MINUTE: "1m",

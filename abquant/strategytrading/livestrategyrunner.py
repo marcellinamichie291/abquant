@@ -19,11 +19,11 @@ from abquant.trader.object import CancelRequest, ContractData, HistoryRequest, L
 from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
 from abquant.trader.utility import OrderGrouper, extract_ab_symbol, round_to
 from .template import StrategyTemplate
-from .strategyrunner import StrategyRunner, LOG_LEVEL
+from .strategyrunner import StrategyManager, StrategyRunner, LOG_LEVEL
 
 
 
-class LiveStrategyRunner(StrategyRunner):
+class LiveStrategyRunner(StrategyRunner, StrategyManager):
     MAC = str(hex(uuid.getnode()))
 
     def __init__(self, event_dispatcher: EventDispatcher):

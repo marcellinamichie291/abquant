@@ -318,6 +318,7 @@ class BitmexListener(WebsocketListener):
     def on_trade(self, d):
         """"""
         # Filter trade update with no trade volume and side which is perpetual funding
+        self.gateway.on_raw(packet=d)
         if not d["lastQty"] or not d["side"]:
             return
 
@@ -348,9 +349,9 @@ class BitmexListener(WebsocketListener):
     def on_order(self, d):
         """"""
         # Filter order data which cannot be processed properly
+        self.gateway.on_raw(packet=d)
         if "ordStatus" not in d:
             return
-
         # Update local order data
         sysid = d["orderID"]
         order = self.orders.get(sysid, None)
@@ -386,6 +387,7 @@ class BitmexListener(WebsocketListener):
 
     def on_position(self, d):
         """"""
+        self.gateway.on_raw(packet=d)
         symbol = d["symbol"]
 
         position = self.positions.get(symbol, None)
@@ -410,6 +412,7 @@ class BitmexListener(WebsocketListener):
 
     def on_account(self, d):
         """"""
+        self.gateway.on_raw(packet=d)
         accountid = str(d["account"])
         account = self.accounts.get(accountid, None)
         if not account:

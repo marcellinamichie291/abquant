@@ -132,7 +132,7 @@ class BitmexAccessor(RestfulAccessor):
         inst = []   # Order special instructions
 
         # Only add price for limit order.
-        if req.type == OrderType.LIMIT:
+        if req.type == OrderType.LIMIT or req.type == OrderType.POSTONLYLIMIT:
             contract = symbol_contract_map.get(req.symbol)
             if contract:
                 price_tick = contract.pricetick
@@ -142,6 +142,8 @@ class BitmexAccessor(RestfulAccessor):
         # stop ? TODO
         if req.offset == Offset.CLOSE:
             inst.append("ReduceOnly")
+        elif req.type == OrderType.POSTONLYLIMIT:
+            inst.append("ParticipateDoNotInitiate")
 
         if inst:
             data["execInst"] = ",".join(inst)
