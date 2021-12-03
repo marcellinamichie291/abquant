@@ -37,7 +37,10 @@ class Dataset(ABC):
                  break
         """
         pass
-    
+
+    @abstractmethod
+    def __next__(self):
+        pass
 
     @abstractmethod
     def __len__(self) -> int:

@@ -3,16 +3,14 @@ import random
 from pandas.core.frame import DataFrame
 
 from abquant.trader.msg import BarData, Interval
+from abquant.trader.utility import extract_ab_symbol
 from abquant.dataloader.dataloader import DataLoader, Dataset
 
 
 class DatasetKline(Dataset):
     def __init__(self, start, end, ab_symbol, interval):
-        """
-        子类须调用该方法初始化
         super().__init__(start, end, ab_symbol, interval)
-        """
-        super().__init__(start, end, ab_symbol, interval)
+        self.symbol, self.exchange = extract_ab_symbol(ab_symbol)
         self.dataframe: DataFrame = None
         self.bars: list = []
         self.cur_pos = -1
@@ -20,33 +18,34 @@ class DatasetKline(Dataset):
 
     def __iter__(self):
         """
-         返回可迭代对象  -> Iterable(BarData)
-         for bar in dataset:
-             do something
-         等价于
-         data_iter = dataset.__iter__()
-         while True:
-             try:
-                 bar = next(data_iter)
-                 do something
-             except StopIteration
-                 break
+            如果返回self，next()函数会调用self.__next__()
+            如果用现有iter，返回iter(self.bars)，next()会调用假借iter（这里是list）的__next__()，不会调用self.__next__()
         """
-        return iter(self.bars)
+        return self  # iter(self.bars)
 
+    # not callable
     def __next__(self) -> BarData:
         self.cur_pos += 1
         if self.cur_pos < self.len:
-            return self.list[self.cur_pos]  # todo: return BarData
+            bar = self.bars[self.cur_pos]  # todo: return BarData
+            bardata = BarData(
+                symbol=bar['symbol'],
+                exchange=self.exchange,
+                interval=self.interval,
+                datetime=bar['datetime'],
+                gateway_name=None,
+                open_price=bar['open_price'],
+                high_price=bar['high_price'],
+                low_price=bar['low_price'],
+                close_price=bar['close_price'],
+            )
+            return bardata
         else:
-            return None
-            # raise StopIteration()
+            # return None
+            raise StopIteration()
 
     def __len__(self) -> int:
-        """返回数据集的长度
-            len(dataset) 时会调用此方法
-        """
-        return len(self.bars)
+        return self.len
 
     def set_data(self, data, dataframe: DataFrame, dlen: int = 0):
         if not isinstance(data, list):
@@ -64,7 +63,7 @@ class DatasetKline(Dataset):
         newds.bars = self.bars   # 数据只读情况下，共用一份，节省内存
         newds.dataframe = self.dataframe
         newds.cur_pos = -1
-        newds.len = 0
+        newds.len = len(newds.bars)
         return newds
 
     def check(self) -> (bool, str):

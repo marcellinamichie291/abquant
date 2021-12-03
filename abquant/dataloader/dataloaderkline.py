@@ -32,6 +32,9 @@ class DataLoaderKline(DataLoader):
             os.makedirs(self.cache_dir)
         self.set_config(config)
 
+    """
+        config each item from setting dict
+    """
     def set_config(self, setting):
         super().set_config(setting)
         try:
@@ -64,6 +67,9 @@ class DataLoaderKline(DataLoader):
         except Exception as e:
             print(e)
 
+    """
+        load csv data, local file or remote aws s3 files
+    """
     def load_data(self) -> Dataset:
         assert self.interval == Interval.MINUTE or self.interval == "1m"
 

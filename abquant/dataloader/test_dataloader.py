@@ -3,6 +3,7 @@ import argparse
 
 from abquant.dataloader.dataloaderkline import DataLoaderKline
 from abquant.dataloader.datasetkline import DatasetKline
+from collections import Iterator,Iterable,Generator
 
 
 # 命令行参数的解析代码，交易员可以不用懂。
@@ -47,11 +48,14 @@ def main():
 
     dataloader: DataLoaderKline = DataLoaderKline(dt_setting)
     dataset: DatasetKline = dataloader.load_data()
+    dataset.dataframe.info(memory_usage='deep')
     if dataset is None:
         return
     diter = iter(dataset)
+    j = 0
     for d in diter:
-        pass
+        j += 1
+        print(j)
     try:
         while True:
             dt = next(diter, None)
