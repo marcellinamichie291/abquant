@@ -21,6 +21,11 @@ pip install -r requirement.txt
 
 # abquant安装
 python -m pip install .
+
+
+# abquant版本更新
+cd abquant && git pull
+python -m pip install .
 ```
 # strategy example, 样例参考及试运行
 
