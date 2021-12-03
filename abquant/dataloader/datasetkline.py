@@ -21,10 +21,12 @@ class DatasetKline(Dataset):
             如果返回self，next()函数会调用self.__next__()
             如果用现有iter，返回iter(self.bars)，next()会调用假借iter（这里是list）的__next__()，不会调用self.__next__()
         """
-        return self  # iter(self.bars)
+        return self
 
-    # not callable
     def __next__(self) -> BarData:
+        """
+            next()调用，并将取出的item转换为BarData
+        """
         self.cur_pos += 1
         if self.cur_pos < self.len:
             bar = self.bars[self.cur_pos]  # todo: return BarData
