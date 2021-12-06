@@ -36,8 +36,8 @@ def main():
         "exchange": args.exchange,
         "symbol": args.symbol,
         "trade_type": "spot",
-        "start_time": "2021-06-20 ",
-        "end_time": "2021-12-1 00:00:00",
+        "start_time": "2021-11-20 ",
+        "end_time": "2021-12-4 00:00:00",
         "location": "local",
         "data_file": args.data_file,
         "interval": "1m",
@@ -55,7 +55,7 @@ def main():
     j = 0
     for d in diter:
         j += 1
-        print(j)
+        # print(j)
     try:
         while True:
             dt = next(diter, None)
