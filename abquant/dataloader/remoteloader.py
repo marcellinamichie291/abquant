@@ -7,6 +7,7 @@ from pandas.core.frame import DataFrame
 
 from abquant.trader.common import Exchange
 from abquant.trader.msg import Interval
+from abquant.dataloader.utility import regular_df
 
 # s3 config
 S3_BUCKET_NAME = "abquant-binance-data"
@@ -47,15 +48,17 @@ class RemoteLoader:
 
     def load_file(self, local_dir, file_base) -> DataFrame:
         if os.path.isdir(local_dir):
-            df_file = None
+            basefile = os.path.join(local_dir, file_base)
             gzfile = os.path.join(local_dir, file_base + '.gz')
             csvfile = os.path.join(local_dir, file_base + '.csv')
-            if not os.path.isfile(csvfile) and os.path.isfile(gzfile):
+            if not os.path.isfile(basefile) and not os.path.isfile(csvfile) and os.path.isfile(gzfile):
                 filename = self.gunzip_file(gzfile)
                 print("unzip: " + filename)
                 if filename[-4:] != '.csv':
                     filename += '.csv'
-            if not os.path.isfile(csvfile):
+            if os.path.isfile(basefile):
+                os.rename(basefile, csvfile)
+            elif not os.path.isfile(csvfile):
                 return None
             df_file = pd.read_csv(csvfile, encoding="utf8", sep=',', dtype=None)
             print(df_file.shape)
@@ -92,9 +95,11 @@ class RemoteLoader:
                 file_base = self.symbol + '-' + self.interval + '-' + dateday.strftime('%Y-%m-%d')
                 df1 = self.load_file(local_dir, file_base)
                 dateday = dateday + timedelta(days=1)
+                days += 1
+                df1 = regular_df(df1, self.exchange, self.symbol, self.interval)
                 if df1 is None:
                     continue
-                days += 1
+                print(df1.shape)
                 if df_all is None:
                     df_all = df1
                 else:

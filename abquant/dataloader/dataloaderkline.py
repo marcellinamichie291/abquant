@@ -10,7 +10,7 @@ from pathlib import Path
 from abquant.trader.msg import Interval
 from abquant.dataloader.dataloader import DataLoader, Dataset, DataLocation
 from abquant.dataloader.datasetkline import DatasetKline
-from abquant.dataloader.utility import regular_time
+from abquant.dataloader.utility import regular_time, make_columns
 from abquant.trader.utility import generate_ab_symbol
 from abquant.trader.common import Exchange
 
@@ -149,59 +149,5 @@ class DataLoaderKline(DataLoader):
         return dataset
 
 
-def make_columns(headers: list) -> (list, list):
-    select_hs = []
-    rename_hs = []
-    if "open_time" in headers:
-        select_hs.append('open_time')
-        rename_hs.append('datetime')
-    if "symbol" in headers:
-        select_hs.append('symbol')
-        rename_hs.append('symbol')
-    if "open" in headers:
-        select_hs.append('open')
-        rename_hs.append('open_price')
-    elif "open_price" in headers:
-        select_hs.append('open_price')
-        rename_hs.append('open_price')
-    elif "o" in headers:
-        select_hs.append('o')
-        rename_hs.append('open_price')
-    if "high" in headers:
-        select_hs.append('high')
-        rename_hs.append('high_price')
-    elif "high_price" in headers:
-        select_hs.append('high_price')
-        rename_hs.append('high_price')
-    elif "h" in headers:
-        select_hs.append('h')
-        rename_hs.append('high_price')
-    if "low" in headers:
-        select_hs.append('low')
-        rename_hs.append('low_price')
-    elif "low_price" in headers:
-        select_hs.append('low_price')
-        rename_hs.append('low_price')
-    elif "l" in headers:
-        select_hs.append('l')
-        rename_hs.append('low_price')
-    if "close" in headers:
-        select_hs.append('close')
-        rename_hs.append('close_price')
-    elif "close_price" in headers:
-        select_hs.append('close_price')
-        rename_hs.append('close_price')
-    elif "c" in headers:
-        select_hs.append('c')
-        rename_hs.append('close_price')
-    if "volume" in headers:
-        select_hs.append('volume')
-        rename_hs.append('volume')
-    elif "v" in headers:
-        select_hs.append('v')
-        rename_hs.append('volume')
-    # if len(select_hs) != 7:
-    #     return None, None
-    return select_hs, rename_hs
 
 
