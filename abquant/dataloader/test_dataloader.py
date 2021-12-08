@@ -48,9 +48,9 @@ def main():
 
     dataloader: DataLoaderKline = DataLoaderKline(dt_setting)
     dataset: DatasetKline = dataloader.load_data()
-    dataset.dataframe.info(memory_usage='deep')
     if dataset is None:
         return
+    dataset.dataframe.info(memory_usage='deep')
     diter = iter(dataset)
     j = 0
     for d in diter:
