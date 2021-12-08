@@ -631,7 +631,6 @@ class BinanceCAccessor(RestfulAccessor):
                 if req.end:
                     end_time = int(datetime.timestamp(req.end))
                     params["endTime"] = end_time * 1000
-                    print("req.end: {}".format(req.end), "start_time: {}, end_time: {}".format(datetime.fromtimestamp(start_time), datetime.fromtimestamp(end_time)))
             else:
                 params["endTime"] = end_time * 1000
                 path = "/dapi/v1/klines"
