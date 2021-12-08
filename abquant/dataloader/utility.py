@@ -133,7 +133,7 @@ def regular_df(df_01: DataFrame, exchange: str, symbol: str, interval: str):
     select_hs, rename_hs = make_columns(headers)
     if select_hs is not None:
         if len(select_hs) == 6 and 'symbol' not in select_hs:
-            df_01['symbol'] = symbol
+            df_01.loc[:, 'symbol'] = symbol
             select_hs.append('symbol')
             rename_hs.append('symbol')
         if len(select_hs) != 7:
@@ -143,9 +143,9 @@ def regular_df(df_01: DataFrame, exchange: str, symbol: str, interval: str):
     df_02.set_axis(rename_hs, axis='columns', inplace=True)
     # df_02.rename(columns=rename_hs, inplace=True)
     df_02.sort_values(by=['datetime'], ascending=True, inplace=True)
-    df_02['exchange'] = exchange
-    df_02['interval'] = interval
-    df_02['datetime'] = pd.to_datetime(df_02['datetime'], unit='ms')
+    df_02.loc[:, 'exchange'] = exchange
+    df_02.loc[:, 'interval'] = interval
+    df_02.loc[:, 'datetime'] = pd.to_datetime(df_02['datetime'], unit='ms')
     print(df_02.head(1))
     print(df_02.shape)
     return df_02
