@@ -60,12 +60,12 @@ if __name__ == '__main__':
     #     str('EXCEPTION: ') + str(event.data)))
 
     # ok
-    # event_dispatcher.register(EventType.EVENT_ORDER, lambda event: print(
-    #     str('ORDER: ') + str(event.data)))
+    event_dispatcher.register(EventType.EVENT_ORDER, lambda event: print(
+        str('ORDER: ') + str(event.data)))
 
     # # need test
-    # event_dispatcher.register(EventType.EVENT_TRADE, lambda event: print(
-    #     str('TRADE: ') + str(event.data)))
+    event_dispatcher.register(EventType.EVENT_TRADE, lambda event: print(
+        str('TRADE: ') + str(event.data)))
 
     # ok
     # event_dispatcher.register(EventType.EVENT_TICK, lambda event: print(
@@ -91,9 +91,9 @@ if __name__ == '__main__':
         transaction=True
     ))
 
-    # dydx_gateway.subscribe(SubscribeRequest(
-    #     symbol="BTC-USD", exchange=Exchange.DYDX
-    # ))
+    dydx_gateway.subscribe(SubscribeRequest(
+        symbol="BTC-USD", exchange=Exchange.DYDX
+    ))
 
     # from abquant.gateway.dydx import symbol_contract_map
 
@@ -101,17 +101,31 @@ if __name__ == '__main__':
 
     dydx_gateway.start()
 
-    time.sleep(5)
-
+    # time.sleep(5)
+    # ab_order_id = dydx_gateway.send_order(OrderRequest(symbol="BTC-USD", exchange=Exchange.DYDX,
+    #                                 direction=Direction.SHORT, type=OrderType.MARKET, 
+    #                                 price=50000, volume=0.001, offset=Offset.OPEN))
+    # order_id = ab_order_id.split('.')[-1]
+    # print("------open",order_id)
+    # # time.sleep(1)
+    # dydx_gateway.cancel_order(CancelRequest(order_id, symbol="BTC-USD",exchange=Exchange.DYDX))
     # 下单撤单
-    # for i in range(1):
-    ab_order_id = dydx_gateway.send_order(OrderRequest(symbol="BTC-USD", exchange=Exchange.DYDX,
-                                    direction=Direction.SHORT, type=OrderType.LIMIT, 
-                                    price=50000, volume=0.001, offset=Offset.OPEN))
+    # post_only test
+    ab_order_id = dydx_gateway.send_order(OrderRequest(symbol="SUSHI-USD", exchange=Exchange.DYDX,
+                                    direction=Direction.SHORT, type=OrderType.POSTONLYLIMIT, 
+                                    price=5, volume=1, offset=Offset.OPEN))
     order_id = ab_order_id.split('.')[-1]
-    print("------open_long",order_id)
-    time.sleep(1)
-    dydx_gateway.cancel_order(CancelRequest(order_id, symbol="BTC-USD",exchange=Exchange.DYDX))
+    
+    
+    
+    # for i in range(1):
+        # ab_order_id = dydx_gateway.send_order(OrderRequest(symbol="BTC-USD", exchange=Exchange.DYDX,
+        #                             direction=Direction.SHORT, type=OrderType.LIMIT, 
+        #                             price=60000, volume=0.001, offset=Offset.OPEN))
+    #     order_id = ab_order_id.split('.')[-1]
+    #     print("------open_long",order_id)
+        # time.sleep(1)
+        # dydx_gateway.cancel_order(CancelRequest(order_id, symbol="BTC-USD",exchange=Exchange.DYDX))
 
     # # cancel all
     # print("----------orders",dydx_gateway.orders)
@@ -127,7 +141,7 @@ if __name__ == '__main__':
     # ok
     # history = dydx_gateway.query_history(HistoryRequest(
     #     symbol='BTC-USD', exchange=Exchange.DYDX,
-    #     start=datetime(year=2021, month=11, day=27, hour=0, minute=0),
+    #     start=datetime(year=2021, month=11, day=30, hour=0, minute=0),
     #     end=datetime.now(),
     #     interval=Interval.MINUTE))
     
@@ -139,3 +153,4 @@ if __name__ == '__main__':
     # 获取测试网络USDC
     # dydx_gateway.get_testnet_token()
         
+#
