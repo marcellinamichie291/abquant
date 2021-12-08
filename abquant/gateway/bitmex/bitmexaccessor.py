@@ -186,8 +186,7 @@ class BitmexAccessor(RestfulAccessor):
 
     def query_history(self, req: HistoryRequest):
         """"""
-        if not self.check_rate_limit():
-            return
+
 
         history = []
         count = 750
@@ -195,6 +194,9 @@ class BitmexAccessor(RestfulAccessor):
 
         while True:
             # Create query params
+            if not self.check_rate_limit():
+                time.sleep(10)
+                continue
             params = {
                 "binSize": INTERVAL_AB2BITMEX[req.interval],
                 "symbol": req.symbol,
@@ -219,6 +221,13 @@ class BitmexAccessor(RestfulAccessor):
                 self.gateway.write_log(msg, level=ERROR)
                 break
             else:
+                headers = resp.headers
+                self.rate_limit_remaining = int(headers.get("x-ratelimit-remaining", 60))
+
+                self.rate_limit_sleep = int(headers.get("Retry-After", 0))
+                if self.rate_limit_sleep:
+                    self.rate_limit_sleep += 1
+
                 data = resp.json()
                 if not data:
                     msg = f"获取历史数据为空，开始时间：{start_time}，数量：{count}"

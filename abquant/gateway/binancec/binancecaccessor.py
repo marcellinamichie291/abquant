@@ -575,16 +575,16 @@ class BinanceCAccessor(RestfulAccessor):
         self.minite_orders_used += order
         self.request_used += request
 
-        if self.seconds_orders_used > self.seconds_orders_limit:
-            msg = f"下单过于频繁，已被Binance限制, 10s内已下单{self.seconds_orders_used}, 超过{self.seconds_orders_limit}次每10s的限制"
+        if self.seconds_orders_used >= self.seconds_orders_limit:
+            msg = f"下单过于频繁，已被Binance限制, 10s内尝试下单{self.seconds_orders_used}, 超过{self.seconds_orders_limit}次每10s的限制， 该次订单被拦截。"
             self.gateway.write_log(msg, level=WARNING)
             return False
-        if self.minite_orders_used > self.minite_orders_limit:
-            msg = f"下单过于频繁，已被Binance限制, 分钟内已下单{self.minite_orders_used}，超过{self.seconds_orders_limit}次每分钟的限制。"
+        if self.minite_orders_used >= self.minite_orders_limit:
+            msg = f"下单过于频繁，已被Binance限制, 分钟内尝试下单{self.minite_orders_used}，超过{self.seconds_orders_limit}次每分钟的限制。该次订单被拦截。"
             self.gateway.write_log(msg, level=WARNING)
             return False
-        if self.request_used > self.request_limit:
-            msg = f"请求过于频繁，已被Binance限制, 分钟内已请求{self.request_used}，超过{self.request_limit}次每分钟的限制。"
+        if self.request_used >= self.request_limit:
+            msg = f"请求过于频繁，已被Binance限制, 分钟内试图请求{self.request_used}，超过{self.request_limit}次每分钟的限制。该次请求被拦截。"
             self.gateway.write_log(msg, level=WARNING)
             return False
         return True
@@ -605,8 +605,7 @@ class BinanceCAccessor(RestfulAccessor):
     def query_history(self, req: HistoryRequest) -> Iterable[BarData]:
         """"""
 
-        if not self.check_rate_limit(request=1, order=0):
-            return
+
         history = []
         limit = 1500
         if self.usdt_base:
@@ -621,6 +620,10 @@ class BinanceCAccessor(RestfulAccessor):
                 "interval": INTERVAL_AB2BINANCEC[req.interval],
                 "limit": limit
             }
+            if not self.check_rate_limit(request=10, order=0):
+                self.gateway.write_log("retry query history after 10s. Don't worry, rate limit will be check before request sending.")
+                time.sleep(10)
+                continue
 
             if self.usdt_base:
                 params["startTime"] = start_time * 1000
@@ -628,7 +631,7 @@ class BinanceCAccessor(RestfulAccessor):
                 if req.end:
                     end_time = int(datetime.timestamp(req.end))
                     params["endTime"] = end_time * 1000
-
+                    print("req.end: {}".format(req.end), "start_time: {}, end_time: {}".format(datetime.fromtimestamp(start_time), datetime.fromtimestamp(end_time)))
             else:
                 params["endTime"] = end_time * 1000
                 path = "/dapi/v1/klines"
@@ -649,10 +652,13 @@ class BinanceCAccessor(RestfulAccessor):
                     "call the gateway.connect method before trying to query history data. otherwaise UBC or BBC gateway is unknown.")
             # Break if request failed with other status code
             if resp.status_code // 100 != 2:
-                msg = f"获取历史数据失败，状态码：{resp.status_code}，信息：{resp.text}"
-                self.gateway.write_log(msg, level=ERROR)
+                msg = f"获取历史数据可能失败(也可能是自然终止)，状态码：{resp.status_code}，信息：{resp.text}"
+                self.gateway.write_log(msg, level=WARNING)
                 break
             else:
+                headers = resp.headers
+
+                self.request_used = int(headers.get("X-MBX-USED-WEIGHT-1M", 0))
                 data = resp.json()
                 if not data:
                     msg = f"获取历史数据为空，开始时间：{start_time}"
@@ -693,6 +699,8 @@ class BinanceCAccessor(RestfulAccessor):
                 if self.usdt_base:
                     start_dt = bar.datetime + TIMEDELTA_MAP[req.interval]
                     start_time = int(datetime.timestamp(start_dt))
+                    if start_dt > req.end:
+                        break
                 # Update end time
                 else:
                     end_dt = begin - TIMEDELTA_MAP[req.interval]
