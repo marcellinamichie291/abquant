@@ -10,7 +10,8 @@ from pathlib import Path
 from abquant.trader.msg import Interval
 from abquant.dataloader.dataloader import DataLoader, Dataset, DataLocation
 from abquant.dataloader.datasetkline import DatasetKline
-from abquant.dataloader.utility import regular_time, make_columns
+from abquant.dataloader.remoteloader import RemoteLoader
+from abquant.dataloader.utility import regular_time, regular_df
 from abquant.trader.utility import generate_ab_symbol
 from abquant.trader.common import Exchange
 
@@ -45,7 +46,7 @@ class DataLoaderKline(DataLoader):
             self.symbol = setting.get("symbol")
             self.trade_type = setting.get("trade_type")
             self.interval = setting.get("interval")
-            if self.interval is None or self.interval == Interval.MINUTE or self.interval == "1m":
+            if self.interval is None or self.interval == Interval.MINUTE:
                 self.interval = "1m"
             elif self.interval == "1m":
                 pass
@@ -90,6 +91,7 @@ class DataLoaderKline(DataLoader):
                 return dataset
 
         df_01 = None
+        df_02 = None
         if self.data_location == DataLocation.LOCAL:
             # path = Path(self.data_file)
             if self.data_file is not None and os.path.isfile(self.data_file):
@@ -97,26 +99,18 @@ class DataLoaderKline(DataLoader):
                 print(df_01.head(1))
 
         elif self.data_location == DataLocation.REMOTE:
-            pass
+            loader = RemoteLoader(self.exchange, self.symbol, self.trade_type, self.interval,
+                                  self.start_time, self.end_time)
+            df_01 = loader.load_remote()
+            df_02 = df_01
+            print(df_01.head(1))
 
         if df_01 is None:
             print('No data loaded, exit')
             return None
 
-        headers = df_01.columns.values.tolist()
-        select_hs, rename_hs = make_columns(headers)
-        if select_hs is not None and len(select_hs) != 7:
-            print("Error: data headers not correct, cannot load")
-            return None
-        df_02 = df_01[select_hs]
-        df_02.set_axis(rename_hs, axis='columns', inplace=True)
-        # df_02.rename(columns=rename_hs, inplace=True)
-        df_02.sort_values(by=['datetime'], ascending=True, inplace=True)
-        df_02['exchange'] = self.exchange.value
-        df_02['interval'] = self.interval
-        df_02['datetime'] = pd.to_datetime(df_02['datetime'], unit='ms')
-        print(df_02.head(1))
-        print(df_02.shape)
+        if df_02 is None:
+            df_02 = regular_df(df_01, self.exchange, self.symbol, self.interval)
 
         rn, cn = df_02.shape
         if self.symbol is None:
