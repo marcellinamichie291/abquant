@@ -55,7 +55,7 @@ def main():
     j = 0
     for d in diter:
         j += 1
-        # print(j)
+    print(j)
     try:
         while True:
             dt = next(diter, None)
@@ -70,6 +70,7 @@ def main():
         for i in range(0, 10):
             d = next(newiter)
             print(d)
+
 
 if __name__ == '__main__':
     main()
