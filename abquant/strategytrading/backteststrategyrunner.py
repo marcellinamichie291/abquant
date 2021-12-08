@@ -9,47 +9,39 @@ from abquant.event import EventType, Event, EventDispatcher
 from abquant.trader.object import CancelRequest, ContractData, HistoryRequest, LogData, OrderRequest, PositionData, SubscribeRequest
 from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
 from abquant.trader.utility import OrderGrouper, extract_ab_symbol, round_to
+from abquant.dataloader import DataLoader
 from .template import StrategyTemplate
-from .strategyrunner import StrategyRunner, LOG_LEVEL
-from .strategyrunner import StrategyRunner
+from .strategyrunner import StrategyManager, StrategyRunner, LOG_LEVEL
 
-
-class BacktestStrategyRunner(StrategyRunner):
+class BacktestStrategyRunner(StrategyManager):
     def __init__(self) -> None:
-        pass
+        self.strategies: Dict[str, StrategyTemplate] = {}
+        self.data_loader: DataLoader = None
+
+    def set_data_loader(self, data_loader: DataLoader):
+        self.data_loader = data_loader
 
     def add_strategy(self, strategy_class: type, strategy_name: str, ab_symbols: list, setting: dict) -> None:
-        pass
+        if self.strategies:
+            raise NotImplementedError("only 1 strategy instance backtesting is supported")
+        strategy = strategy_class(self, strategy_name, ab_symbols, setting)
+        self.strategies[strategy_name] = strategy
+
 
     def remove_strategy(self, strategy_name: str):
-        pass
+        self.strategies.pop(strategy_name)
 
     def get_strategy(self, strategy_name: str):
-        pass
+        strategy = self.strategies.get(strategy_name, None)
+        return strategy
 
     def edit_strategy(self, strategy_name: str, setting: dict):
-        pass
+        strategy = self.strategies[strategy_name]
+        strategy.update_setting(setting)
 
-    def compile_check(self, strategy_class: type):
-        pass
-
-    def load_bars(self, strategy: StrategyTemplate, days: int, interval: Interval = ...):
-        pass
-
-    def write_log(self, msg: str, strategy: StrategyTemplate = None, level: LOG_LEVEL = ...):
-        pass
-
-    def send_order(self, strategy: StrategyTemplate,
-                   ab_symbol: str,
-                   direction: Direction,
-                   price: float,
-                   volume: float,
-                   offset: Offset,
-                   order_type: OrderType) -> Iterable[str]:
-        pass
-    
-    def cancel_order(self, strategy: StrategyTemplate, ab_orderid: str):
-        pass
-
-    def cancel_orders(self, strategy: StrategyTemplate, ab_orderids: Iterable[str]):
-        pass
+    def run_backtest(self, start_dt: datetime, end_dt: datetime, interval: Interval = Interval.MINUTE):
+        assert(interval==Interval.MINUTE, "for now, only Minute interval backtest are supported. Tick level may supported later.")
+        if self.data_loader is None:
+            raise AttributeError("data_loader is not set")
+        strategy_name, strategy = self.strategies.popitem()
+        

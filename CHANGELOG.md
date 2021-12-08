@@ -1,6 +1,12 @@
 
 
 
+## 0.6.1
+1. telegramNotifer 初版
+1. binancecgateway request limit on query_history
+1. bitmexgateway request limit on query_history
+1. dydx增加post only, 增加一些币种常量
+
 ## 0.6.0
 1. dydx 重构
 1. binancec，bitmex POSTONLYLIMIT订单支持

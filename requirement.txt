@@ -4,4 +4,5 @@ websocket-client
 pytz
 pandas
 ecdsa
+telegram
 #ta-lib

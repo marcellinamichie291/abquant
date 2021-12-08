@@ -2,7 +2,7 @@ from setuptools import PackageFinder, setup, find_packages
 
 setup(
     name='abquant',
-    version='0.6.0',
+    version='0.6.1',
     description='event-driven quant dev tools',
     author='independent regime',
     # package_dir={"":"./abquant"},
@@ -13,7 +13,9 @@ setup(
         'requests',
         'websocket-client',
         'pytz',
-        'ecdsa'
+        'ecdsa',
+        'pandas',
+        'telegram',
     ],
     python_requires='>=3.8',
 

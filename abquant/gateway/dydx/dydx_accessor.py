@@ -21,7 +21,7 @@ from ...trader.object import (
     Status,
     Direction
 )
-from ...trader.common import Exchange
+from ...trader.common import Exchange, OrderType
 from . import (
     DIRECTION_AB2DYDX,
     REST_HOST,
@@ -171,6 +171,7 @@ class DydxAccessor(RestfulAccessor):
         expiration_epoch_seconds: int = int(time.time() + 86400)
         
         order_type, timeInForce = ORDERTYPE_AB2DYDX[req.type]
+        post_only = True if req.type == OrderType.POSTONLYLIMIT else False
         contract = symbol_contract_map.get(req.symbol)
         if contract:
             price = round_to(req.price, contract.pricetick)
@@ -202,7 +203,7 @@ class DydxAccessor(RestfulAccessor):
             "price": str(price),
             "limitFee": str(self.limitFee),
             "expiration": epoch_seconds_to_iso(expiration_epoch_seconds),
-            "postOnly": False,
+            "postOnly": post_only,
             "clientId": orderid,
             "signature": signature
         }
