@@ -13,7 +13,9 @@ setup(
         'requests',
         'websocket-client',
         'pytz',
-        'ecdsa'
+        'ecdsa',
+        'pandas',
+        'telegram',
     ],
     python_requires='>=3.8',
 
