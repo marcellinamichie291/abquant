@@ -19,6 +19,8 @@ class BarAccumulater:
     def check_datatime(bars: Dict[str, BarData]):
         bar_time = None
         for ab_symbol, bar in bars.items():
+            if bar is None:
+                continue
             if bar_time is None:
                 bar_time = bar.datetime
             assert bar_time == bar.datetime, "the BarData in bars has different timestamp."
@@ -32,6 +34,8 @@ class BarAccumulater:
         self.check_datatime(bars)
         self._update_times += 1
         for ab_symbol, bar in bars.items():
+            if bar is None:
+                continue
             if ab_symbol not in self.bars:
                 bar = BarData(gateway_name="GENERATED",
                               symbol=bar.symbol,

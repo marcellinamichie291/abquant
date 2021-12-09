@@ -1,5 +1,7 @@
 
 
+## 0.6.2
+1. 处理无行情产品barData聚合问题。
 
 ## 0.6.1
 1. telegramNotifer 初版
