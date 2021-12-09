@@ -90,6 +90,8 @@ class TheStrategy(StrategyTemplate):
         n = 1
         self.load_bars(n)
         self.write_log("Strategy initiated")
+        # 如果需要报警功能，配置好 monitor后可以通过该方法实现。
+        # self.notify_lark("ssssssssssssssssssssssssssssssssss lark")
 
     def on_start(self):
         self.write_log("Strategy started")
@@ -181,8 +183,6 @@ class TheStrategy(StrategyTemplate):
         # window分钟级策略在这里实现， 注意设置 window参数。方便
         # self.write_log("WINDOW BAR: {}".format(bars))
 
-        # 如果需要报警功能，配置好 monitor后可以通过该方法实现。
-        self.notify_lark("send msg to lark")
         pass
 
     def on_entrust(self, entrust: EntrustData) -> None:
@@ -232,7 +232,7 @@ def main():
 
     common_setting = {
         "strategy": args.strategy,
-        "lark_url": None,  # "https://open.larksuite.com/open-apis/bot/v2/hook/2b92f893-83c2-48c1-b366-2e6e38a09efe",
+        "lark_url": "https://open.larksuite.com/open-apis/bot/v2/hook/2b92f893-83c2-48c1-b366-2e6e38a09efe",
         "log_path": args.log_path,
     }
     # Monitor.init_monitor(common_setting)
@@ -253,11 +253,11 @@ def main():
     #         event.data.gateway_name,
     #         event.data.msg)
     # ))
-    event_dispatcher.register(EventType.EVENT_ACCOUNT, lambda event: print(
-        str('ACCOUNT: ') + str(event.data)))  # pass accessor,  trade_listerer not done
+    # event_dispatcher.register(EventType.EVENT_ACCOUNT, lambda event: print(
+    #     str('ACCOUNT: ') + str(event.data)))  # pass accessor,  trade_listerer not done
     # event_dispatcher.register(EventType.EVENT_CONTRACT, lambda event:  print(str('CONTRACT: ') + str(event.data))) # pass
-    event_dispatcher.register(EventType.EVENT_POSITION, lambda event: print(
-        str('POSITION: ') + str(event.data)))
+    # event_dispatcher.register(EventType.EVENT_POSITION, lambda event: print(
+    #     str('POSITION: ') + str(event.data)))
 
     binance_spot_gateway = BinanceSGateway(event_dispatcher)
     binance_spot_gateway.connect(binance_setting)
@@ -289,8 +289,8 @@ def main():
 
 
     from abquant.gateway.binancec import symbol_contract_map
-    for k, v in symbol_contract_map.items():
-        print(v)
+    # for k, v in symbol_contract_map.items():
+    #     print(v)
     ab_symbols = [generate_ab_symbol(
         symbol, exchange=Exchange.BINANCE) for symbol in symbol_contract_map.keys()]
     # this is subscribe all
@@ -305,8 +305,8 @@ def main():
     #                              )
 
     from abquant.gateway.binances import symbol_contract_map
-    for k, v in symbol_contract_map.items():
-        print(v)
+    # for k, v in symbol_contract_map.items():
+    #     print(v)
     strategy_runner.add_strategy(strategy_class=TheStrategy,
                                  strategy_name='the_strategy1',
                                  ab_symbols=["BTCUSDT.BINANCE",

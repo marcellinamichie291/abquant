@@ -62,22 +62,22 @@ class Logger:
         logger2.addHandler(self.get_handler('file', log_path))
 
     def debug(self, msg, *args, **kwargs):
-        self._logger.debug(msg, args, **kwargs)
+        self._logger.debug(msg, *args, **kwargs)
 
     def log(self, msg, *args, **kwargs):
-        self.debug(msg, args, **kwargs)
+        self.debug(msg, *args, **kwargs)
 
     def print(self, msg, *args, **kwargs):
-        self.debug(msg, args, **kwargs)
+        self.debug(msg, *args, **kwargs)
 
     def info(self, msg, *args, **kwargs):
-        self._logger.info(msg, args, **kwargs)
+        self._logger.info(msg, *args, **kwargs)
 
     def warn(self, msg, *args, **kwargs):
-        self._logger.warning(msg, args, **kwargs)
+        self._logger.warning(msg, *args, **kwargs)
 
     def error(self, msg, *args, **kwargs):
-        self._logger.error(msg, args, **kwargs)
+        self._logger.error(msg, *args, **kwargs)
 
     def print_log_format(self, data):
         logger2 = self._logger
