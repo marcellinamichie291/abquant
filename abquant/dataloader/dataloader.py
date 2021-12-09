@@ -3,10 +3,12 @@ from abc import ABC, abstractmethod
 from typing import Dict, Iterable
 from datetime import datetime
 from copy import copy
+from enum import Enum
 
 from pandas.core.frame import DataFrame
 
 from abquant.trader.msg import BarData, Interval
+
 
 class Dataset(ABC):
     def __init__(self, start, end, ab_symbol, interval):
@@ -16,11 +18,11 @@ class Dataset(ABC):
         """
         self.start: datetime = start
         self.end: datetime = end
-        self.ab_symbol:str = ab_symbol
+        self.ab_symbol: str = ab_symbol
         self.interval: Interval = interval
     
     @abstractmethod
-    def __iter__(self) -> Iterable(BarData):
+    def __iter__(self):
         """
          返回可迭代对象。
          for bar in dataset:
@@ -57,7 +59,15 @@ class Dataset(ABC):
 
         pass
 
+    @abstractmethod
+    def check(self) -> bool:
+        pass
+
+
 class DataLoader(ABC):
+
+    _config = None
+
     def __init__(self, config: Dict):
         """
         子类须调用该方法初始化
@@ -67,14 +77,14 @@ class DataLoader(ABC):
         self.set_config(config)
     
     @abstractmethod
-    def set_config(setting):
+    def set_config(self, setting):
         """
         子类须实现该方法
         """
-        pass
+        self._config = setting
 
     @abstractmethod
-    def load_data(self, ab_symbol: str, start: datetime, end: datetime, interval: Interval=Interval.MINUTE) -> Dataset:
+    def load_data(self) -> Dataset:
         """
         1. 子类须实现该方法，
         2. assert, interval是分钟级的
@@ -84,6 +94,12 @@ class DataLoader(ABC):
         """
         pass
     
-    
+
+class DataLocation(Enum):
+    """
+    Backtest Data Type.
+    """
+    LOCAL = "LOCAL"
+    REMOTE = "REMOTE"
 
 
