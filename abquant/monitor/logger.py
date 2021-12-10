@@ -13,7 +13,7 @@ FORMAT = "%(message)s"
 
 class Logger:
     def __init__(self, name="monitor"):
-        print("Logger init")
+        # print(f"Logger {name} init")
         self._logger = logging.getLogger(name)
         self._logger.setLevel(LOG_LEVEL)
         self.config_logger()

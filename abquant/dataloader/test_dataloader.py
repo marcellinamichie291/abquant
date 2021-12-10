@@ -37,7 +37,7 @@ def main():
         "symbol": args.symbol,
         "trade_type": "ubc",
         "start_time": "2021-10-1 ",
-        "end_time": "2021-12-4 00:00:00",
+        "end_time": "2021-12-14 00:00:00",
         "location": "local",
         "data_file": args.data_file,
         "interval": "1m",
