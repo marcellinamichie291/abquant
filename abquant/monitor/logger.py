@@ -2,7 +2,7 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 import json
-import datetime
+from datetime import datetime
 
 LOG_LEVEL = logging.INFO
 FORMAT = "%(message)s"
@@ -95,7 +95,10 @@ class Logger:
                 if strategy_name is None and event_type is None and payload is None:
                     logger2.info(json.dumps(data))
                     return
-                date_array = datetime.datetime.fromtimestamp(event_time)
+                if event_time is not None:
+                    date_array = datetime.fromtimestamp(event_time)
+                else:
+                    date_array = datetime.today()
                 event_time = date_array.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
                 formatStr = f'{event_time} '
                 if strategy_name is not None and strategy_name != '':

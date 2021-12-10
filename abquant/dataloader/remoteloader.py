@@ -98,6 +98,7 @@ class RemoteLoader:
             dateday = self.start_time
             df_all = None
             days = 0
+            short_days = []
             while dateday < self.end_time:
                 enday = dateday.strftime('%Y-%m-%d')
                 file_base = f'{self.symbol}-{self.interval}-{enday}'
@@ -107,12 +108,15 @@ class RemoteLoader:
                 days += 1
                 df1 = regular_df(df1, self.exchange, self.symbol, self.interval)
                 if df1 is None:
+                    short_days.append(enday)
                     continue
                 self._logger.debug(df1.shape)
                 if df_all is None:
                     df_all = df1
                 else:
                     df_all = df_all.append(df1)    # todo: 去重
+            self._logger.info(f'Searching {days} days, but {len(short_days)} days not available: '
+                              f'{short_days[:10]} {"..." if len(short_days) > 10 else ""}')
             return df_all
         except Exception as e:
             self._logger.error(e)

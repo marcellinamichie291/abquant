@@ -45,17 +45,30 @@ class DataLoaderKline(DataLoader):
             exchange = setting.get("exchange")
             if exchange is None:
                 raise Exception(f'Dataloader config: exchange is none')
-            self.exchange = Exchange(exchange)
+            exchange = exchange.strip("'\" \n\t")
+            self.exchange = Exchange(exchange.upper())
         except ValueError:
             raise Exception(f'Dataloader config: exchange incorrect')
         self.symbol = setting.get("symbol")
         if self.symbol is None:
             raise Exception(f'Dataloader config: symbol is none')
+        self.symbol = self.symbol.strip("'\" \n\t").upper()
         self.trade_type = setting.get("trade_type")
         if self.trade_type is None:
             raise Exception(f'Dataloader config: trade_type is none')
+        self.trade_type = self.trade_type.strip("'\" \n\t").lower()
+        if self.trade_type == 'bbc' and '_' not in self.trade_type:
+            symbol = self.symbol
+            if self.symbol[-4:] == 'USDT':
+                self.symbol = self.symbol[:-4] + 'USD_PERP'
+            elif self.symbol[-4:] == 'USD':
+                self.symbol = self.symbol + '_PERP'
+            self._logger.info(f'Do you mean perpetual contract? Change your symbol {symbol} to {self.symbol}')
         self.interval = setting.get("interval")
-        if self.interval is None or self.interval == Interval.MINUTE:
+        if self.interval is None:
+            raise Exception(f'Dataloader config: interval is none')
+        self.interval = self.interval.strip("'\" \n\t")
+        if self.interval == Interval.MINUTE:
             self.interval = "1m"
         elif self.interval == "1m":
             pass
@@ -65,6 +78,8 @@ class DataLoaderKline(DataLoader):
         etime = setting.get("end_time")
         if stime is None or etime is None:
             raise Exception(f'Dataloader config: neither start nor end time could be none')
+        stime = stime.strip("'\" \n\t")
+        etime = etime.strip("'\" \n\t")
         self.start_time = regular_time(stime)
         self.end_time = regular_time(etime)
         if stime is not None and self.start_time is None:
