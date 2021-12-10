@@ -91,7 +91,7 @@ class TheStrategy(StrategyTemplate):
         self.load_bars(n)
         self.write_log("Strategy initiated")
         # 如果需要报警功能，配置好 monitor后可以通过该方法实现。
-        # self.notify_lark("ssssssssssssssssssssssssssssssssss lark")
+        # self.notify_lark("test send lark")
 
     def on_start(self):
         self.write_log("Strategy started")
