@@ -18,7 +18,7 @@ AWS_S3_BASE_PATH = "s3://" + S3_BUCKET_NAME + S3_HOME_FOLDER
 
 class RemoteLoader:
     def __init__(self, exchange: Exchange, symbol, trade_type, interval, start_time: datetime, end_time: datetime):
-        self._logger = Logger("dataset")
+        self._logger = Logger("dataloader")
         self.exchange: Exchange = exchange
         self.symbol = symbol
         self.trade_type = trade_type
@@ -72,11 +72,20 @@ class RemoteLoader:
             return None
 
     def load_remote(self):
-        remote_dir = ''
-        local_dir = ''
+        try:
+            sub_dir = f'/{self.exchange.value.lower()}/{self.trade_type}/daily/{self.symbol}/{self.interval}/'
+            enday = self.end_time.strftime('%Y-%m-%d')
+            file_name = f'{self.symbol}-{self.interval}-{enday}.csv'
+            remote_dir = AWS_S3_BASE_PATH + sub_dir
+            local_dir = LOCAL_PATH + sub_dir
+            local_file = LOCAL_PATH + sub_dir + file_name
+        except Exception as e:
+            self._logger.error(e)
+            self._logger.error('Short of parameters, cannot specify local s3 file')
 
-        if not os.path.isfile(os.path.join(local_dir, "_SUCCESS")):
-            cmd = "aws s3 sync " + AWS_S3_BASE_PATH + " " + LOCAL_PATH
+        if not os.path.isfile(local_file):
+            cmd = "aws s3 sync " + remote_dir + " " + local_dir
+            self._logger.info(f'syncing {remote_dir} to {local_dir} ...')
             ret = os.system(cmd)
             if ret != 0:
                 raise Exception('Sync AWS S3 failure: command=%s, status=%s' % (cmd, ret))
@@ -89,10 +98,10 @@ class RemoteLoader:
             dateday = self.start_time
             df_all = None
             days = 0
-            while dateday <= self.end_time:
-                # local_dir = LOCAL_PATH + '/' + self.exchange.value.lower() + "/" + self.symbol + "/"
-                local_dir = LOCAL_PATH
-                file_base = self.symbol + '-' + self.interval + '-' + dateday.strftime('%Y-%m-%d')
+            while dateday < self.end_time:
+                enday = dateday.strftime('%Y-%m-%d')
+                file_base = f'{self.symbol}-{self.interval}-{enday}'
+                file_name = f'{file_base}.csv'
                 df1 = self.load_file(local_dir, file_base)
                 dateday = dateday + timedelta(days=1)
                 days += 1
@@ -111,8 +120,9 @@ class RemoteLoader:
 
 
 if __name__ == '__main__':
-    loader = RemoteLoader(Exchange.BINANCE, 'BTCUSDT', 'spot', '1m',
+    loader = RemoteLoader(Exchange.BINANCE, 'ETHUSDT', 'spot', '1m',
                           datetime(2021, 6, 20, 16, 46, 19, 100127),
                           datetime(2021, 12, 1, 16, 46, 19, 100127))
     pdf = loader.load_remote()
-    print(pdf[:3])
+    if pdf is not None and not pdf.empty:
+        print(pdf[:3])

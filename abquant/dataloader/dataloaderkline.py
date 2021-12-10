@@ -82,15 +82,17 @@ class DataLoaderKline(DataLoader):
         # 检查缓存  todo: 数据合并
         if self.exchange is not None and self.symbol is not None and self.start_time is not None \
                 and self.end_time is not None and self.trade_type is not None:
-            cache_file = f"{self.exchange.value.lower()}-{self.trade_type.lower()}-{self.symbol.lower()}-1m" \
-                       f"-{str(self.start_time)[:19].replace(' ','-')}-{str(self.end_time)[:19].replace(' ','-')}.csv"
-            if Path(self.cache_dir + '/' + cache_file).is_file():
+            stime = self.start_time.strftime('%Y-%m-%d')
+            etime = self.end_time.strftime('%Y-%m-%d')
+            cache_file = f"{self.exchange.value.lower()}-{self.symbol.lower()}-{self.trade_type}-{self.interval}" \
+                       f"-{stime}-{etime}.csv"
+            if os.path.isfile(self.cache_dir + '/' + cache_file):
                 # load from cache
-                self._logger.info(f"Load from cache: {self.cache_dir + '/' + cache_file}")
                 df_03 = pd.read_csv(self.cache_dir + '/' + cache_file, index_col=0)
                 absymbol = generate_ab_symbol(self.symbol, self.exchange)
                 dataset: DatasetKline = DatasetKline(self.start_time, self.end_time, absymbol, self.interval)
                 dataset.set_data(df_03.to_dict(orient="records"), df_03, df_03.shape[0])
+                self._logger.info(f"Load from cache: {self.cache_dir + '/' + cache_file}")
                 return dataset
 
         df_01 = None
@@ -135,14 +137,17 @@ class DataLoaderKline(DataLoader):
             return None
 
         # cache
-        if cache_file is not None and len(cache_file) > 0:
-            df_02.to_csv(self.cache_dir + '/' + cache_file)
-        else:
-            cache_file = f"{self.exchange.value.lower()}-{self.trade_type.lower()}-{self.symbol.lower()}-1m" \
-                         f"-{str(self.start_time)[:19].replace(' ', '-')}-{str(self.end_time)[:19].replace(' ', '-')}.csv"
-            df_02.to_csv(self.cache_dir + '/' + cache_file, index=False)
+        try:
+            if cache_file is not None and len(cache_file) > 0:
+                df_02.to_csv(self.cache_dir + '/' + cache_file)
+            else:
+                cache_file = f"{self.exchange.value.lower()}-{self.trade_type.lower()}-{self.symbol.lower()}-1m" \
+                             f"-{str(self.start_time)[:19].replace(' ', '-')}-{str(self.end_time)[:19].replace(' ', '-')}.csv"
+                df_02.to_csv(self.cache_dir + '/' + cache_file, index=False)
 
-        self._logger.info(f"Loaded k-line bars {rn}")
+            self._logger.info(f"Loaded k-line bars {rn}")
+        except Exception as e:
+            self._logger.error('Error saving cache: ', e)
         return dataset
 
 

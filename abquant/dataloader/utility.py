@@ -51,18 +51,18 @@ def regular_time(untime) -> datetime:
             return None
         # if statement should be in order
         if re.search(r'(\d{2,4}[-/]\d{1,2}[-/]\d{1,2} \d{1,2}(:\d{1,2}){2})', suntime) is not None:
-            format = f'%{year}{hyphen}%m{hyphen}%d %H:%M:%S'
+            dformat = f'%{year}{hyphen}%m{hyphen}%d %H:%M:%S'
         elif re.search(r'(\d{2,4}[-/]\d{1,2}[-/]\d{1,2} \d{1,2}:\d{1,2})', suntime) is not None:
-            format = f'%{year}{hyphen}%m{hyphen}%d %H:%M'
+            dformat = f'%{year}{hyphen}%m{hyphen}%d %H:%M'
         elif re.search(r'(\d{2,4}[-/]\d{1,2}[-/]\d{1,2} \d{1,2})', suntime) is not None:
-            format = f'%{year}{hyphen}%m{hyphen}%d %H'
+            dformat = f'%{year}{hyphen}%m{hyphen}%d %H'
         elif re.search(r'(\d{2,4}[-/]\d{1,2}[-/]\d{1,2})', suntime) is not None:
-            format = f'%{year}{hyphen}%m{hyphen}%d'
+            dformat = f'%{year}{hyphen}%m{hyphen}%d'
         else:
             print(f'Unrecognized time in datetime: {suntime}')
             return None
         try:
-            dt = datetime.strptime(suntime, format)
+            dt = datetime.strptime(suntime, dformat)
             return dt
         except Exception as ex:
             print(f'Unrecognized datetime: {suntime}')
@@ -147,8 +147,8 @@ def regular_df(df_01: DataFrame, exchange: str, symbol: str, interval: str) -> D
     df_02.loc[:, 'exchange'] = exchange
     df_02.loc[:, 'interval'] = interval
     df_02.loc[:, 'datetime'] = pd.to_datetime(df_02['datetime'], unit='ms')
-    print(df_02.head(1))
-    print(df_02.shape)
+    # print(df_02.head(1))
+    # print(df_02.shape)
     return df_02
 
 

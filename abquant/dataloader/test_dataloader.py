@@ -35,8 +35,8 @@ def main():
     dt_setting = {
         "exchange": args.exchange,
         "symbol": args.symbol,
-        "trade_type": "spot",
-        "start_time": "2021-11-20 ",
+        "trade_type": "ubc",
+        "start_time": "2021-10-1 ",
         "end_time": "2021-12-4 00:00:00",
         "location": "local",
         "data_file": args.data_file,
