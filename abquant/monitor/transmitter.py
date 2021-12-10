@@ -6,7 +6,7 @@ import requests
 
 import websocket
 
-from .util import logger
+from .logger import Logger
 
 WS_URL = "wss://dct-test001-internal.wecash.net/dct-service-abquant/ws/business?strategy="
 MAX_CONNECT_RETRY = 5
@@ -16,10 +16,12 @@ class Transmitter:
 
     client = None
     strategy = None
+    _logger = None
 
     def __init__(self, strategy):
         self.strategy = strategy
         self._pp_thread = None  # underlying ping/pong thread
+        self._logger = Logger("monitor")
 
     def connect_ws(self):
         if self.client is not None:
@@ -29,7 +31,7 @@ class Transmitter:
             'Content-Type': 'application/json; charset=UTF-8'
         }
         if self.strategy is None:
-            logger.debug("Monitor: No strategy config")
+            self._logger.debug("Monitor: No strategy config")
             return
         websocket.enableTrace(False)
         try:
@@ -37,13 +39,13 @@ class Transmitter:
                                         on_close=self.on_close, on_open=self.on_open,
                                         on_ping=self.on_ping, on_pong=self.on_pong)
         except Exception as e:
-            logger.error(e)
+            self._logger.debug(e)
             return
         self.client = ws
         # ws.run_forever(ping_interval=30, ping_timeout=5)
         self._pp_thread = Thread(target=self.run_forever, args=(ws,))
         self._pp_thread.start()
-        logger.debug("tx: start ping/pong thread")
+        self._logger.debug("tx: start ping/pong thread")
         time.sleep(1)
 
         return ws
@@ -52,9 +54,9 @@ class Transmitter:
         pass
 
     def run_forever(self, ws):
-        logger.debug("tx: run forever")
+        self._logger.debug("tx: run forever")
         if self.client is None:
-            logger.debug("Error: tx: no client to run ping pong thread")
+            self._logger.debug("Error: tx: no client to run ping pong thread")
             return
         self.client.run_forever(ping_interval=10, ping_timeout=5)
 
@@ -72,27 +74,27 @@ class Transmitter:
             else:
                 data = str(data)
         except Exception as e:
-            logger.debug(f'Data transform error, use str()')
+            self._logger.debug(f'Data transform error, use str()')
             data = str(data)
         # logger.debug(f"Monitor: send {data}")
         self.client.send(data)
 
     def on_message(self, ws, msg):
-        logger.debug(msg)
+        self._logger.debug(msg)
 
     def on_error(self, ws, error):
-        logger.error(error)
+        self._logger.error(error)
 
     def on_open(self, ws):
         self.client = ws
-        logger.info("Monitor: WebSocket started")
+        self._logger.info("Monitor: WebSocket started")
 
     def on_close(self, ws, code, msg):
         self.client = None
         if code is not None and code == 1008:   # WS Error Code: Policy Violation, 具体是strategy参数不对
-            logger.info("Monitor: No strategy config, WebSocket CLOSED")
+            self._logger.info("Monitor: No strategy config, WebSocket CLOSED")
             return
-        logger.info(f"WebSocket closed, code: {code}, msg: {msg}")
+        self._logger.debug(f"WebSocket closed, code: {code}, msg: {msg}")
         i = 1
         time.sleep(3)
         while i <= MAX_CONNECT_RETRY:
@@ -102,13 +104,13 @@ class Transmitter:
                 break
             i += 1
         if self.client is None:
-            logger.info(f"Monitor server CLOSED after {i} retry failures")
+            self._logger.info(f"Monitor server CLOSED after {i} retry failures")
         else:
-            logger.info(f"Monitor server RECONNECT after {i} retries")
+            self._logger.info(f"Monitor server RECONNECT after {i} retries")
 
     def on_ping(self, pingMsg, ex):
         # ws._send_ping()
-        logger.debug("tx: ping")
+        self._logger.debug("tx: ping")
 
     def on_pong(self, pongMsg, ex):
         # logger.debug("tx: pong")
