@@ -22,7 +22,7 @@ class Dataset(ABC):
         self.interval: Interval = interval
     
     @abstractmethod
-    def __iter__(self):
+    def __iter__(self) -> Iterable[BarData]:
         """
          返回可迭代对象。
          for bar in dataset:

@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import re
 from pandas.core.frame import DataFrame
 import pandas as pd
+from typing import Tuple, List
 
 
 def is_number(s):
@@ -68,7 +69,7 @@ def regular_time(untime) -> datetime:
             return None
 
 
-def make_columns(headers: list) -> (list, list):
+def make_columns(headers: list) -> Tuple[List, List]:
     select_hs = []
     rename_hs = []
     if "open_time" in headers:
@@ -124,7 +125,7 @@ def make_columns(headers: list) -> (list, list):
     return select_hs, rename_hs
 
 
-def regular_df(df_01: DataFrame, exchange: str, symbol: str, interval: str):
+def regular_df(df_01: DataFrame, exchange: str, symbol: str, interval: str) -> DataFrame:
     if df_01 is None or not isinstance(df_01, DataFrame):
         return df_01
     if df_01.shape[0] == 0:

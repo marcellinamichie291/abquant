@@ -1,10 +1,11 @@
 
 import random
 from pandas.core.frame import DataFrame
+from typing import Tuple, Iterable
 
-from abquant.trader.msg import BarData, Interval
+from abquant.trader.msg import BarData
 from abquant.trader.utility import extract_ab_symbol
-from abquant.dataloader.dataloader import DataLoader, Dataset
+from abquant.dataloader.dataloader import Dataset
 
 
 class DatasetKline(Dataset):
@@ -16,7 +17,7 @@ class DatasetKline(Dataset):
         self.cur_pos = -1
         self.len = 0
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[BarData]:
         """
             如果返回self，next()函数会调用self.__next__()
             如果用现有iter，返回iter(self.bars)，next()会调用假借iter（这里是list）的__next__()，不会调用self.__next__()
@@ -68,7 +69,7 @@ class DatasetKline(Dataset):
         newds.len = len(newds.bars)
         return newds
 
-    def check(self) -> (bool, str):
+    def check(self) -> Tuple[bool, str]:
         try:
             df_01 = self.dataframe
             # --> 检查列名
