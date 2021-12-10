@@ -11,8 +11,9 @@ import uuid
 from abquant.trader.msg import OrderData, TradeData
 from abquant.trader.object import LogData
 from abquant.trader.utility import extract_ab_symbol, object_as_dict
+from .notify_lark import notify_lark, LarkMessage, TypeEnum
 from .transmitter import Transmitter
-from .logger import logger, config_logger, print_log_format
+from .logger import Logger
 
 MAX_QUEUE_SIZE = 10000
 MAX_BUFFER_SIZE = 100000
@@ -25,26 +26,28 @@ class Monitor(Thread):
     strategy = None
     buffer = None
     lark_url = None
+    _logger = None
 
     def __init__(self, setting: dict):
         Thread.__init__(self)
+        self._logger = Logger("monitor")
         self.setting = setting
         self.strategy = setting.get("strategy", None)
         if self.strategy is None:
-            logger.info("Monitor: No strategy config, cannot upload log")
+            self._logger.info("Monitor: No strategy config, cannot upload log")
         self.lark_url = setting.get("lark_url", None)
         if self.lark_url is None:
-            logger.info("Monitor: No lark url config, cannot send lark")
+            self._logger.info("Monitor: No lark url config, cannot send lark")
         self.log_path = setting.get("log_path", None)
         if self.log_path is None:
-            logger.info("Monitor: No log path config, default to ./logs/")
+            self._logger.info("Monitor: No log path config, default to ./logs/")
         self.buffer = []
         self.queue: Queue = Queue(maxsize=MAX_QUEUE_SIZE)
-        logger.debug("Monitor: queue length {}".format(MAX_QUEUE_SIZE))
-        logger.info("Monitor initiated")
+        self._logger.debug("Monitor: queue length {}".format(MAX_QUEUE_SIZE))
+        self._logger.info("Monitor initiated")
 
     def run(self):
-        config_logger(self.log_path)
+        # config_logger(self.log_path)
         try:
             if self.txmt is None:
                 self.txmt = Transmitter(self.strategy)
@@ -52,19 +55,19 @@ class Monitor(Thread):
                 time.sleep(1)
                 # self.txmt.client.send("test: websocket start")
         except Exception as e:
-            logger.debug(f"Error: {e}")
+            self._logger.debug(f"Error: {e}")
         try:
             self.consumer()
             # asyncio.run(self.consumer())
         except Exception as e:
-            logger.debug(f"Error: {e}")
+            self._logger.debug(f"Error: {e}")
 
     def send(self, data: json):
         # if self.txmt is None or self.txmt.client is None:
         #     logger.error("Error: websocket client is None.")
         #     return
         if self.queue.full():
-            logger.debug("Monitor: queue is full")
+            self._logger.debug("Monitor: queue is full")
             return
         self.queue.put_nowait(data)
         # logger.debug(f"Monitor: put to queue: {data}, current queue length: {self.queue.qsize()}")
@@ -124,7 +127,7 @@ class Monitor(Thread):
             current_info['payload']['value'] = value
             self.send(current_info)
 
-    def send_log(self, run_id, log: LogData, log_type: str='custom'):
+    def send_log(self, run_id, log: LogData, log_type: str = 'custom'):
         info = self.default_info(run_id, "log")
         info['gateway_name'] = log.gateway_name
         payload = object_as_dict(log)
@@ -132,7 +135,6 @@ class Monitor(Thread):
         payload['type'] = log_type
         info['payload'] = payload
         self.send(info)
-
 
     def send_status(self, run_id, status_type: str, ab_symbols: List[str]):
         info = self.default_info(run_id, "status_report")
@@ -143,7 +145,7 @@ class Monitor(Thread):
         info['payload'] = payload
         self.send(info)
 
-    def send_notify_lark(self, run_id, msg: str):
+    def send_notify_lark(self, run_id, msg: str, title: str = '', content: list = None):
         if self.lark_url is None:
             return
         info = self.default_info(run_id, "lark")
@@ -151,8 +153,13 @@ class Monitor(Thread):
                    "message": msg}
         info['payload'] = payload
         self.send(info)
+        if content is None or type(content) is not list or type(content[0]) is not list:
+            notify_lark.put(LarkMessage(self.strategy, self.lark_url, TypeEnum.TEXT, text=msg))
+        else:
+            notify_lark.put(LarkMessage(self.strategy, self.lark_url, TypeEnum.POST, title=title, content=content))
 
     def consumer(self):
+        # global _logger
         # self.queue.put(1.5)
         # self.queue.put('2')
         # self.queue.put("{\"c\":3}")
@@ -161,31 +168,31 @@ class Monitor(Thread):
         # self.queue.put((1, 2))
         # logger.debug("Monitor: test data ok")
         if self.queue is None:
-            logger.debug("Error: qu: queue is none.")
+            self._logger.debug("Error: qu: queue is none.")
             return
         # if self.txmt is None or self.txmt.client is None:
         #     logger.error("Error: tx: ws client is none.")
         #     return
-        logger.info("Monitor Started")
+        self._logger.info("Monitor Started")
         cycles = 1
         while True:
             try:
                 self.send_buffer()
             except Exception as e:
-                logger.debug(f'Error: buffer: {e}')
+                self._logger.debug(f'Error: buffer: {e}')
 
             try:
                 size = self.queue.qsize()
                 # logger.debug(f'Monitor: current queue length {size}')
                 data = self.queue.get(timeout=1)
                 # logger.info(data)
-                print_log_format(data)
+                self._logger.print_log_format(data)
                 # logger.debug(f'Monitor: take element to send: {data}')
                 # await self.txmt.client.send(str(data))
                 try:
                     self.txmt.send(data)
                 except Exception as e:
-                    logger.debug(f'Error: Queue send: {e},  put into buffer')
+                    self._logger.debug(f'Error: Queue send: {e},  put into buffer')
                     self.push_buffer(data)
                     # time.sleep(1)
                     cycles += 1
@@ -203,7 +210,7 @@ class Monitor(Thread):
                 # logger.debug('empty queue')
                 continue
             except Exception as e:
-                logger.debug(f'Error: qu: {e}')
+                self._logger.debug(f'Error: qu: {e}')
                 # time.sleep(1)
                 continue
 
@@ -212,7 +219,7 @@ class Monitor(Thread):
             self.buffer.append(data)
             return len(self.buffer)
         else:
-            logger.debug("Error: Buffer is full")
+            self._logger.debug("Error: Buffer is full")
             return -1
 
     def send_buffer(self):
@@ -226,10 +233,10 @@ class Monitor(Thread):
                 try:
                     self.txmt.send(buf)
                 except Exception as e:
-                    logger.debug(f'Error: Buffer send: {e}')
+                    self._logger.debug(f'Error: Buffer send: {e}')
                     raise
-                logger.debug(f"qu: send buffer: {buf}")
+                self._logger.debug(f"qu: send buffer: {buf}")
             self.buffer.clear()
-            logger.info(f'Resend {blen} elements while disconnection')
+            self._logger.info(f'Resend {blen} elements while disconnection')
             return blen
         return 0
