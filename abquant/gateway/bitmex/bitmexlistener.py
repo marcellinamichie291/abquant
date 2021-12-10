@@ -138,6 +138,8 @@ class BitmexListener(WebsocketListener):
         elif "table" in packet:
             name = packet["table"]
             callback = self.callbacks[name]
+            if name in ("execution", "order", "position", "margin"):
+                self.gateway.on_raw(packet)
 
             if isinstance(packet["data"], list):
                 for d in packet["data"]:
@@ -350,7 +352,6 @@ class BitmexListener(WebsocketListener):
         # Filter order data which cannot be processed properly
         if "ordStatus" not in d:
             return
-
         # Update local order data
         sysid = d["orderID"]
         order = self.orders.get(sysid, None)

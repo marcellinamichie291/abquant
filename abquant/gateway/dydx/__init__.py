@@ -38,7 +38,8 @@ ORDERTYPE_AB2DYDX: Dict[OrderType, Tuple[str, str]] = {
     OrderType.MARKET: ("MARKET", "FOK"),
     OrderType.STOP: ("STOP_LIMIT", "IOC"),
     OrderType.TRAILING_STOP: ("TRAILING_STOP", "IOC"),
-    OrderType.TAKE_PROFIT: ("TAKE_PROFIT", "IOC")
+    OrderType.TAKE_PROFIT: ("TAKE_PROFIT", "IOC"),
+    OrderType.POSTONLYLIMIT: ("LIMIT", "GTT")
 
 }
 ORDERTYPE_DYDX2AB: Dict[Tuple[str, str], OrderType] = {v[0]: k for k, v in ORDERTYPE_AB2DYDX.items()}

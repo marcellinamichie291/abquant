@@ -11,7 +11,7 @@ from . import DIRECTION_BINANCEC2AB, D_TESTNET_WEBSOCKET_DATA_HOST, D_WEBSOCKET_
 from ..basegateway import Gateway
 from ..listener import WebsocketListener
 from abquant.trader.exception import MarketException
-from abquant.trader.common import Direction, Exchange
+from abquant.trader.common import Direction, Exchange, OrderType
 from abquant.trader.object import AccountData, PositionData, SubscribeRequest
 from abquant.trader.msg import DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
 
@@ -45,6 +45,7 @@ class BinanceCDataWebsocketListener(WebsocketListener):
     def on_connected(self) -> None:
         """"""
         self.gateway.write_log("行情Websocket API连接")
+        # TODO  query the active order while reconnect.
 
     def on_disconnected(self):
         """"""
@@ -222,6 +223,7 @@ class BinanceCTradeWebsocketListener(WebsocketListener):
 
     def on_packet(self, packet: dict) -> None:  
         """"""
+        self.gateway.on_raw(packet)
         if packet["e"] == "ACCOUNT_UPDATE":
             self.on_account(packet)
         elif packet["e"] == "ORDER_TRADE_UPDATE":
@@ -267,6 +269,9 @@ class BinanceCTradeWebsocketListener(WebsocketListener):
         order_type = ORDERTYPE_BINANCEC2AB.get(key, None)
         if not order_type:
             return
+        # such an ugly code due to multi gateway consistency.
+        elif order_type == OrderType.POSTONLYLIMIT:
+            order_type = OrderType.LIMIT
 
         order = OrderData(
             symbol=ord_data["s"],
@@ -289,7 +294,7 @@ class BinanceCTradeWebsocketListener(WebsocketListener):
 
         contract = symbol_contract_map.get(order.symbol, None)
         if contract:
-            trade_volume = round_to(trade_volume, contract.size)
+            trade_volume = round_to(trade_volume, contract.step_size)
 
         if not trade_volume:
             return

@@ -1,4 +1,5 @@
 import ast
+from dataclasses import dataclass
 import inspect
 from copy import Error
 from datetime import datetime, timedelta
@@ -19,11 +20,11 @@ from abquant.trader.object import CancelRequest, ContractData, HistoryRequest, L
 from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
 from abquant.trader.utility import OrderGrouper, extract_ab_symbol, round_to
 from .template import StrategyTemplate
-from .strategyrunner import StrategyRunner, LOG_LEVEL
+from .strategyrunner import StrategyManager, StrategyRunner, LOG_LEVEL
 
 
 
-class LiveStrategyRunner(StrategyRunner):
+class LiveStrategyRunner(StrategyRunner, StrategyManager):
     MAC = str(hex(uuid.getnode()))
 
     def __init__(self, event_dispatcher: EventDispatcher):
@@ -56,7 +57,6 @@ class LiveStrategyRunner(StrategyRunner):
         strategy = strategy_class(self, strategy_name, ab_symbols, setting)
         self.strategies[strategy_name] = strategy
 
-        # Add vt_symbol to strategy map.
         for ab_symbol in ab_symbols:
             strategies = self.symbol_strategys_map[ab_symbol]
             strategies.append(strategy)
@@ -106,8 +106,9 @@ class LiveStrategyRunner(StrategyRunner):
         self.write_log("strategy: {} start to init ".format(strategy_name))
 
         # Call on_init function of strategy
-        self.call_strategy_func(strategy, strategy.on_init)
-
+        init_success = self.call_strategy_func(strategy, strategy.on_init)
+        if not init_success:
+            return
         # Restore strategy data
         # see if required.
 
@@ -402,7 +403,7 @@ class LiveStrategyRunner(StrategyRunner):
 
     def call_strategy_func(
         self, strategy: StrategyTemplate, func: Callable, params: Any = None
-    ):
+    ) -> bool:
         """
         Call function of a strategy and catch any exception raised.
         """
@@ -420,6 +421,8 @@ class LiveStrategyRunner(StrategyRunner):
             # et, ev, tb = sys.exc_info()
             msg = f"Exception in strategy: {strategy.strategy_name}. strategy stoped. \n{traceback.format_exc()}"
             self.write_log(msg, strategy, level=ERROR)
+            return False
+        return True
 
     def compile_check(self, strategy_class: type):
         for func_node in ast.walk(ast.parse(inspect.getsource(strategy_class))):
@@ -433,10 +436,9 @@ class LiveStrategyRunner(StrategyRunner):
                             "strategy.load_bars, by which is only allowed to be called inside strategy.on_init method, called by {}.".format(func_node.name))
 
     # @lru_cache TO NOT USE lru_cache for situations dynamic adding and running strategies with data outdated risk.
-    def load_bar(self, ab_symbol: str, days: int, interval: Interval) -> Iterable[BarData]:
+
+    def load_bar_(self, ab_symbol: str, start: datetime, end: datetime, interval: Interval) -> Iterable[BarData]:
         symbol, exchange = extract_ab_symbol(ab_symbol)
-        end = datetime.now()
-        start = end - timedelta(days=days)
         contract: ContractData = self.order_manager.get_contract(ab_symbol)
         data = []
 
@@ -458,14 +460,16 @@ class LiveStrategyRunner(StrategyRunner):
     def load_bars(self,
                   strategy: StrategyTemplate,
                   days: int,
-                  interval: Interval = Interval.MINUTE):
+                  interval: Interval = Interval.MINUTE, on_interval: Callable[[Dict[str, BarData]], None]=None):
         ab_symbols = strategy.ab_symbols
         dts: Set[datetime] = set()
         history_data: Dict[Tuple, BarData] = {}
 
-        # Load data from rqdata/gateway/database
+        end = datetime.now()
+        start = end - timedelta(days=days)
+        # Load data from gateway/database
         for ab_symbol in ab_symbols:
-            data = self.load_bar(ab_symbol, days, interval)
+            data = self.load_bar_(ab_symbol, start, end, interval)
 
             for bar in data:
                 dts.add(bar.datetime)
@@ -475,12 +479,12 @@ class LiveStrategyRunner(StrategyRunner):
         bars = {}
 
         for dt in dts:
-            for vt_symbol in ab_symbols:
-                bar = history_data.get((dt, vt_symbol), None)
+            for ab_symbol in ab_symbols:
+                bar = history_data.get((dt, ab_symbol), None)
                 if bar:
-                    bars[vt_symbol] = bar
-                elif vt_symbol in bars:
-                    last_bar = bars[vt_symbol]
+                    bars[ab_symbol] = bar
+                elif ab_symbol in bars:
+                    last_bar = bars[ab_symbol]
 
                     bar = BarData(
                         symbol=last_bar.symbol,
@@ -492,9 +496,16 @@ class LiveStrategyRunner(StrategyRunner):
                         close_price=last_bar.close_price,
                         gateway_name=last_bar.gateway_name
                     )
-                    bars[vt_symbol] = bar
+                    bars[ab_symbol] = bar
 
-            self.call_strategy_func(strategy, strategy.on_bars, bars)
+            if not on_interval or interval == Interval.MINUTE:
+                if on_interval:
+                    self.write_log("call load_bar in 1 min Interval, will automatically call strategy.on_bars, the parameter on_interval will not be used.", strategy, WARNING)
+                self.call_strategy_func(strategy, strategy.on_bars, bars)
+            else:
+                raise NotImplementedError("non-minute-interval load_bars are not supported yet.")
+        
+            
 
     def write_log(self, msg: str, strategy: StrategyTemplate = None, level: LOG_LEVEL = INFO):
         if strategy:

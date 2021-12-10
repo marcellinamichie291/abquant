@@ -202,6 +202,8 @@ class StrategyTemplate(ABC):
 
         if not order.is_active() and order.ab_orderid in self.active_orderids:
             self.active_orderids.remove(order.ab_orderid)
+            self.orders.pop(order.ab_orderid)
+
 
     def buy(self, ab_symbol: str, price: float, volume: float, order_type: OrderType = OrderType.MARKET) -> List[str]:
         """

@@ -11,15 +11,8 @@ if TYPE_CHECKING:
 
 LOG_LEVEL = int
 
-class StrategyRunner:
 
-    def __init__(self):
-        self.monitor = DummyMonitor()
-
-    def set_monitor(self, monitor: Monitor):
-        self.monitor = monitor
-
-
+class StrategyManager:
     @abstractmethod
     def add_strategy(
             self,
@@ -32,7 +25,7 @@ class StrategyRunner:
     @abstractmethod
     def edit_strategy(self, strategy_name: str, setting: dict):
         pass
-    
+
     @abstractmethod
     def get_strategy(self, strategy_name: str):
         pass
@@ -40,11 +33,19 @@ class StrategyRunner:
     @abstractmethod
     def remove_strategy(self, strategy_name: str):
         pass
-    
+
+
+class StrategyRunner:
+
+    def __init__(self):
+        self.monitor = DummyMonitor()
+
+    def set_monitor(self, monitor: Monitor):
+        self.monitor = monitor
+
     @abstractmethod
     def compile_check(self, strategy_class: type):
         pass
-
 
     @abstractmethod
     def load_bars(self,
@@ -59,13 +60,13 @@ class StrategyRunner:
 
     @abstractmethod
     def send_order(self,
-                strategy: "StrategyTemplate",
-                ab_symbol: str,
-                direction: Direction,
-                price: float,
-                volume: float,
-                offset: Offset,
-                order_type: OrderType) -> Iterable[str]:
+                   strategy: "StrategyTemplate",
+                   ab_symbol: str,
+                   direction: Direction,
+                   price: float,
+                   volume: float,
+                   offset: Offset,
+                   order_type: OrderType) -> Iterable[str]:
         pass
 
     @abstractmethod
