@@ -6,11 +6,13 @@ from typing import Tuple, Iterable
 from abquant.trader.msg import BarData
 from abquant.trader.utility import extract_ab_symbol
 from abquant.dataloader.dataloader import Dataset
+from abquant.monitor.logger import Logger
 
 
 class DatasetKline(Dataset):
     def __init__(self, start, end, ab_symbol, interval):
         super().__init__(start, end, ab_symbol, interval)
+        self._logger = Logger("dataset")
         self.symbol, self.exchange = extract_ab_symbol(ab_symbol)
         self.dataframe: DataFrame = None
         self.bars: list = []
@@ -52,7 +54,7 @@ class DatasetKline(Dataset):
 
     def set_data(self, data, dataframe: DataFrame, dlen: int = 0):
         if not isinstance(data, list):
-            print(f'Error: data is not list: {str(data)[:50]}  ...')
+            self._logger.error(f'Error: data is not list: {str(data)[:50]}  ...')
             return
         self.bars = data
         self.dataframe = dataframe
@@ -83,12 +85,12 @@ class DatasetKline(Dataset):
             stat = df_01.groupby('symbol').count()['datetime']
             snum = len(stat)
             if snum != 1:
-                print(stat)
+                self._logger.info(stat)
                 return False, 'more than 1 symbol'
             # --> 检查记录日期
             df_02 = df_01.loc[(df_01.datetime < self.start) | (df_01.datetime > self.end)]
             if not df_02.empty:
-                print(df_02.iloc[0])
+                self._logger.info(df_02.iloc[0])
                 return False, 'datetime out of range'
             # --> 检查数据依赖
             r1 = random.uniform(0, 1)
@@ -102,10 +104,10 @@ class DatasetKline(Dataset):
                 if abs(df_i['close_price'] - df_i1['open_price']) > gap:
                     gap = abs(df_i['close_price'] - df_i1['open_price'])
                 # if abs(df_i['close_price'] - df_i1['open_price']) > df_i['close_price'] * 0.001:
-                #     print(df_i)
-                #     print(df_i1)
+                #     self._logger.info(df_i)
+                #     self._logger.info(df_i1)
                 #     return False, f'kline lack at: {df_i["datetime"]}'
-            print(f'dataloader check: max gap between minutes for {self.ab_symbol}: {gap}')
+            self._logger.debug(f'dataloader check: max gap between minutes for {self.ab_symbol}: {gap}')
         except Exception as e:
             return False, 'wrong'
         return True, 'pass'

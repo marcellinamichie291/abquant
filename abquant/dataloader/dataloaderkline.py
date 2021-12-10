@@ -14,11 +14,13 @@ from abquant.dataloader.remoteloader import RemoteLoader
 from abquant.dataloader.utility import regular_time, regular_df
 from abquant.trader.utility import generate_ab_symbol
 from abquant.trader.common import Exchange
+from abquant.monitor.logger import Logger
 
 
 class DataLoaderKline(DataLoader):
     def __init__(self, config: Dict):
         super().__init__(config)
+        self._logger = Logger("dataloader")
         self.exchange: Exchange = None
         self.symbol = None
         self.trade_type = None
@@ -31,6 +33,7 @@ class DataLoaderKline(DataLoader):
         self.cache_dir = home_dir + '/.abquant/data'
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
+            self._logger.info(f'Data loader cache dir: {self.cache_dir}')
         self.set_config(config)
 
     """
@@ -66,7 +69,7 @@ class DataLoaderKline(DataLoader):
             else:
                 self.data_location = DataLocation.REMOTE
         except Exception as e:
-            print(e)
+            self._logger.error(e)
 
     """
         load csv data, local file or remote aws s3 files
@@ -83,7 +86,7 @@ class DataLoaderKline(DataLoader):
                        f"-{str(self.start_time)[:19].replace(' ','-')}-{str(self.end_time)[:19].replace(' ','-')}.csv"
             if Path(self.cache_dir + '/' + cache_file).is_file():
                 # load from cache
-                print(f"Load from cache: {self.cache_dir + '/' + cache_file}")
+                self._logger.info(f"Load from cache: {self.cache_dir + '/' + cache_file}")
                 df_03 = pd.read_csv(self.cache_dir + '/' + cache_file, index_col=0)
                 absymbol = generate_ab_symbol(self.symbol, self.exchange)
                 dataset: DatasetKline = DatasetKline(self.start_time, self.end_time, absymbol, self.interval)
@@ -96,17 +99,17 @@ class DataLoaderKline(DataLoader):
             # path = Path(self.data_file)
             if self.data_file is not None and os.path.isfile(self.data_file):
                 df_01 = pd.read_csv(self.data_file)
-                print(df_01.head(1))
+                self._logger.debug(df_01.head(1))
 
         elif self.data_location == DataLocation.REMOTE:
             loader = RemoteLoader(self.exchange, self.symbol, self.trade_type, self.interval,
                                   self.start_time, self.end_time)
             df_01 = loader.load_remote()
             df_02 = df_01
-            print(df_01.head(1))
+            self._logger.debug(df_01.head(1))
 
         if df_01 is None:
-            print('No data loaded, exit')
+            self._logger.info('No data loaded, exit')
             return None
 
         if df_02 is None:
@@ -128,7 +131,7 @@ class DataLoaderKline(DataLoader):
         # check
         result, msg = dataset.check()
         if not result:
-            print(f"Error: data check: {msg}, cannot load")
+            self._logger.info(f"Error: data check: {msg}, cannot load")
             return None
 
         # cache
@@ -139,7 +142,7 @@ class DataLoaderKline(DataLoader):
                          f"-{str(self.start_time)[:19].replace(' ', '-')}-{str(self.end_time)[:19].replace(' ', '-')}.csv"
             df_02.to_csv(self.cache_dir + '/' + cache_file, index=False)
 
-        print(f"Loaded k-line bars {rn}")
+        self._logger.info(f"Loaded k-line bars {rn}")
         return dataset
 
 
