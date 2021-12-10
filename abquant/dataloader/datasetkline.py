@@ -87,7 +87,7 @@ class DatasetKline(Dataset):
             rn, cn = df_01.shape
             if self.interval == Interval.MINUTE or self.interval == '1m':
                 minutes = int((self.end - self.start).total_seconds()/60)
-                self._logger.info(f'Should load items {minutes}, real load items {rn}')
+                self._logger.info(f'Time interval minutes {minutes}, real loaded items {rn}')
             # --> 检查币种
             stat = df_01.groupby('symbol').count()['datetime']
             snum = len(stat)

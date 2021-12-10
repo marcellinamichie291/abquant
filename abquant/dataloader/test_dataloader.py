@@ -35,7 +35,7 @@ def main():
     dt_setting = {
         "exchange": args.exchange,
         "symbol": args.symbol,
-        "trade_type": "ubc",
+        "trade_type": "bbc",
         "start_time": "2021-10-1 ",
         "end_time": "2021-12-14 00:00:00",
         "location": "local",
