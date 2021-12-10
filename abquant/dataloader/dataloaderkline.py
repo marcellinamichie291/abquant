@@ -19,8 +19,8 @@ from abquant.monitor.logger import Logger
 
 class DataLoaderKline(DataLoader):
     def __init__(self, config: Dict):
-        super().__init__(config)
         self._logger = Logger("dataloader")
+        super().__init__(config)
         self.exchange: Exchange = None
         self.symbol = None
         self.trade_type = None
@@ -42,34 +42,40 @@ class DataLoaderKline(DataLoader):
     def set_config(self, setting):
         super().set_config(setting)
         try:
-            try:
-                self.exchange = Exchange(setting.get("exchange"))
-            except ValueError:
-                raise Exception(f'Dataloader config: exchange incorrect: {setting.get("exchange")}')
-            self.symbol = setting.get("symbol")
-            self.trade_type = setting.get("trade_type")
-            self.interval = setting.get("interval")
-            if self.interval is None or self.interval == Interval.MINUTE:
-                self.interval = "1m"
-            elif self.interval == "1m":
-                pass
-            else:
-                raise Exception(f'Dataloader config: interval incorrect: {self.interval}')
-            stime = setting.get("start_time")
-            etime = setting.get("end_time")
-            self.start_time = regular_time(stime)
-            self.end_time = regular_time(etime)
-            if stime is not None and self.start_time is None:
-                raise Exception(f'Dataloader config: start time misformat: {stime}')
-            if etime is not None and self.start_time is None:
-                raise Exception(f'Dataloader config: end time misformat: {etime}')
-            self.data_file = setting.get("data_file")
-            if self.data_file is not None and os.path.isfile(self.data_file):
-                self.data_location = DataLocation.LOCAL
-            else:
-                self.data_location = DataLocation.REMOTE
-        except Exception as e:
-            self._logger.error(e)
+            exchange = setting.get("exchange")
+            if exchange is None:
+                raise Exception(f'Dataloader config: exchange is none')
+            self.exchange = Exchange(exchange)
+        except ValueError:
+            raise Exception(f'Dataloader config: exchange incorrect')
+        self.symbol = setting.get("symbol")
+        if self.symbol is None:
+            raise Exception(f'Dataloader config: symbol is none')
+        self.trade_type = setting.get("trade_type")
+        if self.trade_type is None:
+            raise Exception(f'Dataloader config: trade_type is none')
+        self.interval = setting.get("interval")
+        if self.interval is None or self.interval == Interval.MINUTE:
+            self.interval = "1m"
+        elif self.interval == "1m":
+            pass
+        else:
+            raise Exception(f'Dataloader config: interval incorrect: {self.interval}')
+        stime = setting.get("start_time")
+        etime = setting.get("end_time")
+        if stime is None or etime is None:
+            raise Exception(f'Dataloader config: neither start nor end time could be none')
+        self.start_time = regular_time(stime)
+        self.end_time = regular_time(etime)
+        if stime is not None and self.start_time is None:
+            raise Exception(f'Dataloader config: start time misformat: {stime}')
+        if etime is not None and self.start_time is None:
+            raise Exception(f'Dataloader config: end time misformat: {etime}')
+        self.data_file = setting.get("data_file")
+        if self.data_file is not None and os.path.isfile(self.data_file):
+            self.data_location = DataLocation.LOCAL
+        else:
+            self.data_location = DataLocation.REMOTE
 
     """
         load csv data, local file or remote aws s3 files

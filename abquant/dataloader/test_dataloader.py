@@ -9,7 +9,7 @@ from collections import Iterator,Iterable,Generator
 # 命令行参数的解析代码，交易员可以不用懂。
 def parse():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-x', '--exchange', type=str, required=True,
+    parser.add_argument('-x', '--exchange', type=str, required=False,
                         help='Exchange that backtest data is from')
     parser.add_argument('-y', '--symbol', type=str, required=False,
                         help='Coin pair symbol name, no slash, eg. BTCUSDT')
