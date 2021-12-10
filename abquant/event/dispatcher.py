@@ -3,7 +3,12 @@ from collections import defaultdict
 from queue import Empty, Queue
 from threading import Thread
 import time
+import sys
+import traceback
 from typing import Any, Callable, List
+from logging import ERROR
+
+from abquant.trader.object import LogData
 
 from .event import EventType
 from abquant.trader.exception import CongestionException
@@ -18,6 +23,7 @@ class Event:
 
 
 HandlerType = Callable[[Event], None]
+
 
 
 class EventDispatcher:
@@ -45,12 +51,24 @@ class EventDispatcher:
             except Empty:
                 pass
 
+    def exception_wrap(self, func):
+        def wrapper(event):
+            try:
+                func(event)
+            except Exception as e:
+                tb = traceback.format_exc()
+                exception_detail = "When dealing with event {}, exception occurred.\n{}".format(event, tb)
+                sys.stderr.write(exception_detail)
+                self.put(Event(type=EventType.EVENT_LOG, data=LogData(msg=exception_detail, level=ERROR, gateway_name="EventDispatcher")))
+        return wrapper
+
+
     def _process(self, event: Event) -> None:
         if event.type in self._handlers:
-            [handler(event) for handler in self._handlers[event.type]]
+            [self.exception_wrap(handler)(event) for handler in self._handlers[event.type]]
 
         if self._general_handlers:
-            [handler(event) for handler in self._general_handlers]
+            [self.exception_wrap(handler)(event) for handler in self._general_handlers]
 
     def _run_timer(self) -> None:
         while self._active:

@@ -1,5 +1,10 @@
 
 
+## 0.6.3
+1. 处理event handler中有可能异常的问题。
+1. KlineDataLoader 部分实现。
+
+
 ## 0.6.2
 1. 处理无行情产品barData聚合问题。
 
