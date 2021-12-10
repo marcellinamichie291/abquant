@@ -66,7 +66,7 @@ class DataLoaderKline(DataLoader):
             self._logger.info(f'Do you mean perpetual contract? Change your symbol {symbol} to {self.symbol}')
         self.interval = setting.get("interval")
         if self.interval is None:
-            raise Exception(f'Dataloader config: interval is none')
+            self.interval = "1m"
         self.interval = self.interval.strip("'\" \n\t")
         if self.interval == Interval.MINUTE:
             self.interval = "1m"
