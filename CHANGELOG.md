@@ -1,5 +1,10 @@
 
 
+## 0.7.0
+1. 回测部分dataloader基本完成，但接口尚未完成，支持本地csv和远程aws s3
+1. 更新monitor的logger
+1. 增加lark notifer模块
+
 ## 0.6.3
 1. 处理event handler中有可能异常的问题。
 1. KlineDataLoader 部分实现。

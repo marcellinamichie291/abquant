@@ -11,6 +11,7 @@ import uuid
 from abquant.trader.msg import OrderData, TradeData
 from abquant.trader.object import LogData
 from abquant.trader.utility import extract_ab_symbol, object_as_dict
+from .notify_lark import notify_lark, LarkMessage, TypeEnum
 from .transmitter import Transmitter
 from .logger import Logger
 
@@ -30,7 +31,6 @@ class Monitor(Thread):
     def __init__(self, setting: dict):
         Thread.__init__(self)
         self._logger = Logger("monitor")
-        self._logger.info('get logger2 222222222222222222222222222222')
         self.setting = setting
         self.strategy = setting.get("strategy", None)
         if self.strategy is None:
@@ -127,7 +127,7 @@ class Monitor(Thread):
             current_info['payload']['value'] = value
             self.send(current_info)
 
-    def send_log(self, run_id, log: LogData, log_type: str='custom'):
+    def send_log(self, run_id, log: LogData, log_type: str = 'custom'):
         info = self.default_info(run_id, "log")
         info['gateway_name'] = log.gateway_name
         payload = object_as_dict(log)
@@ -145,7 +145,7 @@ class Monitor(Thread):
         info['payload'] = payload
         self.send(info)
 
-    def send_notify_lark(self, run_id, msg: str):
+    def send_notify_lark(self, run_id, msg: str, title: str = '', content: list = None):
         if self.lark_url is None:
             return
         info = self.default_info(run_id, "lark")
@@ -153,10 +153,13 @@ class Monitor(Thread):
                    "message": msg}
         info['payload'] = payload
         self.send(info)
+        if content is None or type(content) is not list or type(content[0]) is not list:
+            notify_lark.put(LarkMessage(self.strategy, self.lark_url, TypeEnum.TEXT, text=msg))
+        else:
+            notify_lark.put(LarkMessage(self.strategy, self.lark_url, TypeEnum.POST, title=title, content=content))
 
     def consumer(self):
         # global _logger
-        self._logger.info('consuuuuuuuuuuuuuuuuuuuuuuuuumer')
         # self.queue.put(1.5)
         # self.queue.put('2')
         # self.queue.put("{\"c\":3}")

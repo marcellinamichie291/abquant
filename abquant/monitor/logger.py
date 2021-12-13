@@ -2,7 +2,7 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 import json
-import datetime
+from datetime import datetime
 
 LOG_LEVEL = logging.INFO
 FORMAT = "%(message)s"
@@ -13,7 +13,7 @@ FORMAT = "%(message)s"
 
 class Logger:
     def __init__(self, name="monitor"):
-        print("Logger init")
+        # print(f"Logger {name} init")
         self._logger = logging.getLogger(name)
         self._logger.setLevel(LOG_LEVEL)
         self.config_logger()
@@ -62,22 +62,22 @@ class Logger:
         logger2.addHandler(self.get_handler('file', log_path))
 
     def debug(self, msg, *args, **kwargs):
-        self._logger.debug(msg, args, **kwargs)
+        self._logger.debug(msg, *args, **kwargs)
 
     def log(self, msg, *args, **kwargs):
-        self.debug(msg, args, **kwargs)
+        self.debug(msg, *args, **kwargs)
 
     def print(self, msg, *args, **kwargs):
-        self.debug(msg, args, **kwargs)
+        self.debug(msg, *args, **kwargs)
 
     def info(self, msg, *args, **kwargs):
-        self._logger.info(msg, args, **kwargs)
+        self._logger.info(msg, *args, **kwargs)
 
     def warn(self, msg, *args, **kwargs):
-        self._logger.warning(msg, args, **kwargs)
+        self._logger.warning(msg, *args, **kwargs)
 
     def error(self, msg, *args, **kwargs):
-        self._logger.error(msg, args, **kwargs)
+        self._logger.error(msg, *args, **kwargs)
 
     def print_log_format(self, data):
         logger2 = self._logger
@@ -95,7 +95,10 @@ class Logger:
                 if strategy_name is None and event_type is None and payload is None:
                     logger2.info(json.dumps(data))
                     return
-                date_array = datetime.datetime.fromtimestamp(event_time)
+                if event_time is not None:
+                    date_array = datetime.fromtimestamp(event_time)
+                else:
+                    date_array = datetime.today()
                 event_time = date_array.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
                 formatStr = f'{event_time} '
                 if strategy_name is not None and strategy_name != '':

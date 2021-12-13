@@ -22,7 +22,7 @@ class Dataset(ABC):
         self.interval: Interval = interval
     
     @abstractmethod
-    def __iter__(self):
+    def __iter__(self) -> Iterable[BarData]:
         """
          返回可迭代对象。
          for bar in dataset:
@@ -37,7 +37,10 @@ class Dataset(ABC):
                  break
         """
         pass
-    
+
+    @abstractmethod
+    def __next__(self) -> BarData:
+        pass
 
     @abstractmethod
     def __len__(self) -> int:
@@ -59,11 +62,6 @@ class Dataset(ABC):
 
         pass
 
-    @abstractmethod
-    def check(self) -> bool:
-        pass
-
-
 class DataLoader(ABC):
 
     _config = None
@@ -74,7 +72,7 @@ class DataLoader(ABC):
         super().__init__(config)
         """
         self.history_data: Dict[str, DataFrame] = {}
-        self.set_config(config)
+        # self.set_config(config)
     
     @abstractmethod
     def set_config(self, setting):
@@ -84,7 +82,7 @@ class DataLoader(ABC):
         self._config = setting
 
     @abstractmethod
-    def load_data(self) -> Dataset:
+    def load_data(self, ab_symbol: str, start: datetime, end: datetime, interval: Interval=Interval.MINUTE) -> Dataset:
         """
         1. 子类须实现该方法，
         2. assert, interval是分钟级的
