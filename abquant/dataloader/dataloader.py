@@ -39,7 +39,7 @@ class Dataset(ABC):
         pass
 
     @abstractmethod
-    def __next__(self):
+    def __next__(self) -> BarData:
         pass
 
     @abstractmethod
@@ -62,11 +62,6 @@ class Dataset(ABC):
 
         pass
 
-    @abstractmethod
-    def check(self) -> bool:
-        pass
-
-
 class DataLoader(ABC):
 
     _config = None
@@ -87,7 +82,7 @@ class DataLoader(ABC):
         self._config = setting
 
     @abstractmethod
-    def load_data(self) -> Dataset:
+    def load_data(self, ab_symbol: str, start: datetime, end: datetime, interval: Interval=Interval.MINUTE) -> Dataset:
         """
         1. 子类须实现该方法，
         2. assert, interval是分钟级的
