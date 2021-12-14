@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+from datetime import timedelta
 import numpy as np
+from copy import deepcopy
 from typing import Callable, Dict, Optional, Type, Union
 
 from abquant.trader.common import Interval
@@ -133,6 +135,7 @@ class BarGenerator:
             self.bar.datetime = self.bar.datetime.replace(
                 second=0, microsecond=0
             )
+            self.last_bar = deepcopy(self.bar)
             self.on_bar(self.bar)
 
             new_minute = True
@@ -176,9 +179,19 @@ class BarGenerator:
         """
         bar = self.bar
 
-        if self.bar:
+        if self.bar is None and self.last_bar:
+
+            bar = self.last_bar
+            bar.datetime += timedelta(minutes=1)
+            bar.high_price = bar.close_price
+            bar.low_price = bar.close_price
+            bar.open_price = bar.close_price
+            bar.volume = 0
+
+        if bar:
             bar.datetime = bar.datetime.replace(second=0, microsecond=0)
             self.on_bar(bar)
+            self.last_bar = bar
         self.bar = None
         # TODO None may not a proper choice. but every time call generate, self.bar.datetime.minut += 1 look ambigious.
         return bar
