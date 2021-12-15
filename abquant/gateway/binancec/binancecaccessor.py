@@ -585,6 +585,7 @@ class BinanceCAccessor(RestfulAccessor):
             self.minite_orders_used += order
             self.request_used += request
 
+            self.gateway.write_log("threadid: {}, check rate limit READY: request used: {}, seconds_userd: {}, minite_used: {}".format(threading.get_ident(), self.request_used, self.seconds_orders_used, self.minite_orders_used), level=DEBUG)
             if self.seconds_orders_used + session_number > self.seconds_orders_limit:
                 self.gateway.write_log("threadid: {}, check rate limit: request used: {}, seconds_userd: {}, minite_used: {}".format(threading.get_ident(), self.request_used, self.seconds_orders_used, self.minite_orders_used), level=DEBUG)
                 msg = f"下单过于频繁，已被Binance限制, 10s内尝试下单{self.seconds_orders_used}, 可能超过{self.seconds_orders_limit}次每10s的限制， 该次订单被拦截。当前servertime: {self.server_datetime}"
@@ -598,13 +599,14 @@ class BinanceCAccessor(RestfulAccessor):
                 msg = f"请求过于频繁，已被Binance限制, 分钟内试图请求{self.request_used}，可能超过{self.request_limit}次每分钟的限制。该次请求被拦截。"
                 self.gateway.write_log(msg, level=WARNING)
                 return False
+
+            self.gateway.write_log("threadid: {}, check rate limit PASSED: request used: {}, seconds_userd: {}, minite_used: {}".format(threading.get_ident(), self.request_used, self.seconds_orders_used, self.minite_orders_used), level=DEBUG)
         return True
 
     def update_rate_limit(self, request: Request):
         if request.response is None:
             return
         headers = request.response.headers
-        self.gateway.write_log("threadid: {}, HTTP method: {} update_ rate limit: request used: {}, seconds_userd: {}, minite_used: {}".format(threading.get_ident(), request.method, self.request_used, self.seconds_orders_used, self.minite_orders_used), level=DEBUG)
 
         with self.rate_limit_lock:
             self.request_used = int(headers.get("X-MBX-USED-WEIGHT-1M", 0))
@@ -614,6 +616,7 @@ class BinanceCAccessor(RestfulAccessor):
             seconds_orders_used = headers.get("X-MBX-ORDER-COUNT-10S", None)
             if seconds_orders_used is not None:
                 self.seconds_orders_used = int(seconds_orders_used)
+            self.gateway.write_log("threadid: {}, HTTP method: {} update_ rate limit: request used: {}, seconds_userd: {}, minite_used: {}".format(threading.get_ident(), request.method, self.request_used, self.seconds_orders_used, self.minite_orders_used), level=DEBUG)
 
     def query_history(self, req: HistoryRequest) -> Iterable[BarData]:
         """"""
