@@ -1,5 +1,6 @@
-from logging import ERROR, WARNING
+from logging import DEBUG, ERROR, WARNING
 import sys
+import threading
 from typing import Iterable, List, Optional
 from threading import Lock
 import urllib.parse
@@ -566,12 +567,16 @@ class BinanceCAccessor(RestfulAccessor):
         # conservative time trick.
         server_datetime = datetime.fromtimestamp(
             time.time() - self.time_offset / 1000 - 3)
-        if server_datetime.second // 10 != self.server_datetime.second // 10:
-            self.seconds_orders_used = 0
-        if server_datetime.minute != self.server_datetime.minute:
-            self.minite_orders_used = 0
-            self.request_used = 0
-        self.server_datetime = server_datetime
+        self.gateway.write_log("threadid {}: begin to reset ratelimt: request used: {}, seconds_userd: {}, minite_used: {}".format(threading.get_ident(), self.request_used, self.seconds_orders_used, self.minite_orders_used), level=DEBUG)
+        with self.rate_limit_lock:
+            if server_datetime.second // 10 != self.server_datetime.second // 10:
+                self.gateway.write_log("reset second limit", level=DEBUG)
+                self.seconds_orders_used = 0
+            if server_datetime.minute != self.server_datetime.minute:
+                self.minite_orders_used = 0
+                self.request_used = 0
+            self.server_datetime = server_datetime
+        self.gateway.write_log("threadid: {}, after reset ratelimt: request used: {}, seconds_userd: {}, minite_used: {};;; server_datetime: {}".format(threading.get_ident(), self.request_used, self.seconds_orders_used, self.minite_orders_used, server_datetime), level=DEBUG)
 
     def check_rate_limit(self, request: int = 1, order: int = 0) -> bool:
         with self.rate_limit_lock:
@@ -581,6 +586,7 @@ class BinanceCAccessor(RestfulAccessor):
 
         session_number = self.get_session_number()
         if self.seconds_orders_used + session_number > self.seconds_orders_limit:
+            self.gateway.write_log("threadid: {}, check rate limit: request used: {}, seconds_userd: {}, minite_used: {}".format(threading.get_ident(), self.request_used, self.seconds_orders_used, self.minite_orders_used), level=DEBUG)
             msg = f"下单过于频繁，已被Binance限制, 10s内尝试下单{self.seconds_orders_used}, 可能超过{self.seconds_orders_limit}次每10s的限制， 该次订单被拦截。当前servertime: {self.server_datetime}"
             self.gateway.write_log(msg, level=WARNING)
             return False
@@ -598,6 +604,7 @@ class BinanceCAccessor(RestfulAccessor):
         if request.response is None:
             return
         headers = request.response.headers
+        self.gateway.write_log("threadid: {}, HTTP method: {} update_ rate limit: request used: {}, seconds_userd: {}, minite_used: {}".format(threading.get_ident(), request.method, self.request_used, self.seconds_orders_used, self.minite_orders_used), level=DEBUG)
 
         with self.rate_limit_lock:
             self.request_used = int(headers.get("X-MBX-USED-WEIGHT-1M", 0))
