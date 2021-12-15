@@ -87,7 +87,7 @@ class DataLoader(ABC):
         self._config = setting
 
     @abstractmethod
-    def load_data(self) -> Dataset:
+    def load_data(self, ab_symbol: str, start: datetime, end: datetime, interval: Interval=Interval.MINUTE) -> Dataset:
         """
         1. 子类须实现该方法，
         2. assert, interval是分钟级的

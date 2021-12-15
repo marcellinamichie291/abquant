@@ -12,13 +12,13 @@ from abquant.dataloader.dataloader import DataLoader, Dataset, DataLocation
 from abquant.dataloader.datasetkline import DatasetKline
 from abquant.dataloader.remoteloader import RemoteLoader
 from abquant.dataloader.utility import regular_time, regular_df
-from abquant.trader.utility import generate_ab_symbol
+from abquant.trader.utility import generate_ab_symbol, extract_ab_symbol
 from abquant.trader.common import Exchange
 from abquant.monitor.logger import Logger
 
 
 class DataLoaderKline(DataLoader):
-    def __init__(self, config: Dict):
+    def __init__(self, config: Dict = None):
         self._logger = Logger("dataloader")
         super().__init__(config)
         self.exchange: Exchange = None
@@ -41,52 +41,58 @@ class DataLoaderKline(DataLoader):
     """
     def set_config(self, setting):
         super().set_config(setting)
-        try:
-            exchange = setting.get("exchange")
-            if exchange is None:
-                raise Exception(f'Dataloader config: exchange is none')
-            exchange = exchange.strip("'\" \n\t")
-            self.exchange = Exchange(exchange.upper())
-        except ValueError:
-            raise Exception(f'Dataloader config: exchange incorrect')
-        self.symbol = setting.get("symbol")
-        if self.symbol is None:
-            raise Exception(f'Dataloader config: symbol is none')
-        self.symbol = self.symbol.strip("'\" \n\t").upper()
-        self.trade_type = setting.get("trade_type")
-        if self.trade_type is None:
-            raise Exception(f'Dataloader config: trade_type is none')
-        self.trade_type = self.trade_type.strip("'\" \n\t").lower()
-        if self.trade_type == 'bbc' and '_' not in self.trade_type:
-            symbol = self.symbol
-            if self.symbol[-4:] == 'USDT':
-                self.symbol = self.symbol[:-4] + 'USD_PERP'
-            elif self.symbol[-4:] == 'USD':
-                self.symbol = self.symbol + '_PERP'
-            self._logger.info(f'Do you mean perpetual contract? Change your symbol {symbol} to {self.symbol}')
-        self.interval = setting.get("interval")
-        if self.interval is None:
-            self.interval = "1m"
-        self.interval = self.interval.strip("'\" \n\t")
-        if self.interval == Interval.MINUTE:
-            self.interval = "1m"
-        elif self.interval == "1m":
-            pass
-        else:
-            raise Exception(f'Dataloader config: interval incorrect: {self.interval}')
-        stime = setting.get("start_time")
-        etime = setting.get("end_time")
-        if stime is None or etime is None:
-            raise Exception(f'Dataloader config: neither start nor end time could be none')
-        stime = stime.strip("'\" \n\t")
-        etime = etime.strip("'\" \n\t")
-        self.start_time = regular_time(stime)
-        self.end_time = regular_time(etime)
-        if stime is not None and self.start_time is None:
-            raise Exception(f'Dataloader config: start time misformat: {stime}')
-        if etime is not None and self.start_time is None:
-            raise Exception(f'Dataloader config: end time misformat: {etime}')
         self.data_file = setting.get("data_file")
+        if self.data_file is not None and os.path.isfile(self.data_file):
+            self.data_location = DataLocation.LOCAL
+        else:
+            self.data_location = DataLocation.REMOTE
+
+    def _clean_loader(self):
+        self.exchange: Exchange = None
+        self.symbol = None
+        self.trade_type = None
+        self.interval = None
+        self.start_time = None
+        self.end_time = None
+
+    def _config_loader(self, ab_symbol: str, start: datetime, end: datetime, interval: Interval=Interval.MINUTE):
+        if ab_symbol is None:
+            raise Exception(f'Dataloader: ab_symbol is none')
+        symbol, exchange = extract_ab_symbol(ab_symbol)
+        if exchange is None:
+            raise Exception(f'Dataloader: exchange is none')
+        self.exchange = exchange
+        self.symbol = symbol
+        if self.symbol is None:
+            raise Exception(f'Dataloader: symbol is none')
+        self.symbol = self.symbol.strip("'\" \n\t")
+        if self.exchange == Exchange.BINANCE:
+            if self.symbol.islower():
+                self.trade_type = 'spot'
+                self.symbol = self.symbol.upper()
+            elif 'USDT' in self.symbol or 'BUSD' in self.symbol:
+                self.trade_type == 'ubc'
+            elif 'USD_' in self.symbol:
+                self.trade_type == 'bbc'
+            else:
+                raise Exception(f'Dataloader: ambiguous symbol for sub trading account type')
+        if interval is None:
+            self.interval = "1m"
+        else:
+            if interval == Interval.MINUTE:
+                self.interval = "1m"
+            else:
+                raise Exception(f'Dataloader config: interval incorrect: {interval}')
+        if start is None or end is None:
+            raise Exception(f'Dataloader config: neither start nor end time could be none')
+        start = start.strip("'\" \n\t")
+        end = end.strip("'\" \n\t")
+        self.start_time = regular_time(start)
+        self.end_time = regular_time(end)
+        if start is not None and self.start_time is None:
+            raise Exception(f'Dataloader config: start time misformat: {start}')
+        if end is not None and self.start_time is None:
+            raise Exception(f'Dataloader config: end time misformat: {end}')
         if self.data_file is not None and os.path.isfile(self.data_file):
             self.data_location = DataLocation.LOCAL
         else:
@@ -95,8 +101,9 @@ class DataLoaderKline(DataLoader):
     """
         load csv data, local file or remote aws s3 files
     """
-    def load_data(self) -> Dataset:
-        assert self.interval == Interval.MINUTE or self.interval == "1m"
+    def load_data(self, ab_symbol: str, start: datetime, end: datetime, interval: Interval=Interval.MINUTE) -> Dataset:
+        self._clean_loader()
+        self._config_loader(ab_symbol, start, end, interval=interval)
 
         cache_file = ''
 
