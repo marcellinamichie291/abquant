@@ -41,6 +41,10 @@ class DataLoaderKline(DataLoader):
     """
     def set_config(self, setting):
         super().set_config(setting)
+        """
+            data_file has highest priority for data loader, if local data file is set, 
+            dataloader will always load the specified data file firstly in LOCAL mode.
+        """
         self.data_file = setting.get("data_file")
         if self.data_file is not None and os.path.isfile(self.data_file):
             self.data_location = DataLocation.LOCAL
@@ -130,6 +134,9 @@ class DataLoaderKline(DataLoader):
             if self.data_file is not None and os.path.isfile(self.data_file):
                 df_01 = pd.read_csv(self.data_file)
                 self._logger.debug(df_01.head(1))
+                df_02 = regular_df(df_01, self.exchange, self.symbol, self.interval)
+            else:
+                return None
 
         elif self.data_location == DataLocation.REMOTE:
             loader = RemoteLoader(self.exchange, self.symbol, self.trade_type, self.interval,
@@ -142,10 +149,9 @@ class DataLoaderKline(DataLoader):
             self._logger.info('No data loaded, exit')
             return None
 
-        if df_02 is None:
-            df_02 = regular_df(df_01, self.exchange, self.symbol, self.interval)
-
         rn, cn = df_02.shape
+        if self.exchange is None:
+            self.exchange = Exchange(df_02.iloc[0]['exchange'].upper())
         if self.symbol is None:
             self.symbol = df_02.iloc[0]['symbol']
         if self.start_time is None:
@@ -159,10 +165,11 @@ class DataLoaderKline(DataLoader):
         dataset.set_data(df_02.to_dict(orient="records"), df_02, rn)
 
         # check
-        result, msg = dataset.check()
-        if not result:
-            self._logger.info(f"Error: data check: {msg}, cannot load")
-            return None
+        if self.data_location == DataLocation.REMOTE:
+            result = dataset.check()
+            if not result:
+                self._logger.info(f"Error: data check not pass, cannot load")
+                return None
 
         # cache
         try:

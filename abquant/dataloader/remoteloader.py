@@ -115,7 +115,7 @@ class RemoteLoader:
                     df_all = df1
                 else:
                     df_all = df_all.append(df1)    # todo: 去重
-            self._logger.info(f'Searching {days} days, but {len(short_days)} days not available: '
+            self._logger.info(f'Searching {days} days, {len(short_days)} days not available: '
                               f'{short_days[:10]} {"..." if len(short_days) > 10 else ""}')
             return df_all
         except Exception as e:
