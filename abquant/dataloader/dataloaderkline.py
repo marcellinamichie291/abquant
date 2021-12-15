@@ -73,9 +73,9 @@ class DataLoaderKline(DataLoader):
                 self.trade_type = 'spot'
                 self.symbol = self.symbol.upper()
             elif 'USDT' in self.symbol or 'BUSD' in self.symbol:
-                self.trade_type == 'ubc'
+                self.trade_type = 'ubc'
             elif 'USD_' in self.symbol:
-                self.trade_type == 'bbc'
+                self.trade_type = 'bbc'
             else:
                 raise Exception(f'Dataloader: ambiguous symbol for sub trading account type')
         if interval is None:
@@ -131,7 +131,6 @@ class DataLoaderKline(DataLoader):
             # path = Path(self.data_file)
             if self.data_file is not None and os.path.isfile(self.data_file):
                 df_01 = pd.read_csv(self.data_file)
-                self._logger.debug(df_01.head(1))
                 df_02 = regular_df(df_01, self.exchange, self.symbol, self.interval)
             else:
                 return None
@@ -141,11 +140,11 @@ class DataLoaderKline(DataLoader):
                                   self.start_time, self.end_time)
             df_01 = loader.load_remote()
             df_02 = df_01
-            self._logger.debug(df_01.head(1))
 
         if df_01 is None:
             self._logger.info('No data loaded, exit')
             return None
+        self._logger.debug(df_01.head(1))
 
         rn, cn = df_02.shape
         if self.exchange is None:
