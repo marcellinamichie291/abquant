@@ -3,6 +3,7 @@ import argparse
 
 from abquant.dataloader.dataloaderkline import DataLoaderKline
 from abquant.dataloader.datasetkline import DatasetKline
+from datetime import datetime
 
 
 # 命令行参数的解析代码
@@ -22,7 +23,7 @@ def main():
     }
 
     dataloader: DataLoaderKline = DataLoaderKline(dt_setting)
-    dataset: DatasetKline = dataloader.load_data('ETHUSDT.BINANCE', '2021-11-23', '2021-12-1')
+    dataset: DatasetKline = dataloader.load_data('ETHUSDT.BINANCE', datetime(2021, 11, 24), datetime(2021, 12, 13))
     if dataset is None:
         return
     dataset.dataframe.info(memory_usage='deep')

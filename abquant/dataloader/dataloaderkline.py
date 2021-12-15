@@ -23,8 +23,8 @@ class DataLoaderKline(DataLoader):
         self.symbol = None
         self.trade_type = None
         self.interval = None
-        self.start_time = None
-        self.end_time = None
+        self.start_time: datetime = None
+        self.end_time: datetime = None
         self.data_file = None
         self.data_location = None
         home_dir = os.environ['HOME']
@@ -86,15 +86,11 @@ class DataLoaderKline(DataLoader):
             else:
                 raise Exception(f'Dataloader config: interval incorrect: {interval}')
         if start is None or end is None:
-            raise Exception(f'Dataloader config: neither start nor end time could be none')
-        start = start.strip("'\" \n\t")
-        end = end.strip("'\" \n\t")
-        self.start_time = regular_time(start)
-        self.end_time = regular_time(end)
-        if start is not None and self.start_time is None:
-            raise Exception(f'Dataloader config: start time misformat: {start}')
-        if end is not None and self.start_time is None:
-            raise Exception(f'Dataloader config: end time misformat: {end}')
+            raise Exception(f'Dataloader config: neither start nor end time could be empty')
+        # self.start_time = regular_time(start)
+        # self.end_time = regular_time(end)
+        self.start_time = start
+        self.end_time = end
         if self.data_file is not None and os.path.isfile(self.data_file):
             self.data_location = DataLocation.LOCAL
         else:
@@ -152,9 +148,9 @@ class DataLoaderKline(DataLoader):
         if self.symbol is None:
             self.symbol = df_02.iloc[0]['symbol']
         if self.start_time is None:
-            self.start_time = df_02.iloc[0]['datetime']
+            self.start_time = datetime.strptime(str(df_02.iloc[0]['datetime']), '%Y-%m-%d %H:%M:%S')
         if self.end_time is None:
-            self.end_time = df_02.iloc[rn - 1]['datetime']
+            self.end_time = datetime.strptime(str(df_02.iloc[rn - 1]['datetime']), '%Y-%m-%d %H:%M:%S')
 
         absymbol = generate_ab_symbol(self.symbol, self.exchange)
         dataset: DatasetKline = DatasetKline(self.start_time, self.end_time, absymbol, self.interval)
@@ -177,7 +173,7 @@ class DataLoaderKline(DataLoader):
                              f"-{str(self.start_time)[:19].replace(' ', '-')}-{str(self.end_time)[:19].replace(' ', '-')}.csv"
                 df_02.to_csv(self.cache_dir + '/' + cache_file, index=False)
 
-            self._logger.info(f"Loaded k-line bars {rn}")
+            self._logger.info(f"\n{'-'*32}\nLoaded k-line bars {rn}\n{'-'*32}")
         except Exception as e:
             self._logger.error('Error saving cache: ', e)
         return dataset
