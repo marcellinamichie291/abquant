@@ -1,5 +1,6 @@
-from logging import ERROR, WARNING
+from logging import DEBUG, ERROR, WARNING
 import sys
+import threading
 from typing import Iterable, List, Optional
 from threading import Lock
 import urllib.parse
@@ -46,6 +47,7 @@ class BinanceCAccessor(RestfulAccessor):
         self.usdt_base: bool = None
 
         self.server_datetime: datetime = datetime.now()
+        self.rate_limit_lock: Lock = Lock()
         self.request_limit = 2400
         self.minite_orders_limit = 1200
         self.seconds_orders_limit = 300
@@ -405,6 +407,7 @@ class BinanceCAccessor(RestfulAccessor):
         self.gateway.write_log("账户资金查询成功")
 
     def on_query_rate_limit(self, data: dict, request: Request) -> None:
+
         for rateLimits in data['rateLimits']:
             if rateLimits['rateLimitType'] == 'REQUEST_WEIGHT':
                 self.request_limit = rateLimits['limit']
@@ -513,7 +516,7 @@ class BinanceCAccessor(RestfulAccessor):
         order.status = Status.REJECTED
         self.gateway.on_order(order)
 
-        msg = f"委托失败，状态码：{status_code}，信息：{request.response.text}"
+        msg = f"委托失败，状态码：{status_code}，信息：{request.response.text}, 当前servertime: {self.server_datetime}"
         self.gateway.write_log(msg, level=WARNING)
 
     def on_send_order_error(
@@ -561,30 +564,38 @@ class BinanceCAccessor(RestfulAccessor):
 
     def reset_server_time(self, interval: int):
 
+        # conservative time trick.
         server_datetime = datetime.fromtimestamp(
-            time.time() - self.time_offset / 1000)
-        if server_datetime.second // 10 != self.server_datetime.second // 10:
-            self.seconds_orders_used = 0
-        if server_datetime.minute != self.server_datetime.minute:
-            self.minite_orders_used = 0
-            self.request_used = 0
-        self.server_datetime = server_datetime
+            time.time() - self.time_offset / 1000 - 3)
+        self.gateway.write_log("threadid {}: begin to reset ratelimt: request used: {}, seconds_userd: {}, minite_used: {}".format(threading.get_ident(), self.request_used, self.seconds_orders_used, self.minite_orders_used), level=DEBUG)
+        with self.rate_limit_lock:
+            if server_datetime.second // 10 != self.server_datetime.second // 10:
+                self.gateway.write_log("reset second limit", level=DEBUG)
+                self.seconds_orders_used = 0
+            if server_datetime.minute != self.server_datetime.minute:
+                self.minite_orders_used = 0
+                self.request_used = 0
+            self.server_datetime = server_datetime
+        self.gateway.write_log("threadid: {}, after reset ratelimt: request used: {}, seconds_userd: {}, minite_used: {};;; server_datetime: {}".format(threading.get_ident(), self.request_used, self.seconds_orders_used, self.minite_orders_used, server_datetime), level=DEBUG)
 
     def check_rate_limit(self, request: int = 1, order: int = 0) -> bool:
-        self.seconds_orders_used += order
-        self.minite_orders_used += order
-        self.request_used += request
+        with self.rate_limit_lock:
+            self.seconds_orders_used += order
+            self.minite_orders_used += order
+            self.request_used += request
 
-        if self.seconds_orders_used >= self.seconds_orders_limit:
-            msg = f"下单过于频繁，已被Binance限制, 10s内尝试下单{self.seconds_orders_used}, 超过{self.seconds_orders_limit}次每10s的限制， 该次订单被拦截。"
+        session_number = self.get_session_number()
+        if self.seconds_orders_used + session_number > self.seconds_orders_limit:
+            self.gateway.write_log("threadid: {}, check rate limit: request used: {}, seconds_userd: {}, minite_used: {}".format(threading.get_ident(), self.request_used, self.seconds_orders_used, self.minite_orders_used), level=DEBUG)
+            msg = f"下单过于频繁，已被Binance限制, 10s内尝试下单{self.seconds_orders_used}, 可能超过{self.seconds_orders_limit}次每10s的限制， 该次订单被拦截。当前servertime: {self.server_datetime}"
             self.gateway.write_log(msg, level=WARNING)
             return False
-        if self.minite_orders_used >= self.minite_orders_limit:
-            msg = f"下单过于频繁，已被Binance限制, 分钟内尝试下单{self.minite_orders_used}，超过{self.seconds_orders_limit}次每分钟的限制。该次订单被拦截。"
+        if self.minite_orders_used + session_number > self.minite_orders_limit:
+            msg = f"下单过于频繁，已被Binance限制, 分钟内尝试下单{self.minite_orders_used}，可能超过{self.seconds_orders_limit}次每分钟的限制。该次订单被拦截。"
             self.gateway.write_log(msg, level=WARNING)
             return False
-        if self.request_used >= self.request_limit:
-            msg = f"请求过于频繁，已被Binance限制, 分钟内试图请求{self.request_used}，超过{self.request_limit}次每分钟的限制。该次请求被拦截。"
+        if self.request_used + session_number > self.request_limit:
+            msg = f"请求过于频繁，已被Binance限制, 分钟内试图请求{self.request_used}，可能超过{self.request_limit}次每分钟的限制。该次请求被拦截。"
             self.gateway.write_log(msg, level=WARNING)
             return False
         return True
@@ -593,14 +604,16 @@ class BinanceCAccessor(RestfulAccessor):
         if request.response is None:
             return
         headers = request.response.headers
+        self.gateway.write_log("threadid: {}, HTTP method: {} update_ rate limit: request used: {}, seconds_userd: {}, minite_used: {}".format(threading.get_ident(), request.method, self.request_used, self.seconds_orders_used, self.minite_orders_used), level=DEBUG)
 
-        self.request_used = int(headers.get("X-MBX-USED-WEIGHT-1M", 0))
-        minite_orders_used = headers.get("X-MBX-ORDER-COUNT-1M", None)
-        if minite_orders_used is not None:
-            self.minite_orders_used = int(minite_orders_used)
-        seconds_orders_used = headers.get("X-MBX-ORDER-COUNT-10S", None)
-        if seconds_orders_used is not None:
-            self.seconds_orders_used = int(seconds_orders_used)
+        with self.rate_limit_lock:
+            self.request_used = int(headers.get("X-MBX-USED-WEIGHT-1M", 0))
+            minite_orders_used = headers.get("X-MBX-ORDER-COUNT-1M", None)
+            if minite_orders_used is not None:
+                self.minite_orders_used = int(minite_orders_used)
+            seconds_orders_used = headers.get("X-MBX-ORDER-COUNT-10S", None)
+            if seconds_orders_used is not None:
+                self.seconds_orders_used = int(seconds_orders_used)
 
     def query_history(self, req: HistoryRequest) -> Iterable[BarData]:
         """"""
