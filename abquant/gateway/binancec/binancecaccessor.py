@@ -579,25 +579,25 @@ class BinanceCAccessor(RestfulAccessor):
         self.gateway.write_log("threadid: {}, after reset ratelimt: request used: {}, seconds_userd: {}, minite_used: {};;; server_datetime: {}".format(threading.get_ident(), self.request_used, self.seconds_orders_used, self.minite_orders_used, server_datetime), level=DEBUG)
 
     def check_rate_limit(self, request: int = 1, order: int = 0) -> bool:
+        session_number = self.get_session_number()
         with self.rate_limit_lock:
             self.seconds_orders_used += order
             self.minite_orders_used += order
             self.request_used += request
 
-        session_number = self.get_session_number()
-        if self.seconds_orders_used + session_number > self.seconds_orders_limit:
-            self.gateway.write_log("threadid: {}, check rate limit: request used: {}, seconds_userd: {}, minite_used: {}".format(threading.get_ident(), self.request_used, self.seconds_orders_used, self.minite_orders_used), level=DEBUG)
-            msg = f"下单过于频繁，已被Binance限制, 10s内尝试下单{self.seconds_orders_used}, 可能超过{self.seconds_orders_limit}次每10s的限制， 该次订单被拦截。当前servertime: {self.server_datetime}"
-            self.gateway.write_log(msg, level=WARNING)
-            return False
-        if self.minite_orders_used + session_number > self.minite_orders_limit:
-            msg = f"下单过于频繁，已被Binance限制, 分钟内尝试下单{self.minite_orders_used}，可能超过{self.seconds_orders_limit}次每分钟的限制。该次订单被拦截。"
-            self.gateway.write_log(msg, level=WARNING)
-            return False
-        if self.request_used + session_number > self.request_limit:
-            msg = f"请求过于频繁，已被Binance限制, 分钟内试图请求{self.request_used}，可能超过{self.request_limit}次每分钟的限制。该次请求被拦截。"
-            self.gateway.write_log(msg, level=WARNING)
-            return False
+            if self.seconds_orders_used + session_number > self.seconds_orders_limit:
+                self.gateway.write_log("threadid: {}, check rate limit: request used: {}, seconds_userd: {}, minite_used: {}".format(threading.get_ident(), self.request_used, self.seconds_orders_used, self.minite_orders_used), level=DEBUG)
+                msg = f"下单过于频繁，已被Binance限制, 10s内尝试下单{self.seconds_orders_used}, 可能超过{self.seconds_orders_limit}次每10s的限制， 该次订单被拦截。当前servertime: {self.server_datetime}"
+                self.gateway.write_log(msg, level=WARNING)
+                return False
+            if self.minite_orders_used + session_number > self.minite_orders_limit:
+                msg = f"下单过于频繁，已被Binance限制, 分钟内尝试下单{self.minite_orders_used}，可能超过{self.seconds_orders_limit}次每分钟的限制。该次订单被拦截。"
+                self.gateway.write_log(msg, level=WARNING)
+                return False
+            if self.request_used + session_number > self.request_limit:
+                msg = f"请求过于频繁，已被Binance限制, 分钟内试图请求{self.request_used}，可能超过{self.request_limit}次每分钟的限制。该次请求被拦截。"
+                self.gateway.write_log(msg, level=WARNING)
+                return False
         return True
 
     def update_rate_limit(self, request: Request):
