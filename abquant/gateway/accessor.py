@@ -98,7 +98,7 @@ class RestfulAccessor(ABC):
         self._pool: ThreadPoolExecutor = None
 
         self.proxies: dict = None
-    
+
     @property
     def gateway_name(self):
         return self.gateway.gateway_name
@@ -124,6 +124,12 @@ class RestfulAccessor(ABC):
         self._pool = ThreadPoolExecutor(n)
         for _ in range(n):
             self._pool.submit(self._run)
+    
+    def get_session_number(self) -> int:
+        if self._pool is None: 
+            return 0
+        else: 
+            return self._pool._max_workers
 
     def stop(self) -> None:
         self._active = False
