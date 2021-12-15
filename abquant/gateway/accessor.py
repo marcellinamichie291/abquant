@@ -125,11 +125,11 @@ class RestfulAccessor(ABC):
         for _ in range(n):
             self._pool.submit(self._run)
     
-    def get_session_number(self) -> int:
+    def get_waiting_request_number(self) -> int:
         if self._pool is None: 
             return 0
         else: 
-            return self._pool._max_workers
+            return self._pool._max_workers + self._queue.qsize()
 
     def stop(self) -> None:
         self._active = False
