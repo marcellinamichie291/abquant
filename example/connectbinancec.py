@@ -31,7 +31,7 @@ if __name__ == '__main__':
     binance_setting = {
         "key": args.key,
         "secret": args.secret,
-        "session_number": 20,
+        "session_number": 2,
         # "127.0.0.1" str类型
         "proxy_host": args.proxy_host if args.proxy_host else "",
         # 1087 int类型
@@ -104,11 +104,11 @@ if __name__ == '__main__':
     print("start to receive data from exchange")
 
     # 下单撤单， 由框架异步执行。胆大的下单撤单吧。不必担心阻塞和 IO。
-    for i in range(2):
+    for i in range(20):
         ab_order_id: str = gateway.send_order(OrderRequest(symbol='XRPUSDT', exchange=Exchange.BINANCE,
-                                            direction=Direction.LONG, type=OrderType.POSTONLYLIMIT, volume=7.00001, price=1, offset=Offset.OPEN))
+                                            direction=Direction.LONG, type=OrderType.POSTONLYLIMIT, volume=10.00001, price=0.7, offset=Offset.OPEN))
         print('ab orderid', ab_order_id)
-        time.sleep(2)
+        time.sleep(1)
         order_id = ab_order_id.split('.')[-1]
         print('orderid', order_id)
         gateway.cancel_order(CancelRequest(
