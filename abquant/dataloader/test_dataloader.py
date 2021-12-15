@@ -18,13 +18,7 @@ def main():
     args = parse()
 
     dt_setting = {
-        # "exchange": args.exchange,
-        # "symbol": args.symbol,
-        # "trade_type": "bbc",    # spot, ubc, bbc
-        # "start_time": "2021-11-1",
-        # "end_time": "2021/12/15",
         "data_file": args.data_file,
-        # "interval": "1m",
     }
 
     dataloader: DataLoaderKline = DataLoaderKline(dt_setting)
