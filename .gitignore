@@ -1,6 +1,7 @@
 .vscode/
 # Byte-compiled / optimized / DLL files
 example_my/
+logs/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -59,6 +60,7 @@ coverage.xml
 
 # Django stuff:
 *.log
+
 /*/*.log
 /*/logs
 local_settings.py
