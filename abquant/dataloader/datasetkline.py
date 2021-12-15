@@ -72,17 +72,17 @@ class DatasetKline(Dataset):
         newds.len = len(newds.bars)
         return newds
 
-    def check(self) -> Tuple[bool, str]:
+    def check(self) -> bool:
         try:
             df_01 = self.dataframe
             if df_01 is None or df_01.empty:
-                return False, 'no data'
+                raise Exception('no data')
             # --> 检查列名
             headers = df_01.columns.values.tolist()
             if 'open' not in headers and 'open_price' not in headers and 'o' not in headers:
-                return False, 'headers no open price'
+                raise Exception('headers no open price')
             if 'volume' not in headers and 'vol' not in headers and 'v' not in headers:
-                return False, 'headers no volume'
+                raise Exception('headers no volume')
             # --> 检查记录条目
             rn, cn = df_01.shape
             if self.interval == Interval.MINUTE or self.interval == '1m':
@@ -93,12 +93,12 @@ class DatasetKline(Dataset):
             snum = len(stat)
             if snum != 1:
                 self._logger.info(stat)
-                return False, 'more than 1 symbol'
+                raise Exception('more than 1 symbol')
             # --> 检查记录日期
             df_02 = df_01.loc[(df_01.datetime < self.start) | (df_01.datetime > self.end)]
             if not df_02.empty:
                 self._logger.info(df_02.iloc[0])
-                return False, 'datetime out of range'
+                raise Exception('datetime out of range')
             # --> 检查数据依赖
             # r1 = random.uniform(0, 1)
             # r2 = random.uniform(0, 1)
@@ -116,7 +116,7 @@ class DatasetKline(Dataset):
             #     #     return False, f'kline lack at: {df_i["datetime"]}'
             # self._logger.debug(f'dataloader check: max gap between minutes for {self.ab_symbol}: {gap}')
         except Exception as e:
-            return False, 'wrong'
-        return True, 'pass'
+            return e
+        return True
 
 
