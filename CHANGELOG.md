@@ -1,6 +1,10 @@
 
 
 
+## 0.7.2
+1. data loader kline子类实现与接口一致
+1. data loader本地csv暂不检查
+
 ## 0.7.1
 1. binancec 10s ratelimit 保守重置机制, 锁保护(无测试环境，待验证。)
 1. bargenerator, 0tick情况时 bar 生成。
