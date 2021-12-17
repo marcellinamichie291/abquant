@@ -28,7 +28,7 @@ class DataLoaderKline(DataLoader):
         self.data_file = None
         self.data_location = None
         home_dir = os.environ['HOME']
-        self.cache_dir = home_dir + '/.abquant/data'
+        self.cache_dir = home_dir + '/.abquant/cache'
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
             self._logger.info(f'Data loader cache dir: {self.cache_dir}')
