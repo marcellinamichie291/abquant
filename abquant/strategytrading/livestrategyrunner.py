@@ -455,6 +455,7 @@ class LiveStrategyRunner(StrategyRunner, StrategyManager):
                 contract.gateway_name).query_history(req)
         else:
             data = None
+            raise ConnectionError("contract is not found or history_data is not set.")
         return data
 
     def load_bars(self,
