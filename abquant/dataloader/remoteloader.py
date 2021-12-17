@@ -11,8 +11,8 @@ from abquant.monitor.logger import Logger
 
 # s3 config
 S3_BUCKET_NAME = "abquant-binance-data"
-S3_HOME_FOLDER = "/"
-LOCAL_PATH = "/data/aws/kline"
+S3_HOME_FOLDER = ""
+LOCAL_PATH = os.environ['HOME'] + '/.abquant/data/aws/kline'
 AWS_S3_BASE_PATH = "s3://" + S3_BUCKET_NAME + S3_HOME_FOLDER
 
 

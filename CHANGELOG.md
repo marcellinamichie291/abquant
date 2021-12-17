@@ -1,5 +1,10 @@
 
 
+## 0.7.3
+1. data loader kline 缓存位置修复
+1. livestrategyrunner load_bars更友好的报错信息。
+1. 新增 双均线杨利策略。方便回测和参考使用。
+1. run_cta_backtest.py 回测使用样例。
 
 ## 0.7.2
 1. data loader kline子类实现与接口一致
