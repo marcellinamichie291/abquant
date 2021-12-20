@@ -7,11 +7,11 @@ from strategy.doublemeanaverage import DoubleMAStrategy
 
 
 if __name__ == '__main__':
-    dt_setting = {}
+    dl_setting = {}
     start = datetime(2021, 12, 1)
     end = datetime(2020, 12, 12)
-    dataloader: DataLoaderKline = DataLoaderKline(dt_setting)
-    dataset = dataloader.load_data('ETHUSDT.BINANCE', start, end)
+    dataloader: DataLoaderKline = DataLoaderKline(dl_setting)
+    # dataset = dataloader.load_data('ETHUSDT.BINANCE', start, end)
 
     backtest_strategy_runner = BacktestStrategyRunner()
     backtest_strategy_runner.set_data_loader(dataloader)
