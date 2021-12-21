@@ -73,7 +73,7 @@ class DataLoader(ABC):
         super().__init__(config)
         """
         self.history_data: Dict[str, DataFrame] = {}
-        # self.set_config(config)
+        self.set_config(config)
     
     @abstractmethod
     def set_config(self, setting):
