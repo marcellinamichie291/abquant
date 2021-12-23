@@ -8,7 +8,7 @@
 
 
 from datetime import timedelta
-from typing import Dict, Set
+from typing import Dict, Set, Tuple
 
 from abquant.trader.common import Direction, Interval, OrderType, Status
 from abquant.trader.object import ContractData
@@ -41,11 +41,13 @@ STATUS_BYBIT2AB: Dict[str, Status] = {
 }
 
 # 委托类型映射
-ORDER_TYPE_AB2BYBIT: Dict[OrderType, str] = {
-    OrderType.LIMIT: "Limit",
-    OrderType.MARKET: "Market",
+ORDER_TYPE_AB2BYBIT: Dict[OrderType, Tuple[str, str]] = {
+    OrderType.LIMIT: ("Limit", "GoodTillCancel"),
+    OrderType.MARKET: ("Market","GoodTillCancel"),
+    OrderType.POSTONLYLIMIT: ("Limit", "PostOnly")
+
 }
-ORDER_TYPE_BYBIT2AB: Dict[str, OrderType] = {v: k for k, v in ORDER_TYPE_AB2BYBIT.items()}
+ORDER_TYPE_BYBIT2AB: Dict[str, OrderType] = {v[0]: k for k, v in ORDER_TYPE_AB2BYBIT.items()}
 
 # 买卖方向映射
 DIRECTION_AB2BYBIT: Dict[Direction, str] = {Direction.LONG: "Buy", Direction.SHORT: "Sell"}

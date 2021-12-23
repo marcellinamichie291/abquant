@@ -9,17 +9,18 @@ from ..basegateway import Gateway
 from ..listener import WebsocketListener
 
 from . import DIRECTION_BYBIT2AB, ORDER_TYPE_BYBIT2AB, PRIVATE_WEBSOCKET_HOST, PUBLIC_WEBSOCKET_HOST, STATUS_BYBIT2AB, TESTNET_PRIVATE_WEBSOCKET_HOST, TESTNET_PUBLIC_WEBSOCKET_HOST, local_orderids
-from bybit_util import generate_datetime, generate_datetime_2, generate_timestamp, sign
+from .bybit_util import generate_datetime, generate_datetime_2, generate_timestamp, sign
 
 class BybitMarketWebsocketListener(WebsocketListener):
     """U本位合约的行情Websocket接口"""
 
     def __init__(self, gateway: Gateway) -> None:
         """构造函数"""
-        super().__init__()
+        super().__init__(gateway)
 
         self.gateway = gateway
-        self.gateway_name: str = gateway.gateway_name
+        self.gateway.set_gateway_name(gateway.gateway_name)
+        self.ping_interval = 30
 
         self.callbacks: Dict[str, Callable] = {}
         self.ticks: Dict[str, TickData] = {}
@@ -68,18 +69,18 @@ class BybitMarketWebsocketListener(WebsocketListener):
         # 缓存订阅记录
         self.subscribed[req.symbol] = req
 
-        # 创建TICK对象
+        # # 创建TICK对象
         tick: TickData = TickData(
             symbol=req.symbol,
             exchange=req.exchange,
             datetime=datetime.now(),
-            name=req.symbol,
             gateway_name=self.gateway_name
         )
         self.ticks[req.symbol] = tick
 
         # 发送订阅请求
         self.subscribe_topic(f"instrument_info.100ms.{req.symbol}", self.on_tick)
+        self.subscribe_topic(f"trade.{req.symbol}", self.on_tick)
         self.subscribe_topic(f"orderBookL2_25.{req.symbol}", self.on_depth)
 
     def subscribe_topic(
@@ -98,6 +99,7 @@ class BybitMarketWebsocketListener(WebsocketListener):
 
     def on_packet(self, packet: dict) -> None:
         """推送数据回报"""
+        print(packet)
         if "topic" not in packet:
             op: str = packet["request"]["op"]
             if op == "auth":
@@ -111,10 +113,10 @@ class BybitMarketWebsocketListener(WebsocketListener):
         self,
         exception_type: type,
         exception_value: Exception,
-        tb
-    ) -> None:
+        tb   
+        ) -> None:
         """触发异常回报"""
-        msg = f"触发异常，状态码：{exception_type}，信息：{exception_value}"
+        msg = f"触发异常，状态码：{exception_type}，信息：{exception_value}, tb: {tb}, req: {req}"
         self.gateway.write_log(msg)
 
     def on_tick(self, packet: dict) -> None:
@@ -130,9 +132,9 @@ class BybitMarketWebsocketListener(WebsocketListener):
             if not data["last_price"]:           # 过滤最新价为0的数据
                 return
 
-            tick.last_price = float(data["last_price"])
+            tick.trade_price = float(data["last_price"])
 
-            tick.volume = int(data["volume_24h_e8"]) / 100000000
+            tick.trade_volume = int(data["volume_24h_e8"]) / 100000000
 
             tick.datetime = generate_datetime(data["updated_at"])
 
@@ -142,11 +144,11 @@ class BybitMarketWebsocketListener(WebsocketListener):
             if "last_price" not in update:      # 过滤最新价为0的数据
                 return
 
-            tick.last_price = float(update["last_price"])
+            tick.trade_price = float(update["last_price"])
 
             if update["volume_24h_e8"]:
 
-                tick.volume = int(update["volume_24h_e8"]) / 100000000
+                tick.trade_volume = int(update["volume_24h_e8"]) / 100000000
 
             tick.datetime = generate_datetime(update["updated_at"])
 
@@ -217,15 +219,16 @@ class BybitMarketWebsocketListener(WebsocketListener):
 
 
 class BybitTradeWebsocketListener(WebsocketListener):
-    """本位 合约的交易Websocket接口"""
+    """u本位 合约的交易Websocket接口"""
 
     def __init__(self, gateway: Gateway) -> None:
         """构造函数"""
-        super().__init__()
+        super().__init__(gateway)
 
         self.gateway = gateway
-        self.gateway_name: str = gateway.gateway_name
-
+        self.gateway.set_gateway_name(gateway.gateway_name)
+        self.ping_interval = 30
+        
         self.key: str = ""
         self.secret: bytes = b""
         self.server: str = ""
@@ -321,7 +324,6 @@ class BybitTradeWebsocketListener(WebsocketListener):
         """用户登录请求回报"""
         success: bool = packet.get("success", False)
         if success:
-            self.gateway.write_log("交易Websocket API登录成功")
 
             self.subscribe_topic("order", self.on_order)
             self.subscribe_topic("execution", self.on_trade)

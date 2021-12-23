@@ -1,5 +1,7 @@
 from datetime import datetime
+from threading import Lock
 from typing import List
+import uuid
 from abquant.trader.common import Exchange, Offset, Product, Status
 from abquant.trader.msg import BarData, OrderData
 
@@ -7,23 +9,27 @@ from abquant.trader.object import AccountData, CancelRequest, ContractData, Hist
 
 from ..accessor import Request, RestfulAccessor
 from ..basegateway import Gateway
-from bybit_util import generate_timestamp, generate_datetime_2, generate_datetime, get_float_value, sign
+from .bybit_util import generate_timestamp, generate_datetime_2, generate_datetime, get_float_value, sign
 from . import DIRECTION_AB2BYBIT, DIRECTION_BYBIT2AB, INTERVAL_AB2BYBIT, ORDER_TYPE_AB2BYBIT, ORDER_TYPE_BYBIT2AB, REST_HOST, STATUS_BYBIT2AB, TESTNET_REST_HOST, TIMEDELTA_MAP, symbol_contract_map, local_orderids
 
 class BybitAccessor(RestfulAccessor):
     """正向合约的REST接口"""
+    ORDER_PREFIX = str(hex(uuid.getnode()))
+
 
     def __init__(self, gateway: Gateway) -> None:
         """构造函数"""
-        super(BybitAccessor, self).__init__()
+        super(BybitAccessor, self).__init__(gateway)
 
         self.gateway = gateway
-        self.gateway_name: str = gateway.gateway_name
+        # self.gateway_name: str = gateway.gateway_name
 
         self.key: str = ""
         self.secret: bytes = b""
+        self.connect_time: int = 0
 
-        self.order_count: int = 0
+        self.order_count: int = 1_000_000
+        self.order_count_lock: Lock = Lock()
 
     def sign(self, request: Request) -> Request:
         """生成签名"""
@@ -48,16 +54,6 @@ class BybitAccessor(RestfulAccessor):
 
         return request
 
-    def new_orderid(self) -> str:
-        """生成本地委托号"""
-        prefix: str = datetime.now().strftime("%Y%m%d-%H%M%S-")
-
-        self.order_count += 1
-        suffix: str = str(self.order_count).rjust(8, "0")
-
-        orderid: str = prefix + suffix
-        return orderid
-
     def connect(
         self,
         key: str,
@@ -74,12 +70,20 @@ class BybitAccessor(RestfulAccessor):
             self.init(REST_HOST, proxy_host, proxy_port)
         else:
             self.init(TESTNET_REST_HOST, proxy_host, proxy_port)
-
+        self.connect_time = (
+            int(datetime.now().strftime("%y%m%d%H%M%S")) * self.order_count
+        )
         self.start(3)
         self.gateway.write_log("REST API启动成功")
 
         self.query_contract()
 
+    def _new_order_id(self) -> int:
+        """"""
+        with self.order_count_lock:
+            self.order_count += 1
+            return self.order_count
+        
     def send_order(self, req: OrderRequest) -> str:
         """委托下单"""
         # 检查委托类型是否正确
@@ -95,22 +99,22 @@ class BybitAccessor(RestfulAccessor):
             return
 
         # 生成本地委托号
-        orderid: str = self.new_orderid()
-        # 推送提交中事件
+        orderid = self.ORDER_PREFIX + \
+            str(self.connect_time + self._new_order_id())        # 推送提交中事件
         order: OrderData = req.create_order_data(orderid, self.gateway_name)
-
+        order_type, time_in_force = ORDER_TYPE_AB2BYBIT[req.type]
         # 生成委托请求
         data: dict = {
             "symbol": req.symbol,
             "side": DIRECTION_AB2BYBIT[req.direction],
             "qty": req.volume,
             "order_link_id": orderid,
-            "time_in_force": "GoodTillCancel",
+            "time_in_force": time_in_force,
             "reduce_only": False,
             "close_on_trigger": False
         }
 
-        data["order_type"] = ORDER_TYPE_AB2BYBIT[req.type]
+        data["order_type"] = order_type
         data["price"] = req.price
 
         if req.offset == Offset.CLOSE:
@@ -127,7 +131,7 @@ class BybitAccessor(RestfulAccessor):
         )
 
         self.gateway.on_order(order)
-        return order.vt_orderid
+        return order.ab_orderid
 
     def on_send_order_failed(
         self,
@@ -213,7 +217,7 @@ class BybitAccessor(RestfulAccessor):
         request: Request
     ) -> None:
         """触发异常回报"""
-        msg = f"触发异常，状态码：{exception_type}，信息：{exception_value}"
+        msg = f"触发异常，状态码：{exception_type}，信息：{exception_value}, req:{request}, tb: {tb}"
         self.gateway.write_log(msg)
 
 
@@ -249,10 +253,12 @@ class BybitAccessor(RestfulAccessor):
                 symbol=d["name"],
                 exchange=Exchange.BYBIT,
                 name=d["name"],
-                product=Product.FUTURES,
-                size=1,
                 pricetick=float(d["price_filter"]["tick_size"]),
+                size=1,
+                step_size=d["lot_size_filter"]["qty_step"],
+                product=Product.FUTURES,
                 min_volume=d["lot_size_filter"]["min_trading_qty"],
+                net_position=True,
                 history_data=True,
                 gateway_name=self.gateway_name
             )

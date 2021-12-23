@@ -1,17 +1,17 @@
 
 
-from typing import Dict, List
-from abquant.gateway import basegateway
+from typing import Dict, Iterable, List
+from abquant.gateway.basegateway import Gateway
 from abquant.trader.common import Exchange
 from abquant.trader.msg import BarData
 from abquant.trader.object import CancelRequest, HistoryRequest, OrderRequest, SubscribeRequest
-
-from bybit_accessor import BybitAccessor
-from bybit_listener import BybitMarketWebsocketListener, BybitTradeWebsocketListener
 from abquant.event import EventDispatcher
 
+from .bybit_accessor import BybitAccessor
+from .bybit_listener import BybitMarketWebsocketListener, BybitTradeWebsocketListener
 
-class BybitGateway(basegateway):
+
+class BybitGateway(Gateway):
     """
     vn.py用于对接Bybit交易所的交易接口。
     """
@@ -30,57 +30,70 @@ class BybitGateway(basegateway):
         """构造函数"""
         super().__init__(event_dispatcher, "BYBIT")
 
-        self.rest_api = None
-        self.private_ws_api = None
-        self.public_ws_api = None
+        self.rest_accessor = None
+        self.trade_listener = None
+        self.market_listener = None
+        
+        self.set_gateway_name("BYBIT")
 
     def connect(self, setting: dict) -> None:
         """连接交易接口"""
-        self.rest_api = BybitAccessor(self)
-        self.private_ws_api = BybitTradeWebsocketListener(self)
-        self.public_ws_api = BybitMarketWebsocketListener(self)
-        key: str = setting["key"]
-        secret: str = setting["secret"]
-        server: str = setting["test_net"]
-        proxy_host: str = setting["proxy_host"]
-        proxy_port: str = setting["proxy_port"]
+        self.rest_accessor = BybitAccessor(self)
+        self.trade_listener = BybitTradeWebsocketListener(self)
+        self.market_listener = BybitMarketWebsocketListener(self)
+        try:
+            key = setting["key"]
+            secret = setting["secret"]
+        except LookupError as e:
+            raise LookupError(
+                "the setting must contain field 'key' and field 'secret'.")
+            
+        server = setting.get("test_net", self.default_setting["test_net"][1])
+        proxy_host = setting.get(
+            "proxy_host", self.default_setting["proxy_host"])        
+        proxy_port = setting.get(
+            "proxy_port", self.default_setting["proxy_port"])
 
-        if proxy_port.isdigit():
-            proxy_port = int(proxy_port)
-        else:
-            proxy_port = 0
 
-        self.rest_api.connect(
+
+        self.rest_accessor.connect(
             key,
             secret,
             server,
             proxy_host,
             proxy_port
         )
-        self.private_ws_api.connect(
+        self.trade_listener.connect(
             key,
             secret,
             server,
             proxy_host,
             proxy_port
         )
-        self.public_ws_api.connect(
+        self.market_listener.connect(
             server,
             proxy_host,
             proxy_port
         )
+    
+    def start(self):
+        self.market_listener.start()
+        self.trade_listener.start()
 
     def subscribe(self, req: SubscribeRequest) -> None:
         """订阅行情"""
-        self.public_ws_api.subscribe(req)
+        self.market_listener.subscribe(req)
 
     def send_order(self, req: OrderRequest) -> str:
         """委托下单"""
-        return self.rest_api.send_order(req)
+        return self.rest_accessor.send_order(req)
 
+    def cancel_orders(self, reqs: Iterable[CancelRequest]) -> None:
+        return super().cancel_orders(reqs)
+    
     def cancel_order(self, req: CancelRequest):
         """委托撤单"""
-        self.rest_api.cancel_order(req)
+        self.rest_accessor.cancel_order(req)
 
     def query_account(self) -> None:
         """查询资金"""
@@ -92,11 +105,11 @@ class BybitGateway(basegateway):
 
     def query_history(self, req: HistoryRequest) -> List[BarData]:
         """查询历史数据"""
-        return self.rest_api.query_history(req)
+        return self.rest_accessor.query_history(req)
 
     def close(self) -> None:
         """关闭连接"""
-        if self.rest_api:
-            self.rest_api.stop()
-            self.private_ws_api.stop()
-            self.public_ws_api.stop()
+        if self.rest_accessor:
+            self.rest_accessor.stop()
+            self.trade_listener.stop()
+            self.market_listener.stop()
