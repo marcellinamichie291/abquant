@@ -6,9 +6,9 @@ from abquant.dataloader.dataloader import DataLoader
 from abquant.strategytrading import BacktestParameter, BacktestStrategyRunner, BacktestingMode
 from abquant.trader.common import Interval
 from strategy.doublemeanaverage import DoubleMAStrategy
+# from abquant.dataloader.dfdataloader import DFDataLoader
 
 
-from abquant.dataloader.dfdataloader import DFDataLoader
 if __name__ == '__main__':
     dl_setting = {
         "dir_path": '/Users/abakus/Desktop/projects/abquant/example_my/binance_history_data_all'
@@ -16,32 +16,40 @@ if __name__ == '__main__':
 
     start = datetime(2021, 8, 1)
     end = datetime(2021, 9, 12)
-    dataloader: DataLoaderKline = DataLoaderKline(dl_setting)
+    dataloader: DataLoader = DataLoaderKline(dl_setting)
+    # dataloader: DataLoader = DFDataLoader(dl_setting)
+
     # dataset = dataloader.load_data('BTCUSDT.BINANCE', start, end)
     # for bar in dataset:
     #     print(bar)
     #     time.sleep(1)
 
-    ab_symbol = 'BTCUSDT.BINANCE'
+    ab_symbol1 = 'BTCUSDT.BINANCE'
+    ab_symbol2 = 'btcusdt.BINANCE'
 
     backtest_parameter = BacktestParameter(
-        ab_symbols=[ab_symbol],
+        ab_symbols=[ab_symbol1, ab_symbol2],
         interval=Interval.MINUTE,
         rates={
-            ab_symbol: 0.0003
+            ab_symbol1: 0.0003,
+            ab_symbol2: 0.001,
         },
         slippages={
-            ab_symbol: 0.0000
+            ab_symbol1: 0.0000,
+            ab_symbol2: 0.0000,
         },
         sizes={
-            ab_symbol: 1
+            ab_symbol1: 1,
+            ab_symbol2: 1,
         },
         priceticks={
-            ab_symbol: 0.001
+            ab_symbol1: 0.01,
+            ab_symbol1: 0.01,
         },
         capital=200000,
         inverses={
-            ab_symbol: False
+            ab_symbol1: False,
+            ab_symbol1: False
         },
         annual_days=365,
         mode=BacktestingMode.BAR
@@ -52,7 +60,7 @@ if __name__ == '__main__':
 
     backtest_strategy_runner.add_strategy(strategy_class=DoubleMAStrategy,
                                           strategy_name='strategy_1',
-                                          ab_symbols=[ab_symbol],
+                                          ab_symbols=[ab_symbol1],
                                           setting={}
                                           )
 
