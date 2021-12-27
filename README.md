@@ -34,6 +34,15 @@ python -m pip install .
 # 如果有余力，请进入./abquant/strategytrading/template.py 并阅读所有注释。
 cd abquant/example
 python run_strategy.py -k "api-key" -s "api-secret" [-proxy_host  proxy例如127.0.0.1 -proxy_port proxy端口例如1087] 
+
+```
+
+#  backtest example (0.8 以后支持)
+```
+cd abquant/example
+# 回测的使用非常简单。请阅读样例 ./example/run_cta_backtest.py。 data_loader的配置项如不清楚可联系张辉。 
+python run_cta_backtest.py
+
 ```
 
 # 新策略开发
