@@ -216,14 +216,26 @@ class BinanceCTradeWebsocketListener(WebsocketListener):
 
     def on_connected(self) -> None:
         """"""
+        raw_data = {
+            'type': 'status_websocket_connected',
+            'gateway_name': self.gateway_name
+        }
+        self.gateway.on_raw(raw_data)
+
         self.gateway.write_log("交易Websocket API连接成功")
     
     def on_disconnected(self):
+        raw_data = {
+            'type': 'status_websocket_disconnected',
+            'gateway_name': self.gateway_name
+        }
+        self.gateway.on_raw(raw_data)
+
         self.gateway.write_log("交易Websocket API断开")
 
     def on_packet(self, packet: dict) -> None:  
         """"""
-        self.gateway.on_raw(packet)
+        # self.gateway.on_raw(packet)
         if packet["e"] == "ACCOUNT_UPDATE":
             self.on_account(packet)
         elif packet["e"] == "ORDER_TRADE_UPDATE":
@@ -231,6 +243,14 @@ class BinanceCTradeWebsocketListener(WebsocketListener):
 
     def on_account(self, packet: dict) -> None:
         """"""
+        raw_data = {
+            'type': 'data_websocket',
+            'gateway_name': self.gateway_name,
+            'data_type': 'account',
+            'payload': packet
+        }
+        self.gateway.on_raw(raw_data)
+
         for acc_data in packet["a"]["B"]:
             account = AccountData(
                 accountid=acc_data["a"],
@@ -263,6 +283,13 @@ class BinanceCTradeWebsocketListener(WebsocketListener):
 
     def on_order(self, packet: dict) -> None:
         """"""
+        raw_data = {
+            'type': 'data_websocket',
+            'gateway_name': self.gateway_name,
+            'data_type': 'order',
+            'payload': packet
+        }
+        self.gateway.on_raw(raw_data)
 
         ord_data = packet["o"]
         key = (ord_data["o"], ord_data["f"])
