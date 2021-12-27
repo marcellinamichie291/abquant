@@ -10,9 +10,9 @@ from strategy.doublemeanaverage import DoubleMAStrategy
 
 
 if __name__ == '__main__':
-    dl_setting = {}
+    dl_setting = {
         # "dir_path": '/Users/abakus/Desktop/projects/abquant/example_my/binance_history_data_all'
-    # }
+    }
 
     start = datetime(2021, 8, 1)
     end = datetime(2021, 9, 12)
@@ -74,4 +74,4 @@ if __name__ == '__main__':
                                           )
 
     # output_log 代表是否 输出 策略本身的日志。
-    backtest_strategy_runner.run_backtest(start_dt=start, end_dt=end, output_log=True)
+    backtest_strategy_runner.run_backtest(start_dt=start, end_dt=end, output_log=False)
