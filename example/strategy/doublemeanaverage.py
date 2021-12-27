@@ -19,7 +19,7 @@ class DoubleMAStrategy(StrategyTemplate):
 
     short_window = 3
     long_window = 10
-    U_per_trade = 100
+    U_per_trade = 1
 
 
     # 声明可配置参数，本行之上是可配置参数的默认值。
@@ -125,14 +125,16 @@ class DoubleMAStrategy(StrategyTemplate):
             if  position == 0:
                 self.buy(ab_symbol, close_price, volume_per_trade, OrderType.LIMIT)
             elif position < 0:
-                self.cover(ab_symbol, close_price, abs(position), OrderType.MARKET)
-                self.buy(close_price, close_price, volume_per_trade, OrderType.LIMIT)
+                # self.cover(ab_symbol, close_price, abs(position), OrderType.MARKET)
+                self.cover(ab_symbol, close_price, abs(position), OrderType.LIMIT)
+                self.buy(ab_symbol, close_price, volume_per_trade, OrderType.LIMIT)
 
         elif cross_below:
             if position == 0:
                 self.short(ab_symbol, close_price, volume_per_trade, OrderType.LIMIT)
             elif position > 0:
-                self.sell(ab_symbol, close_price, abs(position), OrderType.MARKET)
+                # self.sell(ab_symbol, close_price, abs(position), OrderType.MARKET)
+                self.sell(ab_symbol, close_price, abs(position), OrderType.LIMIT)
                 self.short(ab_symbol, close_price, volume_per_trade, OrderType.LIMIT)
         # self.sync_data()
 
@@ -168,7 +170,6 @@ class DoubleMAStrategy(StrategyTemplate):
     def update_order(self, order: OrderData) -> None:
         # 订单状态改变发生的回调。
         super().update_order(order)
-        self.write_log("update order: {}".format(order))
         if order.status == Status.SUBMITTING:
             self.write_log("update order: {}".format(order))
         elif order.status == Status.ALLTRADED:

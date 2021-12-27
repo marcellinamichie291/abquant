@@ -109,7 +109,7 @@ class TheStrategy(StrategyTemplate):
                 bars[ab_symbol] = bg.generate()
             # 生成新的k线数据后，主动调用 on_bars。
             # self.write_log("new minutes tick: {}".format(tick))
-            if bars.values():
+            if all(bars.values()):
                 self.on_bars(bars)
 
         bg: BarGenerator = self.bgs[tick.ab_symbol]
