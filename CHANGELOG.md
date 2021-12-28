@@ -1,4 +1,8 @@
 
+## 0.7.5
+1. 去掉monitor在连接服务器时多余的错误日志
+1. monitor停止上传日志到websocket服务器
+
 ## 0.7.4
 1. base virtual matcher OrderBook class
 1. 回测api固定

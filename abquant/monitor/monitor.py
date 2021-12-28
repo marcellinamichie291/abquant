@@ -34,7 +34,7 @@ class Monitor(Thread):
         self._logger = Logger("monitor")
         self.setting = setting
         self.strategy = setting.get("strategy", None)
-        if self.strategy is None:
+        if self.strategy is None and USE_WS_TRANSMITTER:
             self._logger.info("Monitor: No strategy config, cannot upload log")
         self.lark_url = setting.get("lark_url", None)
         if self.lark_url is None:
@@ -147,9 +147,9 @@ class Monitor(Thread):
         info['payload'] = payload
         self.send(info)
         if content is None or type(content) is not list or type(content[0]) is not list:
-            notify_lark.put(LarkMessage(self.strategy, self.lark_url, TypeEnum.TEXT, text=msg))
+            notify_lark.put(LarkMessage(run_id, self.lark_url, TypeEnum.TEXT, text=msg))
         else:
-            notify_lark.put(LarkMessage(self.strategy, self.lark_url, TypeEnum.POST, title=title, content=content))
+            notify_lark.put(LarkMessage(run_id, self.lark_url, TypeEnum.POST, title=title, content=content))
 
     def consumer(self):
         if self.queue is None:
@@ -176,7 +176,7 @@ class Monitor(Thread):
                     self.push_buffer(data)
                     # time.sleep(1)
                     cycles += 1
-                    if cycles > 10:
+                    if cycles > 10 and USE_WS_TRANSMITTER:
                         self.txmt = Transmitter(self.strategy)
                         self.txmt.connect_ws()
                         time.sleep(2)
