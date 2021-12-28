@@ -278,10 +278,6 @@ class OrderBook():
         )
 
         self.offset: int = 0
-        self.open_price: float = 0.0
-        self.high_price: float = 0.0
-        self.low_price: float = 0.0
-        self.last_price: float = 0.0
         self.date: datetime.date = None
 
     def on_message(self, d: dict) -> None:
@@ -309,16 +305,6 @@ class OrderBook():
         if not self.date:
             self.date = tick.datetime.date()
 
-        if tick.datetime.date() != self.date:
-            req: HistoryRequest = HistoryRequest(
-                symbol=tick.symbol,
-                exchange=Exchange.DYDX,
-                start=None,
-                end=None,
-                interval=Interval.DAILY
-            )
-            history: list[BarData] = self.gateway.query_history(req)
-            self.open_price = history[0].open_price
         tick.localtime = datetime.now()
         tick.trade_price = float(d[0]["price"])
         tick.trade_volume = float(d[0]["size"])
