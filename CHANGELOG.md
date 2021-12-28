@@ -1,7 +1,8 @@
 
-## 0.7.5
+## 0.8.0
 1. 去掉monitor在连接服务器时多余的错误日志
 1. monitor停止上传日志到websocket服务器
+1. 新增bybit U本位 gateway。
 
 ## 0.7.4
 1. base virtual matcher OrderBook class
