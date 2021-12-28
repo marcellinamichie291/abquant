@@ -2,12 +2,12 @@
 ## 0.8.0
 1. 去掉monitor在连接服务器时多余的错误日志
 1. monitor停止上传日志到websocket服务器
-1. 新增bybit U本位 gateway。
+1. 新增bybit U本位 gateway。（注意， 由于bybit目前不支持单向持仓。因此必须非常审慎的使用 strategyTemplate.pos对象，最好在策略中自行维护双向的仓位。该对象维护的是净持仓。同时send_order中要非常明确的使用Offset.Close 来平掉某一方向的仓位。）
 
 ## 0.7.4
 1. base virtual matcher OrderBook class
 1. 回测api固定
-1. 监测用 rawdata in binancec gatewauy
+1. 监测用 rawdata in binancec gateway
 
 ## 0.7.3
 1. data loader kline 缓存位置修复
