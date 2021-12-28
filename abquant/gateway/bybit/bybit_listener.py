@@ -8,7 +8,17 @@ from abquant.trader.object import AccountData, PositionData, SubscribeRequest
 from ..basegateway import Gateway
 from ..listener import WebsocketListener
 
-from . import DIRECTION_BYBIT2AB, ORDER_TYPE_BYBIT2AB, PRIVATE_WEBSOCKET_HOST, PUBLIC_WEBSOCKET_HOST, STATUS_BYBIT2AB, TESTNET_PRIVATE_WEBSOCKET_HOST, TESTNET_PUBLIC_WEBSOCKET_HOST, local_orderids
+from . import (
+    DIRECTION_BYBIT2AB, 
+    ORDER_TYPE_BYBIT2AB, 
+    PRIVATE_WEBSOCKET_HOST, 
+    PUBLIC_WEBSOCKET_HOST, 
+    STATUS_BYBIT2AB, 
+    TESTNET_PRIVATE_WEBSOCKET_HOST, 
+    TESTNET_PUBLIC_WEBSOCKET_HOST, 
+    local_orderids,
+    symbol_contract_map)
+
 from .bybit_util import generate_datetime, generate_datetime_2, generate_timestamp, sign
 
 class BybitMarketWebsocketListener(WebsocketListener):
@@ -16,56 +26,44 @@ class BybitMarketWebsocketListener(WebsocketListener):
 
     def __init__(self, gateway: Gateway) -> None:
         """构造函数"""
-        super().__init__(gateway)
+        super(BybitMarketWebsocketListener, self).__init__(gateway)
 
         self.gateway = gateway
-        self.gateway.set_gateway_name(gateway.gateway_name)
         self.ping_interval = 30
 
-        self.callbacks: Dict[str, Callable] = {}
         self.ticks: Dict[str, TickData] = {}
         self.subscribed: Dict[str, SubscribeRequest] = {}
 
         self.symbol_bids: Dict[str, dict] = {}
         self.symbol_asks: Dict[str, dict] = {}
 
-    def connect(
-        self,
-        server: str,
-        proxy_host: str,
-        proxy_port: int
-    ) -> None:
-        """连接Websocket公共频道"""
-        self.proxy_host = proxy_host
-        self.proxy_port = proxy_port
-        self.server = server
+    def connect(self, server: str, proxy_host: str, proxy_port: int):
+        """ws行情"""
 
-        if self.server == "REAL":
+        if server == "REAL":
             url = PUBLIC_WEBSOCKET_HOST
         else:
             url = TESTNET_PUBLIC_WEBSOCKET_HOST
-
-        self.init(url, self.proxy_host, self.proxy_port)
+        self.init(url, proxy_host, proxy_port)
         self.start()
 
     def on_connected(self) -> None:
-        """连接成功回报"""
+        """"""
         self.gateway.write_log("行情Websocket API连接成功")
 
-        if self.subscribed:
-            for req in self.subscribed.values():
-                self.subscribe(req)
+        for req in list(self.subscribed.values()):
+            self.subscribe(req)
 
     def on_disconnected(self) -> None:
-        """连接断开回报"""
+        """"""
         self.gateway.write_log("行情Websocket API连接断开")
 
     def subscribe(self, req: SubscribeRequest) -> None:
         """订阅行情"""
-
-        if req.symbol in self.subscribed:
+        
+        if req.symbol not in symbol_contract_map:
+            self.gateway.write_log(f"找不到该合约代码{req.symbol}")
             return
-
         # 缓存订阅记录
         self.subscribed[req.symbol] = req
 
@@ -79,45 +77,27 @@ class BybitMarketWebsocketListener(WebsocketListener):
         self.ticks[req.symbol] = tick
 
         # 发送订阅请求
-        self.subscribe_topic(f"instrument_info.100ms.{req.symbol}", self.on_tick)
-        self.subscribe_topic(f"trade.{req.symbol}", self.on_tick)
-        self.subscribe_topic(f"orderBookL2_25.{req.symbol}", self.on_depth)
-
-    def subscribe_topic(
-        self,
-        topic: str,
-        callback: Callable[[str, dict], Any]
-    ) -> None:
-        """订阅公共频道推送"""
-        self.callbacks[topic] = callback
-
-        req: dict = {
-            "op": "subscribe",
-            "args": [topic],
+        
+        req_dict: dict = {
+            "op": "subscribe", 
+            "args": [
+                f"instrument_info.100ms.{req.symbol}",
+                f"orderBookL2_25.{req.symbol}",
+                # f"trade.{req.symbol}",
+            ]
         }
-        self.send_packet(req)
+        self.send_packet(req_dict)
+    
 
-    def on_packet(self, packet: dict) -> None:
-        """推送数据回报"""
-        print(packet)
+    def on_packet(self, packet: dict):
         if "topic" not in packet:
-            op: str = packet["request"]["op"]
-            if op == "auth":
-                self.on_login(packet)
-        else:
-            channel: str = packet["topic"]
-            callback: callable = self.callbacks[channel]
-            callback(packet)
+            return
+        channel = packet["topic"]
 
-    def on_error(
-        self,
-        exception_type: type,
-        exception_value: Exception,
-        tb   
-        ) -> None:
-        """触发异常回报"""
-        msg = f"触发异常，状态码：{exception_type}，信息：{exception_value}, tb: {tb}, req: {req}"
-        self.gateway.write_log(msg)
+        if "orderBookL2_25" in  channel:
+            self.on_depth(packet)
+        if "instrument_info" in channel:
+            self.on_tick(packet)
 
     def on_tick(self, packet: dict) -> None:
         """行情推送回报"""
@@ -151,7 +131,8 @@ class BybitMarketWebsocketListener(WebsocketListener):
                 tick.trade_volume = int(update["volume_24h_e8"]) / 100000000
 
             tick.datetime = generate_datetime(update["updated_at"])
-
+            
+        tick.localtime = datetime.now()
         self.gateway.on_tick(copy(tick))
 
     def on_depth(self, packet: dict) -> None:
@@ -215,6 +196,7 @@ class BybitMarketWebsocketListener(WebsocketListener):
             setattr(tick, f"ask_volume_{n}", ask_data["size"])
 
         tick.datetime = generate_datetime_2(int(packet["timestamp_e6"]) / 1000000)
+        tick.localtime = datetime.now()
         self.gateway.on_tick(copy(tick))
 
 
@@ -223,12 +205,11 @@ class BybitTradeWebsocketListener(WebsocketListener):
 
     def __init__(self, gateway: Gateway) -> None:
         """构造函数"""
-        super().__init__(gateway)
+        super(BybitTradeWebsocketListener, self).__init__(gateway)
 
         self.gateway = gateway
-        self.gateway.set_gateway_name(gateway.gateway_name)
         self.ping_interval = 30
-        
+
         self.key: str = ""
         self.secret: bytes = b""
         self.server: str = ""
@@ -308,17 +289,6 @@ class BybitTradeWebsocketListener(WebsocketListener):
             channel: str = packet["topic"]
             callback: callable = self.callbacks[channel]
             callback(packet)
-
-    def on_error(
-        self,
-        exception_type: type,
-        exception_value: Exception,
-        tb
-    ) -> None:
-        """触发异常回报"""
-        msg = f"触发异常，状态码：{exception_type}，信息：{exception_value}"
-        self.gateway.write_log(msg)
-
 
     def on_login(self, packet: dict):
         """用户登录请求回报"""

@@ -9,20 +9,31 @@ from abquant.trader.object import AccountData, CancelRequest, ContractData, Hist
 
 from ..accessor import Request, RestfulAccessor
 from ..basegateway import Gateway
-from .bybit_util import generate_timestamp, generate_datetime_2, generate_datetime, get_float_value, sign
-from . import DIRECTION_AB2BYBIT, DIRECTION_BYBIT2AB, INTERVAL_AB2BYBIT, ORDER_TYPE_AB2BYBIT, ORDER_TYPE_BYBIT2AB, REST_HOST, STATUS_BYBIT2AB, TESTNET_REST_HOST, TIMEDELTA_MAP, symbol_contract_map, local_orderids
+from .bybit_util import generate_timestamp, generate_datetime_2, generate_datetime, sign
+from . import (
+    DIRECTION_AB2BYBIT, 
+    DIRECTION_BYBIT2AB, 
+    INTERVAL_AB2BYBIT, 
+    ORDER_TYPE_AB2BYBIT, 
+    ORDER_TYPE_BYBIT2AB, 
+    REST_HOST, 
+    STATUS_BYBIT2AB, 
+    TESTNET_REST_HOST, 
+    TIMEDELTA_MAP, 
+    symbol_contract_map, 
+    local_orderids
+)
 
 class BybitAccessor(RestfulAccessor):
     """正向合约的REST接口"""
     ORDER_PREFIX = str(hex(uuid.getnode()))
 
 
-    def __init__(self, gateway: Gateway) -> None:
+    def __init__(self, gateway: Gateway):
         """构造函数"""
         super(BybitAccessor, self).__init__(gateway)
 
-        self.gateway = gateway
-        # self.gateway_name: str = gateway.gateway_name
+        self.gateway: Gateway = gateway
 
         self.key: str = ""
         self.secret: bytes = b""
@@ -33,7 +44,7 @@ class BybitAccessor(RestfulAccessor):
 
     def sign(self, request: Request) -> Request:
         """生成签名"""
-        request.headers = {"Referer": "vn.py"}
+        request.headers = {"Referer": "abquant"}
 
         if request.method == "GET":
             api_params: dict = request.params
@@ -73,10 +84,10 @@ class BybitAccessor(RestfulAccessor):
         self.connect_time = (
             int(datetime.now().strftime("%y%m%d%H%M%S")) * self.order_count
         )
-        self.start(3)
+        self.start()
+        self.query_contract()
         self.gateway.write_log("REST API启动成功")
 
-        self.query_contract()
 
     def _new_order_id(self) -> int:
         """"""
@@ -119,7 +130,7 @@ class BybitAccessor(RestfulAccessor):
 
         if req.offset == Offset.CLOSE:
             data["reduce_only"] = True
-
+            
         self.add_request(
             "POST",
             path,
@@ -147,7 +158,7 @@ class BybitAccessor(RestfulAccessor):
         error_msg: str = data["ret_msg"]
         error_code: int = data["ret_code"]
         msg = f"委托失败，错误代码:{error_code},  错误信息：{error_msg}"
-        self.gateway.write_log(msg)
+        self.gateway.write_log(data)
 
     def on_send_order_error(
         self,
@@ -208,18 +219,6 @@ class BybitAccessor(RestfulAccessor):
 
         msg = f"请求失败，状态码：{request.status}，错误代码：{error_code}, 信息：{error_msg}"
         self.gateway.write_log(msg)
-
-    def on_error(
-        self,
-        exception_type: type,
-        exception_value: Exception,
-        tb,
-        request: Request
-    ) -> None:
-        """触发异常回报"""
-        msg = f"触发异常，状态码：{exception_type}，信息：{exception_value}, req:{request}, tb: {tb}"
-        self.gateway.write_log(msg)
-
 
     def on_query_position(self, data: dict, request: Request) -> None:
         """持仓查询回报"""

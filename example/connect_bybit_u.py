@@ -51,8 +51,8 @@ if __name__ == '__main__':
         str('ORDER: ') + str(event.data)))
     event_dispatcher.register(EventType.EVENT_TRADE, lambda event: print(
         str('TRADE: ') + str(event.data)))
-    event_dispatcher.register(EventType.EVENT_TICK, lambda event: print(
-        str('TICK: ') + str(event.data)))
+    # event_dispatcher.register(EventType.EVENT_TICK, lambda event: print(
+    #     str('TICK: ') + str(event.data)))
     # event_dispatcher.register(EventType.EVENT_DEPTH, lambda event: print(
     #     str('DEPTH: ') + str(event.data)))
     # event_dispatcher.register(EventType.EVENT_TRANSACTION, lambda event: print(
@@ -81,11 +81,12 @@ if __name__ == '__main__':
         # 交易数据 transaction
         transaction=True)
     )
-    gateway.subscribe(SubscribeRequest(
-        symbol='BTCUSDT', exchange=Exchange.BYBIT))
+    # gateway.subscribe(SubscribeRequest(
+    #     symbol='BTCUSDT', exchange=Exchange.BYBIT))
 
     # gateway.connect 之后会更新的 binance合约交易的 合约的dict,  symbol_contract_map是全局的一个单例。
-    from abquant.gateway.bybit import symbol_contract_map
+    # from abquant.gateway.bybit import symbol_contract_map
+    # print(symbol_contract_map)
 
     # for i, k in enumerate(symbol_contract_map):
     #     if i > 3:
@@ -95,15 +96,15 @@ if __name__ == '__main__':
     #         symbol=k, exchange=Exchange.BYBIT))
     # subscribe 各个产品后 要调用gateway.start 开始接受数据。该操作较为冗赘，有实现细节上的考虑。 实现strategy时，以上调用对交易员隐藏，由框架实现。
     gateway.start()
-    print("start to receive data from exchange")
+    # print("start to receive data from exchange")
 
     # 下单撤单， 由框架异步执行。胆大的下单撤单吧。不必担心阻塞和 IO。 
     # ok
     
     # for i in range(20):
-    # ab_order_id: str = gateway.send_order(OrderRequest(symbol='BTCUSDT', exchange=Exchange.BYBIT,
-    #                                     direction=Direction.LONG, type=OrderType.LIMIT, volume=0.001, price=40000, offset=Offset.OPEN))
-    # print('ab orderid', ab_order_id)
+    ab_order_id: str = gateway.send_order(OrderRequest(symbol='DYDXUSDT', exchange=Exchange.BYBIT,
+                                        direction=Direction.LONG, type=OrderType.LIMIT, volume=1, price=9, offset=Offset.OPEN))
+    print('ab orderid', ab_order_id)
     # time.sleep(3)
     # order_id = ab_order_id.split('.')[-1]
     # print('orderid', order_id)

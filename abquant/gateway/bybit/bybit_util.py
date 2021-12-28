@@ -2,7 +2,7 @@ from datetime import datetime
 import time
 import hashlib
 import hmac
-from pytz import timezone, utc
+from pytz import timezone
 
 # 中国时区
 CHINA_TZ: timezone = timezone("Asia/Shanghai")
@@ -32,14 +32,16 @@ def generate_datetime(timestamp: str) -> datetime:
     else:
         dt: datetime = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%SZ")
 
-    dt = utc.localize(dt)
-    return dt.astimezone(CHINA_TZ)
+    # dt = utc.localize(dt)
+    # return dt.astimezone(CHINA_TZ)
+    return dt
 
 
 def generate_datetime_2(timestamp: int) -> datetime:
     """生成时间"""
     dt: datetime = datetime.fromtimestamp(timestamp)
-    return CHINA_TZ.localize(dt)
+    return dt
+    # return CHINA_TZ.localize(dt)
 
 
 def get_float_value(data: dict, key: str) -> float:

@@ -1,6 +1,5 @@
-
-
 from typing import Dict, Iterable, List
+
 from abquant.gateway.basegateway import Gateway
 from abquant.trader.common import Exchange
 from abquant.trader.msg import BarData
@@ -12,10 +11,6 @@ from .bybit_listener import BybitMarketWebsocketListener, BybitTradeWebsocketLis
 
 
 class BybitGateway(Gateway):
-    """
-    vn.py用于对接Bybit交易所的交易接口。
-    """
-
     default_setting: Dict[str, str] = {
         "key": "",
         "secret": "",
@@ -24,23 +19,20 @@ class BybitGateway(Gateway):
         "test_net": ["REAL", "TESTNET"],
     }
 
-    exchanges: List[Exchange] = [Exchange.BYBIT]
+    exchanges = [Exchange.BYBIT]
 
-    def __init__(self, event_dispatcher: EventDispatcher):
-        """构造函数"""
-        super().__init__(event_dispatcher, "BYBIT")
-
-        self.rest_accessor = None
-        self.trade_listener = None
-        self.market_listener = None
+    def __init__(self, event_dispatcher: EventDispatcher, gateway_name="BYBIT"):
+        """"""
+        super().__init__(event_dispatcher, gateway_name)
         
-        self.set_gateway_name("BYBIT")
-
-    def connect(self, setting: dict) -> None:
-        """连接交易接口"""
+        self.set_gateway_name(gateway_name)
         self.rest_accessor = BybitAccessor(self)
         self.trade_listener = BybitTradeWebsocketListener(self)
         self.market_listener = BybitMarketWebsocketListener(self)
+        
+    def connect(self, setting: dict) -> None:
+        """"""
+
         try:
             key = setting["key"]
             secret = setting["secret"]
@@ -53,8 +45,6 @@ class BybitGateway(Gateway):
             "proxy_host", self.default_setting["proxy_host"])        
         proxy_port = setting.get(
             "proxy_port", self.default_setting["proxy_port"])
-
-
 
         self.rest_accessor.connect(
             key,
@@ -75,7 +65,8 @@ class BybitGateway(Gateway):
             proxy_host,
             proxy_port
         )
-    
+        self.on_gateway(self)
+        
     def start(self):
         self.market_listener.start()
         self.trade_listener.start()
