@@ -6,3 +6,4 @@ from .binances.binancegateway import BinanceSGateway
 from .dydx.dydx_getway import DydxGateway
 
 from .bitmex.bitmexgateway import BitmexGateway
+from .bybit.bybit_gateway import BybitGateway
