@@ -83,7 +83,7 @@ class Transmitter:
         self._logger.debug(msg)
 
     def on_error(self, ws, error):
-        self._logger.error(error)
+        self._logger.debug(error)
 
     def on_open(self, ws):
         self.client = ws
@@ -92,7 +92,7 @@ class Transmitter:
     def on_close(self, ws, code, msg):
         self.client = None
         if code is not None and code == 1008:   # WS Error Code: Policy Violation, 具体是strategy参数不对
-            self._logger.info("Monitor: No strategy config, WebSocket CLOSED")
+            self._logger.debug("Monitor: No strategy config, WebSocket CLOSED")
             return
         self._logger.debug(f"WebSocket closed, code: {code}, msg: {msg}")
         i = 1
@@ -104,9 +104,9 @@ class Transmitter:
                 break
             i += 1
         if self.client is None:
-            self._logger.info(f"Monitor server CLOSED after {i} retry failures")
+            self._logger.debug(f"Monitor server CLOSED after {i} retry failures")
         else:
-            self._logger.info(f"Monitor server RECONNECT after {i} retries")
+            self._logger.debug(f"Monitor server RECONNECT after {i} retries")
 
     def on_ping(self, pingMsg, ex):
         # ws._send_ping()
