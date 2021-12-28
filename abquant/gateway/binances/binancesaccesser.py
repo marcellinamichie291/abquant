@@ -294,6 +294,14 @@ class BinanceAccessor(RestfulAccessor):
             if account.balance:
                 self.gateway.on_account(account)
 
+        raw_data = {
+            'type': 'data_restful',
+            'gateway_name': self.gateway_name,
+            'data_type': 'account',
+            'payload': data
+        }
+        self.gateway.on_raw(raw_data)
+
         self.gateway.write_log("账户资金查询成功")
 
     def on_query_order(self, data, request):
@@ -313,6 +321,14 @@ class BinanceAccessor(RestfulAccessor):
                 gateway_name=self.gateway_name,
             )
             self.gateway.on_order(order)
+
+        raw_data = {
+            'type': 'data_restful',
+            'gateway_name': self.gateway_name,
+            'data_type': 'order',
+            'payload': data
+        }
+        self.gateway.on_raw(raw_data)
 
         self.gateway.write_log("委托信息查询成功")
 
