@@ -3,7 +3,7 @@ import time
 import argparse
 
 from abquant.event import EventDispatcher, EventType
-from abquant.gateway import BybitGateway
+from abquant.gateway import BybitUBCGateway
 from abquant.trader.object import CancelRequest, HistoryRequest, OrderRequest, SubscribeMode, SubscribeRequest
 from abquant.trader.common import Direction, Exchange, Interval, Offset, OrderType
 
@@ -33,7 +33,8 @@ if __name__ == '__main__':
         # 1087 int类型
         "proxy_port": args.proxy_port if args.proxy_port else 0,
         "test_net": ["TESTNET", "REAL"][0],
-    }
+        "position_mode":["MergedSingle", "BothSide"][0],    
+}
     event_dispatcher = EventDispatcher()
 
     # 根据事件类型 注册回调函数。 随意uncomment
@@ -62,7 +63,7 @@ if __name__ == '__main__':
 
     # 订阅行情
     # u本位 gateway
-    gateway = BybitGateway(event_dispatcher)
+    gateway = BybitUBCGateway(event_dispatcher)
     # btc 本位 gateway
     gateway.connect(setting)
 

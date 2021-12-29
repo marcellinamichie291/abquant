@@ -6,17 +6,18 @@ from abquant.trader.msg import BarData
 from abquant.trader.object import CancelRequest, HistoryRequest, OrderRequest, SubscribeRequest
 from abquant.event import EventDispatcher
 
-from .bybit_accessor import BybitAccessor
-from .bybit_listener import BybitMarketWebsocketListener, BybitTradeWebsocketListener
+from .bybit_accessor import BybitUBCAccessor
+from .bybit_listener import BybitUBCMarketWebsocketListener, BybitUBCTradeWebsocketListener
 
 
-class BybitGateway(Gateway):
+class BybitUBCGateway(Gateway):
     default_setting: Dict[str, str] = {
         "key": "",
         "secret": "",
         "proxy_host": "",
         "proxy_port": 0,
         "test_net": ["REAL", "TESTNET"],
+        "position_mode":["MergedSingle", "BothSide"],
     }
 
     exchanges = [Exchange.BYBIT]
@@ -26,9 +27,9 @@ class BybitGateway(Gateway):
         super().__init__(event_dispatcher, gateway_name)
         
         self.set_gateway_name(gateway_name)
-        self.rest_accessor = BybitAccessor(self)
-        self.trade_listener = BybitTradeWebsocketListener(self)
-        self.market_listener = BybitMarketWebsocketListener(self)
+        self.rest_accessor = BybitUBCAccessor(self)
+        self.trade_listener = BybitUBCTradeWebsocketListener(self)
+        self.market_listener = BybitUBCMarketWebsocketListener(self)
         
     def connect(self, setting: dict) -> None:
         """"""
@@ -45,10 +46,12 @@ class BybitGateway(Gateway):
             "proxy_host", self.default_setting["proxy_host"])        
         proxy_port = setting.get(
             "proxy_port", self.default_setting["proxy_port"])
-
+        position_mode = setting.get("position_mode", self.default_setting["position_mode"][0])
+        
         self.rest_accessor.connect(
             key,
             secret,
+            position_mode,
             server,
             proxy_host,
             proxy_port

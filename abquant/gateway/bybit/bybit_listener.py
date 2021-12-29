@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any, Callable, Dict
 from copy import copy
 
-from abquant.trader.common import Exchange, Offset
+from abquant.trader.common import Direction, Exchange, Offset
 from abquant.trader.msg import OrderData, TickData, TradeData
 from abquant.trader.object import AccountData, PositionData, SubscribeRequest
 from ..basegateway import Gateway
@@ -21,12 +21,12 @@ from . import (
 
 from .bybit_util import generate_datetime, generate_datetime_2, generate_timestamp, sign
 
-class BybitMarketWebsocketListener(WebsocketListener):
+class BybitUBCMarketWebsocketListener(WebsocketListener):
     """U本位合约的行情Websocket接口"""
 
     def __init__(self, gateway: Gateway) -> None:
         """构造函数"""
-        super(BybitMarketWebsocketListener, self).__init__(gateway)
+        super(BybitUBCMarketWebsocketListener, self).__init__(gateway)
 
         self.gateway = gateway
         self.ping_interval = 30
@@ -200,12 +200,12 @@ class BybitMarketWebsocketListener(WebsocketListener):
         self.gateway.on_tick(copy(tick))
 
 
-class BybitTradeWebsocketListener(WebsocketListener):
+class BybitUBCTradeWebsocketListener(WebsocketListener):
     """u本位 合约的交易Websocket接口"""
 
     def __init__(self, gateway: Gateway) -> None:
         """构造函数"""
-        super(BybitTradeWebsocketListener, self).__init__(gateway)
+        super(BybitUBCTradeWebsocketListener, self).__init__(gateway)
 
         self.gateway = gateway
         self.ping_interval = 30
@@ -373,8 +373,8 @@ class BybitTradeWebsocketListener(WebsocketListener):
             position: PositionData = PositionData(
                 symbol=d["symbol"],
                 exchange=Exchange.BYBIT,
-                direction=DIRECTION_BYBIT2AB[d["side"]],
-                volume=d["size"],
+                direction=Direction.NET if d["mode"] == "MergedSingle" else DIRECTION_BYBIT2AB[d["side"]],
+                volume=d["size"] if d["side"] == "Buy" else -d["size"],
                 price=float(d["entry_price"]),
                 gateway_name=self.gateway_name
             )

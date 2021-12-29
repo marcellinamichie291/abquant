@@ -24,19 +24,21 @@ from . import (
     local_orderids
 )
 
-class BybitAccessor(RestfulAccessor):
-    """正向合约的REST接口"""
+class BybitUBCAccessor(RestfulAccessor):
+    """U本位合约的REST接口"""
     ORDER_PREFIX = str(hex(uuid.getnode()))
 
 
     def __init__(self, gateway: Gateway):
         """构造函数"""
-        super(BybitAccessor, self).__init__(gateway)
+        super(BybitUBCAccessor, self).__init__(gateway)
 
         self.gateway: Gateway = gateway
 
         self.key: str = ""
         self.secret: bytes = b""
+        self.position_mode: str = ""
+        
         self.connect_time: int = 0
 
         self.order_count: int = 1_000_000
@@ -69,6 +71,7 @@ class BybitAccessor(RestfulAccessor):
         self,
         key: str,
         secret: str,
+        position_mode: str,
         server: str,
         proxy_host: str,
         proxy_port: int,
@@ -76,6 +79,8 @@ class BybitAccessor(RestfulAccessor):
         """连接服务器"""
         self.key = key
         self.secret = secret.encode()
+        self.position_mode = position_mode
+        print("##################BybitUBCAccessor   position_mode",position_mode)
 
         if server == "REAL":
             self.init(REST_HOST, proxy_host, proxy_port)
@@ -124,7 +129,8 @@ class BybitAccessor(RestfulAccessor):
             "reduce_only": False,
             "close_on_trigger": False
         }
-
+        if self.position_mode == "MergedSingle":
+            data["position_idx"] = 0
         data["order_type"] = order_type
         data["price"] = req.price
 
