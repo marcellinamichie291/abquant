@@ -18,7 +18,7 @@ from typing import Tuple, Optional
 from ecdsa.rfc6979 import generate_k
 import hashlib
 from enum import Enum
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 import json
 import hmac

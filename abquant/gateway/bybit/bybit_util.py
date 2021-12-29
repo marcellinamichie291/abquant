@@ -4,10 +4,6 @@ import hashlib
 import hmac
 from pytz import timezone
 
-# 中国时区
-CHINA_TZ: timezone = timezone("Asia/Shanghai")
-
-
 
 def generate_timestamp(expire_after: float = 30) -> int:
     """生成时间戳"""
@@ -32,8 +28,6 @@ def generate_datetime(timestamp: str) -> datetime:
     else:
         dt: datetime = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%SZ")
 
-    # dt = utc.localize(dt)
-    # return dt.astimezone(CHINA_TZ)
     return dt
 
 
@@ -41,7 +35,6 @@ def generate_datetime_2(timestamp: int) -> datetime:
     """生成时间"""
     dt: datetime = datetime.fromtimestamp(timestamp)
     return dt
-    # return CHINA_TZ.localize(dt)
 
 
 def get_float_value(data: dict, key: str) -> float:

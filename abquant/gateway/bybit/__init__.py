@@ -30,6 +30,24 @@ TESTNET_INVERSE_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime"
 TESTNET_PUBLIC_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime_public"
 TESTNET_PRIVATE_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime_private"
 
+# 
+REST_PATH_MAP = {
+    "UBC": {
+        "send_order": "/private/linear/order/create",
+        "cancel_order": "/private/linear/order/cancel",
+        "query_position": "/private/linear/position/list",
+        "query_order": "/private/linear/order/search",
+        "query_history": "/public/linear/kline"
+    },
+    "BBC": {
+        "send_order": "/private/linear/order/create",
+        "cancel_order": "/private/linear/order/cancel",
+        "query_position": "/private/linear/position/list",
+        "query_order": "/private/linear/order/search",
+        "query_history": "/public/linear/kline"
+    }
+}
+
 # 委托状态映射
 STATUS_BYBIT2AB: Dict[str, Status] = {
     "Created": Status.NOTTRADED,
@@ -68,15 +86,13 @@ TIMEDELTA_MAP: Dict[Interval, timedelta] = {
 }
 
 # 反向永续合约类型列表
-swap_symbols: Set[str] = set()
+bbc_symbol_contract_map: Dict[str, ContractData] = {}
 
 # 反向交割合约类型列表
-futures_symbols: Set[str] = set()
+future_symbol_contract_map: Dict[str, ContractData] = {}
 
 # USDT永续合约类型列表
-usdt_symbols: Set[str] = set()
+ubc_symbol_contract_map: Dict[str, ContractData] = {}
 
 # 本地委托号缓存集合
 local_orderids: Set[str] = set()
-
-symbol_contract_map: Dict[str, ContractData] = {}
