@@ -1,10 +1,11 @@
 from datetime import datetime
+from re import sub
 from struct import pack
 from typing import Any, Callable, Dict
 from copy import copy
 
 from abquant.trader.common import Direction, Exchange, Offset
-from abquant.trader.msg import OrderData, TickData, TradeData
+from abquant.trader.msg import DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
 from abquant.trader.object import AccountData, PositionData, SubscribeRequest
 from ..basegateway import Gateway
 from ..listener import WebsocketListener
@@ -35,6 +36,9 @@ class BybitUBCMarketWebsocketListener(WebsocketListener):
         self.ping_interval = 30
 
         self.ticks: Dict[str, TickData] = {}
+        self.transactions: Dict[str, TransactionData] = {}
+        self.depths: Dict[str, DepthData] = {}        
+
         self.subscribed: Dict[str, SubscribeRequest] = {}
 
         self.symbol_bids: Dict[str, dict] = {}
@@ -69,6 +73,8 @@ class BybitUBCMarketWebsocketListener(WebsocketListener):
             return
         # 缓存订阅记录
         self.subscribed[req.symbol] = req
+        
+        
 
         # # 创建TICK对象
         tick: TickData = TickData(
@@ -80,14 +86,18 @@ class BybitUBCMarketWebsocketListener(WebsocketListener):
         self.ticks[req.symbol] = tick
 
         # 发送订阅请求
+        subscribe_mode = self.gateway.subscribe_mode
+        channels = []
+        if subscribe_mode.transaction:
+            channels.append(f"instrument_info.100ms.{req.symbol}")
+        if subscribe_mode.tick_5:
+            channels.append(f"orderBookL2_25.{req.symbol}")
+        if subscribe_mode.transaction:
+            channels.append(f"trade.{req.symbol}")
         
         req_dict: dict = {
             "op": "subscribe", 
-            "args": [
-                f"instrument_info.100ms.{req.symbol}",
-                f"orderBookL2_25.{req.symbol}",
-                # f"trade.{req.symbol}",
-            ]
+            "args": channels
         }
         self.send_packet(req_dict)
     
@@ -653,7 +663,6 @@ class BybitBBCTradeWebsocketListener(WebsocketListener):
 
     def on_packet(self, packet: dict) -> None:
         """推送数据回报"""
-        print("###########trade ws packet", packet)
         if "topic" not in packet:
             op: str = packet["request"]["op"]
             if op == "auth":

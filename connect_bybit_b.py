@@ -101,16 +101,21 @@ if __name__ == '__main__':
 
     # 下单撤单， 由框架异步执行。胆大的下单撤单吧。不必担心阻塞和 IO。 
     # ok
+    time.sleep(3)
     
     # for i in range(20):
     ab_order_id: str = gateway.send_order(OrderRequest(symbol='BTCUSD', exchange=Exchange.BYBIT,
-                                        direction=Direction.LONG, type=OrderType.LIMIT, volume=1, price=47760.50, offset=Offset.OPEN))
-    # print('ab orderid', ab_order_id)
-    # time.sleep(3)
-    # order_id = ab_order_id.split('.')[-1]
+                                        direction=Direction.LONG, type=OrderType.POSTONLYLIMIT, volume=1, price=48000.50, offset=Offset.OPEN))
+    
+    
+    ab_order_id1: str = gateway.send_order(OrderRequest(symbol='BTCUSD', exchange=Exchange.BYBIT,
+                                        direction=Direction.LONG, type=OrderType.LIMIT, volume=1, price=44000.50, offset=Offset.OPEN))
+    print('ab orderid', ab_order_id1)
+    time.sleep(3)
+    order_id = ab_order_id1.split('.')[-1]
     # print('orderid', order_id)
-    # gateway.cancel_order(CancelRequest(
-    #     order_id, symbol='BTCUSDT', exchange=Exchange.BYBIT))
+    gateway.cancel_order(CancelRequest(
+        order_id, symbol='BTCUSD', exchange=Exchange.BYBIT))
 
 
 
