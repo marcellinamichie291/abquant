@@ -86,8 +86,8 @@ if __name__ == '__main__':
     #     symbol='BTCUSDT', exchange=Exchange.BYBIT))
 
     # gateway.connect 之后会更新的 binance合约交易的 合约的dict,  symbol_contract_map是全局的一个单例。
-    # from abquant.gateway.bybit import symbol_contract_map
-    # print(symbol_contract_map)
+    from abquant.gateway.bybit import ubc_symbol_contract_map
+    print(ubc_symbol_contract_map)
 
     # for i, k in enumerate(symbol_contract_map):
     #     if i > 3:
@@ -103,9 +103,9 @@ if __name__ == '__main__':
     # ok
     
     # for i in range(20):
-    ab_order_id: str = gateway.send_order(OrderRequest(symbol='DYDXUSDT', exchange=Exchange.BYBIT,
-                                        direction=Direction.LONG, type=OrderType.LIMIT, volume=1, price=9, offset=Offset.OPEN))
-    print('ab orderid', ab_order_id)
+    # ab_order_id: str = gateway.send_order(OrderRequest(symbol='DYDXUSDT', exchange=Exchange.BYBIT,
+    #                                     direction=Direction.LONG, type=OrderType.LIMIT, volume=1, price=9, offset=Offset.OPEN))
+    # print('ab orderid', ab_order_id)
     # time.sleep(3)
     # order_id = ab_order_id.split('.')[-1]
     # print('orderid', order_id)
