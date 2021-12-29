@@ -23,7 +23,7 @@ def main():
     }
 
     dataloader: DataLoaderKline = DataLoaderKline(dt_setting)
-    dataset: DatasetKline = dataloader.load_data('ETHUSDT.BINANCE', datetime(2021, 11, 24), datetime(2021, 12, 13))
+    dataset: DatasetKline = dataloader.load_data('ETHUSDT.BINANCE', datetime(2021, 12, 24), datetime(2021, 12, 28))
     if dataset is None:
         return
     dataset.dataframe.info(memory_usage='deep')

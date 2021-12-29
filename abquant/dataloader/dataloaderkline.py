@@ -173,7 +173,7 @@ class DataLoaderKline(DataLoader):
                              f"-{str(self.start_time)[:19].replace(' ', '-')}-{str(self.end_time)[:19].replace(' ', '-')}.csv"
                 df_02.to_csv(self.cache_dir + '/' + cache_file, index=False)
 
-            self._logger.info(f"\n{'-'*32}\nLoaded k-line bars {rn}\n{'-'*32}")
+            self._logger.info(f"\n{'-'*32}\nLoaded k-line {self.interval.value} bars: {rn}\n{'-'*32}")
         except Exception as e:
             self._logger.error('Error saving cache: ', e)
         return dataset
