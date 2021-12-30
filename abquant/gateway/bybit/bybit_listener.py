@@ -52,7 +52,6 @@ class BybitUBCMarketWebsocketListener(WebsocketListener):
         else:
             url = TESTNET_PUBLIC_WEBSOCKET_HOST
         self.init(url, proxy_host, proxy_port)
-        self.start()
 
     def on_connected(self) -> None:
         """"""
@@ -73,27 +72,27 @@ class BybitUBCMarketWebsocketListener(WebsocketListener):
             return
         # 缓存订阅记录
         self.subscribed[req.symbol] = req
+        # print("#########subscribe", req)
         
+        symbol = req.symbol
         
-
-        # # 创建TICK对象
-        tick: TickData = TickData(
-            symbol=req.symbol,
-            exchange=req.exchange,
-            datetime=datetime.now(),
-            gateway_name=self.gateway_name
-        )
-        self.ticks[req.symbol] = tick
+        tick, depth, transaction, _ = self.make_data(symbol, Exchange.BYBIT, datetime.now(), self.gateway_name)
+        self.ticks[symbol] = tick
+        self.transactions[symbol] = transaction
+        self.depths[symbol] = depth
 
         # 发送订阅请求
         subscribe_mode = self.gateway.subscribe_mode
+        # print("##########subscribe########", subscribe_mode)
         channels = []
-        if subscribe_mode.transaction:
-            channels.append(f"instrument_info.100ms.{req.symbol}")
+        if subscribe_mode.best_tick:
+            channels.append(f"instrument_info.100ms.{symbol}")
         if subscribe_mode.tick_5:
-            channels.append(f"orderBookL2_25.{req.symbol}")
+            channels.append(f"orderBookL2_25.{symbol}")
         if subscribe_mode.transaction:
-            channels.append(f"trade.{req.symbol}")
+            channels.append(f"trade.{symbol}")
+        if subscribe_mode.depth:
+            channels.append(f"orderBook_200.100ms.{symbol}")
         
         req_dict: dict = {
             "op": "subscribe", 
@@ -105,113 +104,147 @@ class BybitUBCMarketWebsocketListener(WebsocketListener):
     def on_packet(self, packet: dict):
         if "topic" not in packet:
             return
-        channel = packet["topic"]
+        channel: str = packet["topic"]
 
-        if "orderBookL2_25" in  channel:
-            self.on_depth(packet)
         if "instrument_info" in channel:
-            self.on_tick(packet)
+            # best_tick
+            type_: str = packet["type"]
+            data: dict = packet["data"]
+            symbol: str = channel.replace("instrument_info.100ms.", "")
+            tick: TickData = self.ticks[symbol]
+            if type_ == "snapshot":
+                if not data["last_price"]:           # 过滤最新价为0的数据
+                    return
 
-    def on_tick(self, packet: dict) -> None:
-        """行情推送回报"""
-        topic: str = packet["topic"]
-        type_: str = packet["type"]
-        data: dict = packet["data"]
+                tick.trade_price = float(data["last_price"])
+                tick.trade_volume = int(data["volume_24h_e8"]) / 100000000
+                tick.datetime = generate_datetime(data["updated_at"])
 
-        symbol: str = topic.replace("instrument_info.100ms.", "")
-        tick: TickData = self.ticks[symbol]
+            else:
+                update: dict = data["update"][0]
 
-        if type_ == "snapshot":
-            if not data["last_price"]:           # 过滤最新价为0的数据
+                if "last_price" not in update:      # 过滤最新价为0的数据
+                    return
+
+                tick.trade_price = float(update["last_price"])
+                if update["volume_24h_e8"]:
+                    tick.trade_volume = int(update["volume_24h_e8"]) / 100000000
+                tick.datetime = generate_datetime(update["updated_at"])
+                
+            tick.localtime = datetime.now()
+            self.gateway.on_tick(copy(tick))
+
+        if "orderBookL2_25" in channel:
+            # tick_5
+            type_: str = packet["type"]
+            data: dict = packet["data"]
+            if not data:
                 return
 
-            tick.trade_price = float(data["last_price"])
+            symbol: str = channel.replace("orderBookL2_25.", "")
+            tick: TickData = self.ticks[symbol]
+            bids: dict = self.symbol_bids.setdefault(symbol, {})
+            asks: dict = self.symbol_asks.setdefault(symbol, {})
 
-            tick.trade_volume = int(data["volume_24h_e8"]) / 100000000
+            if type_ == "snapshot":
 
-            tick.datetime = generate_datetime(data["updated_at"])
+                buf: list = data["order_book"]
 
-        else:
-            update: dict = data["update"][0]
+                for d in buf:
+                    price: float = float(d["price"])
 
-            if "last_price" not in update:      # 过滤最新价为0的数据
-                return
+                    if d["side"] == "Buy":
+                        bids[price] = d
+                    else:
+                        asks[price] = d
+            else:
+                for d in data["delete"]:
+                    price: float = float(d["price"])
 
-            tick.trade_price = float(update["last_price"])
+                    if d["side"] == "Buy":
+                        bids.pop(price)
+                    else:
+                        asks.pop(price)
 
-            if update["volume_24h_e8"]:
+                for d in (data["update"] + data["insert"]):
 
-                tick.trade_volume = int(update["volume_24h_e8"]) / 100000000
+                    price: float = float(d["price"])
+                    if d["side"] == "Buy":
+                        bids[price] = d
+                    else:
+                        asks[price] = d
 
-            tick.datetime = generate_datetime(update["updated_at"])
+            bid_keys: list = list(bids.keys())
+            bid_keys.sort(reverse=True)
+
+            ask_keys: list = list(asks.keys())
+            ask_keys.sort()
+
+            for i in range(5):
+                n = i + 1
+
+                bid_price = bid_keys[i]
+                bid_data = bids[bid_price]
+                ask_price = ask_keys[i]
+                ask_data = asks[ask_price]
+
+                setattr(tick, f"bid_price_{n}", bid_price)
+                setattr(tick, f"bid_volume_{n}", bid_data["size"])
+                setattr(tick, f"ask_price_{n}", ask_price)
+                setattr(tick, f"ask_volume_{n}", ask_data["size"])
+
+            tick.datetime = generate_datetime_2(int(packet["timestamp_e6"]) / 1000000)
+            tick.localtime = datetime.now()
+            self.gateway.on_tick(copy(tick))
             
-        tick.localtime = datetime.now()
-        self.gateway.on_tick(copy(tick))
+        if "trade" in channel:
+            # transaction
+            symbol: str = channel.replace("trade.", "")
+            l = packet["data"]
+            for data in l:
+                transaction: TradeData = self.transactions[symbol]
+                
+                transaction.datetime = generate_datetime_2(int(data["trade_time_ms"]) / 1000)
+                transaction.volume = data["size"]
+                transaction.price = data["price"]
+                transaction.direction = Direction.SHORT if data["side"] == "Sell" else Direction.LONG
+                transaction.localtime = datetime.now()
+                
+                self.gateway.on_transaction(copy(transaction))
 
-    def on_depth(self, packet: dict) -> None:
-        """盘口推送回报"""
-        topic: str = packet["topic"]
-        type_: str = packet["type"]
-        data: dict = packet["data"]
-        if not data:
-            return
-
-        symbol: str = topic.replace("orderBookL2_25.", "")
-        tick: TickData = self.ticks[symbol]
-        bids: dict = self.symbol_bids.setdefault(symbol, {})
-        asks: dict = self.symbol_asks.setdefault(symbol, {})
-
-        if type_ == "snapshot":
-
-            buf: list = data["order_book"]
-
-            for d in buf:
-                price: float = float(d["price"])
-
-                if d["side"] == "Buy":
-                    bids[price] = d
-                else:
-                    asks[price] = d
-        else:
-            for d in data["delete"]:
-                price: float = float(d["price"])
-
-                if d["side"] == "Buy":
-                    bids.pop(price)
-                else:
-                    asks.pop(price)
-
-            for d in (data["update"] + data["insert"]):
-
-                price: float = float(d["price"])
-                if d["side"] == "Buy":
-                    bids[price] = d
-                else:
-                    asks[price] = d
-
-        bid_keys: list = list(bids.keys())
-        bid_keys.sort(reverse=True)
-
-        ask_keys: list = list(asks.keys())
-        ask_keys.sort()
-
-        for i in range(5):
-            n = i + 1
-
-            bid_price = bid_keys[i]
-            bid_data = bids[bid_price]
-            ask_price = ask_keys[i]
-            ask_data = asks[ask_price]
-
-            setattr(tick, f"bid_price_{n}", bid_price)
-            setattr(tick, f"bid_volume_{n}", bid_data["size"])
-            setattr(tick, f"ask_price_{n}", ask_price)
-            setattr(tick, f"ask_volume_{n}", ask_data["size"])
-
-        tick.datetime = generate_datetime_2(int(packet["timestamp_e6"]) / 1000000)
-        tick.localtime = datetime.now()
-        self.gateway.on_tick(copy(tick))
-
+        if "orderBook_200" in channel:
+            # depth
+            symbol: str = channel.replace("orderBook_200.100ms.", "")
+            type_: str = packet["type"]
+            data: dict = packet["data"]
+            depth: DepthData = self.depths[symbol]
+            depth.localtime = datetime.now()
+            if not data:
+                return
+            
+            depth.datetime = generate_datetime_2(int(packet["timestamp_e6"]) / 1000000)
+            if type_ == "snapshot":
+                buf = data["order_book"]
+                for d in buf:
+                    depth.price = d["price"]
+                    depth.volume = d["size"]
+                    depth.direction = Direction.SHORT if d["side"] == "Sell" else Direction.LONG
+                    self.gateway.on_depth(copy(depth))
+            else:
+                for key, buf in data.items():
+                    if key == "delete":
+                        for d in buf:
+                            depth.price = float(d["price"])
+                            depth.volume = 0
+                            depth.direction = Direction.SHORT if d["side"] == "Sell" else Direction.LONG
+                            self.gateway.on_depth(copy(depth))
+                    
+                    if key == "update" or key == "insert":
+                        for d in buf:
+                            depth.price = float(d["price"])
+                            depth.volume = d["size"]
+                            depth.direction = Direction.SHORT if d["side"] == "Sell" else Direction.LONG
+                            self.gateway.on_depth(copy(depth))
 
 class BybitUBCTradeWebsocketListener(WebsocketListener):
     """u本位 合约的交易Websocket接口"""
