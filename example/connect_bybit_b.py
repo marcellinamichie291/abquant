@@ -51,13 +51,13 @@ if __name__ == '__main__':
         str('ORDER: ') + str(event.data)))
     event_dispatcher.register(EventType.EVENT_TRADE, lambda event: print(
         str('TRADE: ') + str(event.data)))
-    # event_dispatcher.register(EventType.EVENT_TICK, lambda event: print(
-    #     str('TICK: ') + str(event.data))) # ok
+    event_dispatcher.register(EventType.EVENT_TICK, lambda event: print(
+        str('TICK: ') + str(event.data))) # ok
     event_dispatcher.register(EventType.EVENT_DEPTH, lambda event: print(
         str('DEPTH: ') + str(event.data))) #ok
-    # event_dispatcher.register(EventType.EVENT_TRANSACTION, lambda event: print(
-    #     str('TRANSACTION: ') + str(event.data)))
-    # event_dispatcher.register(EventType.EVENT_ENTRUST, lambda event:  print(str('ENTRUST: ') + str(event.data)))
+    event_dispatcher.register(EventType.EVENT_TRANSACTION, lambda event: print(
+        str('TRANSACTION: ') + str(event.data)))
+    event_dispatcher.register(EventType.EVENT_ENTRUST, lambda event:  print(str('ENTRUST: ') + str(event.data)))
     # event_dispatcher.register_general(lambda event: print(str(event.type) +  str(event.data)))
 
     # 订阅行情
@@ -71,21 +71,21 @@ if __name__ == '__main__':
     # 针对minghang策略特殊定制，正常情况无需调用，默认所有数据全部订阅。（除entrust外）想感受各种各样类型的数据的把，一下的depth，tick_5, best_tick项 赋值True，或comment掉下一行代码即可。
     gateway.set_subscribe_mode(SubscribeMode(
         #订阅 深度数据 depth
-        depth=True,
+        depth=False, # ok
         # 最优五档tick
-        tick_5=True,
+        tick_5=True, # ok
         # best bid/ask tick
-        best_tick=True,
+        best_tick=True,  # ok
         # 委托单（通常不支持） entrust
         entrust=False,
-        # 交易数据 transaction
+        # 交易数据 transaction  ok
         transaction=True)
     )
     gateway.subscribe(SubscribeRequest(
         symbol='BTCUSD', exchange=Exchange.BYBIT))
 
-    # gateway.connect 之后会更新的 binance合约交易的 合约的dict,  symbol_contract_map是全局的一个单例。
-    from abquant.gateway.bybit import bbc_symbol_contract_map, future_symbol_contract_map
+    # gateway.connect 之后会更新的 binance合约交易的 合约的dict,  symbol_contract_map是全局的一个单例。 ok
+    # from abquant.gateway.bybit import bbc_symbol_contract_map, future_symbol_contract_map
     # print(bbc_symbol_contract_map)
     # print(future_symbol_contract_map)
 
@@ -101,16 +101,21 @@ if __name__ == '__main__':
 
     # 下单撤单， 由框架异步执行。胆大的下单撤单吧。不必担心阻塞和 IO。 
     # ok
+    time.sleep(3)
     
-    # for i in range(20):
-    ab_order_id: str = gateway.send_order(OrderRequest(symbol='BTCUSD', exchange=Exchange.BYBIT,
-                                        direction=Direction.LONG, type=OrderType.LIMIT, volume=1, price=47760.50, offset=Offset.OPEN))
-    # print('ab orderid', ab_order_id)
+    # # for i in range(20):
+    # ab_order_id: str = gateway.send_order(OrderRequest(symbol='BTCUSD', exchange=Exchange.BYBIT,
+    #                                     direction=Direction.LONG, type=OrderType.POSTONLYLIMIT, volume=1, price=48000.50, offset=Offset.OPEN))
+    
+    
+    # ab_order_id1: str = gateway.send_order(OrderRequest(symbol='BTCUSD', exchange=Exchange.BYBIT,
+    #                                     direction=Direction.LONG, type=OrderType.LIMIT, volume=1, price=44000.50, offset=Offset.OPEN))
+    # print('ab orderid', ab_order_id1)
     # time.sleep(3)
-    # order_id = ab_order_id.split('.')[-1]
-    # print('orderid', order_id)
+    # order_id = ab_order_id1.split('.')[-1]
+    # # print('orderid', order_id)
     # gateway.cancel_order(CancelRequest(
-    #     order_id, symbol='BTCUSDT', exchange=Exchange.BYBIT))
+    #     order_id, symbol='BTCUSD', exchange=Exchange.BYBIT))
 
 
 
