@@ -82,6 +82,7 @@ class DataLoaderKline(DataLoader):
                 raise Exception(f'Dataloader: ambiguous symbol for sub trading account type')
         if interval != Interval.MINUTE:
             raise Exception(f'Dataloader config: only accept interval MINUTE, but set: {interval}')
+        self.interval = interval
         if start is None or end is None:
             raise Exception(f'Dataloader config: neither start nor end time could be empty')
         # self.start_time = regular_time(start)
