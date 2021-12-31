@@ -1,4 +1,8 @@
 
+## 0.8.1
+1. 新增bybit B本位 gateway.
+1. bybit支持subscribe_mode。 可任意订阅5类行情。
+
 ## 0.8.0
 1. 去掉monitor在连接服务器时多余的错误日志
 1. monitor停止上传日志到websocket服务器
