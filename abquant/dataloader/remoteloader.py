@@ -102,7 +102,10 @@ class RemoteLoader:
             n = 0
             for obj in self._bucket.objects.filter(Prefix=prefix):
                 ofile = LOCAL_PATH + '/' + obj.key
-                odate = os.path.basename(obj.key).split('.')[0].split(intvl)[1].strip('-')
+                oname = os.path.basename(obj.key)
+                if oname == '' or '.' not in oname or intvl not in oname:
+                    continue
+                odate = oname.split('.')[0].split(intvl)[1].strip('-')
                 if odate in selected_days and not os.path.isfile(ofile):
                     self._logger.info(f'downloading {AWS_S3_BASE_PATH + obj.key} to {ofile} ...')
                     self._bucket.download_file(obj.key, ofile)
