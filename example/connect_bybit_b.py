@@ -3,7 +3,7 @@ import time
 import argparse
 
 from abquant.event import EventDispatcher, EventType
-from abquant.gateway import BybitUBCGateway
+from abquant.gateway import BybitBBCGateway
 from abquant.trader.object import CancelRequest, HistoryRequest, OrderRequest, SubscribeMode, SubscribeRequest
 from abquant.trader.common import Direction, Exchange, Interval, Offset, OrderType
 
@@ -33,19 +33,18 @@ if __name__ == '__main__':
         # 1087 int类型
         "proxy_port": args.proxy_port if args.proxy_port else 0,
         "test_net": ["TESTNET", "REAL"][0],
-        "position_mode":["MergedSingle", "BothSide"][0],    
 }
     event_dispatcher = EventDispatcher()
 
     # 根据事件类型 注册回调函数。 随意uncomment
     event_dispatcher.register(EventType.EVENT_LOG, lambda event: print(
-        str('LOG: ') + str(event.data)))  # pass
+        str('LOG: ') + str(event.data)))  # ok
     # event_dispatcher.register(EventType.EVENT_TIMER, lambda event:  print(str('TIMER: ') + str(event.data))) #pass
-    event_dispatcher.register(EventType.EVENT_ACCOUNT, lambda event: print(
-        str('ACCOUNT: ') + str(event.data)))  # pass accessor,  trade_listerer not done
+    # event_dispatcher.register(EventType.EVENT_ACCOUNT, lambda event: print(
+    #     str('ACCOUNT: ') + str(event.data)))  # ok
     # event_dispatcher.register(EventType.EVENT_CONTRACT, lambda event:  print(str('CONTRACT: ') + str(event.data))) # pass
     event_dispatcher.register(EventType.EVENT_POSITION, lambda event: print(
-        str('POSITION: ') + str(event.data)))  # pass accessor, trade_listerer not done
+        str('POSITION: ') + str(event.data)))  # ok
     event_dispatcher.register(EventType.EVENT_EXCEPTION, lambda event: print(
         str('EXCEPTION: ') + str(event.data)))
     event_dispatcher.register(EventType.EVENT_ORDER, lambda event: print(
@@ -53,17 +52,17 @@ if __name__ == '__main__':
     event_dispatcher.register(EventType.EVENT_TRADE, lambda event: print(
         str('TRADE: ') + str(event.data)))
     event_dispatcher.register(EventType.EVENT_TICK, lambda event: print(
-        str('TICK: ') + str(event.data)))
+        str('TICK: ') + str(event.data))) # ok
     event_dispatcher.register(EventType.EVENT_DEPTH, lambda event: print(
-        str('DEPTH: ') + str(event.data)))
+        str('DEPTH: ') + str(event.data))) #ok
     event_dispatcher.register(EventType.EVENT_TRANSACTION, lambda event: print(
         str('TRANSACTION: ') + str(event.data)))
-    # event_dispatcher.register(EventType.EVENT_ENTRUST, lambda event:  print(str('ENTRUST: ') + str(event.data)))
+    event_dispatcher.register(EventType.EVENT_ENTRUST, lambda event:  print(str('ENTRUST: ') + str(event.data)))
     # event_dispatcher.register_general(lambda event: print(str(event.type) +  str(event.data)))
 
     # 订阅行情
     # u本位 gateway
-    gateway = BybitUBCGateway(event_dispatcher)
+    gateway = BybitBBCGateway(event_dispatcher)
     # btc 本位 gateway
     gateway.connect(setting)
 
@@ -71,23 +70,24 @@ if __name__ == '__main__':
     time.sleep(3)
     # 针对minghang策略特殊定制，正常情况无需调用，默认所有数据全部订阅。（除entrust外）想感受各种各样类型的数据的把，一下的depth，tick_5, best_tick项 赋值True，或comment掉下一行代码即可。
     gateway.set_subscribe_mode(SubscribeMode(
-        #订阅 深度数据 depth  ok
-        depth=False,
-        # 最优五档tick  ok
-        tick_5=True,
-        # best bid/ask tick ok
-        best_tick=True,
+        #订阅 深度数据 depth
+        depth=False, # ok
+        # 最优五档tick
+        tick_5=True, # ok
+        # best bid/ask tick
+        best_tick=True,  # ok
         # 委托单（通常不支持） entrust
         entrust=False,
         # 交易数据 transaction  ok
-        transaction=False)
+        transaction=True)
     )
     gateway.subscribe(SubscribeRequest(
-        symbol='BTCUSDT', exchange=Exchange.BYBIT))
+        symbol='BTCUSD', exchange=Exchange.BYBIT))
 
-    # gateway.connect 之后会更新的 binance合约交易的 合约的dict,  symbol_contract_map是全局的一个单例。
-    from abquant.gateway.bybit import ubc_symbol_contract_map
-    # print(ubc_symbol_contract_map)
+    # gateway.connect 之后会更新的 binance合约交易的 合约的dict,  symbol_contract_map是全局的一个单例。 ok
+    # from abquant.gateway.bybit import bbc_symbol_contract_map, future_symbol_contract_map
+    # print(bbc_symbol_contract_map)
+    # print(future_symbol_contract_map)
 
     # for i, k in enumerate(symbol_contract_map):
     #     if i > 3:
@@ -101,16 +101,21 @@ if __name__ == '__main__':
 
     # 下单撤单， 由框架异步执行。胆大的下单撤单吧。不必担心阻塞和 IO。 
     # ok
+    time.sleep(3)
     
-    # for i in range(20):
-    # ab_order_id: str = gateway.send_order(OrderRequest(symbol='DYDXUSDT', exchange=Exchange.BYBIT,
-    #                                     direction=Direction.LONG, type=OrderType.LIMIT, volume=1, price=9, offset=Offset.OPEN))
-    # print('ab orderid', ab_order_id)
+    # # for i in range(20):
+    # ab_order_id: str = gateway.send_order(OrderRequest(symbol='BTCUSD', exchange=Exchange.BYBIT,
+    #                                     direction=Direction.LONG, type=OrderType.POSTONLYLIMIT, volume=1, price=48000.50, offset=Offset.OPEN))
+    
+    
+    # ab_order_id1: str = gateway.send_order(OrderRequest(symbol='BTCUSD', exchange=Exchange.BYBIT,
+    #                                     direction=Direction.LONG, type=OrderType.LIMIT, volume=1, price=44000.50, offset=Offset.OPEN))
+    # print('ab orderid', ab_order_id1)
     # time.sleep(3)
-    # order_id = ab_order_id.split('.')[-1]
-    # print('orderid', order_id)
+    # order_id = ab_order_id1.split('.')[-1]
+    # # print('orderid', order_id)
     # gateway.cancel_order(CancelRequest(
-    #     order_id, symbol='BTCUSDT', exchange=Exchange.BYBIT))
+    #     order_id, symbol='BTCUSD', exchange=Exchange.BYBIT))
 
 
 
@@ -119,8 +124,8 @@ if __name__ == '__main__':
     #  查询历史 在初始化策略时 可以用到该功能。 OK
     # end = datetime.now()
     # history = gateway.query_history(HistoryRequest(
-    #     symbol='BTCUSDT', exchange=Exchange.BYBIT,
-    #     start=end - timedelta(days=2),
+    #     symbol='BTCUSD', exchange=Exchange.BYBIT,
+    #     start=end - timedelta(days=1),
     #     end=end,
     #     interval=Interval.MINUTE))
     
