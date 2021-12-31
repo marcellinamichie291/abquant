@@ -1,7 +1,7 @@
 
-import random
 from pandas.core.frame import DataFrame
 from typing import Tuple, Iterable
+from copy import copy
 
 from abquant.trader.msg import BarData
 from abquant.trader.utility import extract_ab_symbol
@@ -65,11 +65,8 @@ class DatasetKline(Dataset):
             self.len = dlen
 
     def copy(self) -> "Dataset":
-        newds = DatasetKline(self.start, self.end, self.ab_symbol, self.interval)
-        newds.bars = self.bars   # 数据只读情况下，共用一份，节省内存
-        newds.dataframe = self.dataframe
+        newds = copy(self)
         newds.cur_pos = -1
-        newds.len = len(newds.bars)
         return newds
 
     def check(self) -> bool:

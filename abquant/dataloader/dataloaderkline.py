@@ -101,16 +101,17 @@ class DataLoaderKline(DataLoader):
         self._clean_loader()
         self._config_loader(ab_symbol, start, end, interval=interval)
 
-        cache_file = ''
         intvl = '1m' if self.interval == Interval.MINUTE else '1m'
+        stime = self.start_time.strftime('%Y-%m-%d')
+        etime = self.end_time.strftime('%Y-%m-%d')
+        # cache_file = f"{self.exchange.value.lower()}-{self.symbol.lower()}-{self.trade_type}-{intvl}" \
+        #     f"-{str(self.start_time)[:19].replace(' ', '-')}-{str(self.end_time)[:19].replace(' ', '-')}.csv"
+        cache_file = f"{self.exchange.value.lower()}-{self.trade_type.lower()}-{self.symbol.lower()}-{intvl}" \
+                     f"-{stime}-{etime}.csv"
 
         # 检查缓存  todo: 数据合并
         if self.exchange is not None and self.symbol is not None and self.start_time is not None \
                 and self.end_time is not None and self.trade_type is not None:
-            stime = self.start_time.strftime('%Y-%m-%d')
-            etime = self.end_time.strftime('%Y-%m-%d')
-            cache_file = f"{self.exchange.value.lower()}-{self.symbol.lower()}-{self.trade_type}-{intvl}" \
-                       f"-{stime}-{etime}.csv"
             if os.path.isfile(self.cache_dir + '/' + cache_file):
                 # load from cache
                 df_03 = pd.read_csv(self.cache_dir + '/' + cache_file, index_col=0)
@@ -126,7 +127,7 @@ class DataLoaderKline(DataLoader):
             # path = Path(self.data_file)
             if self.data_file is not None and os.path.isfile(self.data_file):
                 df_01 = pd.read_csv(self.data_file)
-                df_02 = regular_df(df_01, self.exchange, self.symbol, intvl)
+                df_02 = regular_df(df_01, self.exchange, self.symbol.upper(), intvl)
             else:
                 return None
 
@@ -168,8 +169,6 @@ class DataLoaderKline(DataLoader):
             if cache_file is not None and len(cache_file) > 0:
                 df_02.to_csv(self.cache_dir + '/' + cache_file)
             else:
-                cache_file = f"{self.exchange.value.lower()}-{self.trade_type.lower()}-{self.symbol.lower()}-1m" \
-                             f"-{str(self.start_time)[:19].replace(' ', '-')}-{str(self.end_time)[:19].replace(' ', '-')}.csv"
                 df_02.to_csv(self.cache_dir + '/' + cache_file, index=False)
 
             self._logger.info(f"\n{'-'*32}\nLoaded k-line {self.interval.value} bars: {rn}\n{'-'*32}")
