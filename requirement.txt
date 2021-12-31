@@ -6,3 +6,4 @@ pandas
 ecdsa
 telegram
 #ta-lib
+boto3

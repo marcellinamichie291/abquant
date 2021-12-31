@@ -9,6 +9,7 @@ import boto3
 from abquant.trader.common import Exchange
 from abquant.dataloader.utility import regular_df
 from abquant.monitor.logger import Logger
+from abquant.trader.msg import Interval
 
 # s3 config
 S3_BUCKET_NAME = "abquant-binance-data"
@@ -23,9 +24,9 @@ class RemoteLoader:
         self.exchange: Exchange = exchange
         self.symbol = symbol
         self.trade_type = trade_type
-        self.interval = interval
-        self.start_time = start_time
-        self.end_time = end_time
+        self.interval: Interval = interval
+        self.start_time: datetime = start_time
+        self.end_time: datetime = end_time
         self.data_location = None
         self._s3 = boto3.resource('s3')
         self._bucket = self._s3.Bucket(S3_BUCKET_NAME)
@@ -76,10 +77,11 @@ class RemoteLoader:
 
     def load_remote(self):
         try:
-            prefix = f'{self.exchange.value.lower()}/{self.trade_type}/daily/{self.symbol.upper()}/{self.interval}/'
+            intvl = '1m' if self.interval == Interval.MINUTE else '1m'
+            prefix = f'{self.exchange.value.lower()}/{self.trade_type}/daily/{self.symbol.upper()}/{intvl}/'
             sub_dir = '/' + prefix
             enday = self.end_time.strftime('%Y-%m-%d')
-            file_name = f'{self.symbol.upper()}-{self.interval}-{enday}.csv'
+            file_name = f'{self.symbol.upper()}-{intvl}-{enday}.csv'
             remote_dir = AWS_S3_BASE_PATH + sub_dir
             local_dir = LOCAL_PATH + sub_dir
             local_file = LOCAL_PATH + sub_dir + file_name
@@ -87,7 +89,7 @@ class RemoteLoader:
             self._logger.error(e)
             self._logger.error('Short of parameters, cannot specify local s3 file')
 
-        if True:  # not os.path.isfile(local_file):
+        try:
             self._logger.info(f'syncing {remote_dir} to {local_dir} ...')
             if not os.path.exists(local_dir):
                 os.makedirs(local_dir)
@@ -100,12 +102,16 @@ class RemoteLoader:
             n = 0
             for obj in self._bucket.objects.filter(Prefix=prefix):
                 ofile = LOCAL_PATH + '/' + obj.key
-                odate = os.path.basename(obj.key).split('.')[0].split('1m')[1].strip('-')
+                odate = os.path.basename(obj.key).split('.')[0].split(intvl)[1].strip('-')
                 if odate in selected_days and not os.path.isfile(ofile):
                     self._logger.info(f'downloading {AWS_S3_BASE_PATH + obj.key} to {ofile} ...')
                     self._bucket.download_file(obj.key, ofile)
                     n += 1
             self._logger.info('sync over' + f', {str(n*2)} downloaded' if n > 0 else '')
+        except Exception as e:
+            self._logger.error("Error when syncing s3 files:")
+            self._logger.error(e)
+            raise e
 
         try:
             if self.start_time >= self.end_time:
@@ -116,12 +122,12 @@ class RemoteLoader:
             short_days = []
             while dateday < self.end_time:
                 enday = dateday.strftime('%Y-%m-%d')
-                file_base = f'{self.symbol}-{self.interval}-{enday}'
+                file_base = f'{self.symbol}-{intvl}-{enday}'
                 file_name = f'{file_base}.csv'
                 df1 = self.load_file(local_dir, file_base)
                 dateday = dateday + timedelta(days=1)
                 days += 1
-                df1 = regular_df(df1, self.exchange, self.symbol, self.interval)
+                df1 = regular_df(df1, self.exchange, self.symbol, intvl)
                 if df1 is None:
                     short_days.append(enday)
                     continue

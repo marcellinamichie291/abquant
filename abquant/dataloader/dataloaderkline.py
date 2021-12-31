@@ -21,7 +21,7 @@ class DataLoaderKline(DataLoader):
         self.exchange: Exchange = None
         self.symbol = None
         self.trade_type = None
-        self.interval = None
+        self.interval: Interval = None
         self.start_time: datetime = None
         self.end_time: datetime = None
         self.data_file = None
@@ -39,6 +39,9 @@ class DataLoaderKline(DataLoader):
     """
     def set_config(self, setting):
         super().set_config(setting)
+        if setting is None:
+            self.data_location = DataLocation.REMOTE
+            return
         """
             data_file has highest priority for data loader, if local data file is set, 
             dataloader will always load the specified data file firstly in LOCAL mode.
@@ -57,7 +60,7 @@ class DataLoaderKline(DataLoader):
         self.start_time = None
         self.end_time = None
 
-    def _config_loader(self, ab_symbol: str, start: datetime, end: datetime, interval: Interval=Interval.MINUTE):
+    def _config_loader(self, ab_symbol: str, start: datetime, end: datetime, interval: Interval = Interval.MINUTE):
         if ab_symbol is None:
             raise Exception(f'Dataloader: ab_symbol is none')
         symbol, exchange = extract_ab_symbol(ab_symbol)
@@ -71,20 +74,14 @@ class DataLoaderKline(DataLoader):
         if self.exchange == Exchange.BINANCE:
             if self.symbol.islower():
                 self.trade_type = 'spot'
-                self.symbol = self.symbol.upper()
             elif 'USDT' in self.symbol or 'BUSD' in self.symbol:
                 self.trade_type = 'ubc'
             elif 'USD_' in self.symbol:
                 self.trade_type = 'bbc'
             else:
                 raise Exception(f'Dataloader: ambiguous symbol for sub trading account type')
-        if interval is None:
-            self.interval = "1m"
-        else:
-            if interval == Interval.MINUTE:
-                self.interval = "1m"
-            else:
-                raise Exception(f'Dataloader config: interval incorrect: {interval}')
+        if interval != Interval.MINUTE:
+            raise Exception(f'Dataloader config: only accept interval MINUTE, but set: {interval}')
         if start is None or end is None:
             raise Exception(f'Dataloader config: neither start nor end time could be empty')
         # self.start_time = regular_time(start)
@@ -99,18 +96,20 @@ class DataLoaderKline(DataLoader):
     """
         load csv data, local file or remote aws s3 files
     """
-    def load_data(self, ab_symbol: str, start: datetime, end: datetime, interval: Interval=Interval.MINUTE) -> Dataset:
+    def load_data(self, ab_symbol: str, start: datetime, end: datetime,
+                  interval: Interval = Interval.MINUTE) -> Dataset:
         self._clean_loader()
         self._config_loader(ab_symbol, start, end, interval=interval)
 
         cache_file = ''
+        intvl = '1m' if self.interval == Interval.MINUTE else '1m'
 
         # 检查缓存  todo: 数据合并
         if self.exchange is not None and self.symbol is not None and self.start_time is not None \
                 and self.end_time is not None and self.trade_type is not None:
             stime = self.start_time.strftime('%Y-%m-%d')
             etime = self.end_time.strftime('%Y-%m-%d')
-            cache_file = f"{self.exchange.value.lower()}-{self.symbol.lower()}-{self.trade_type}-{self.interval}" \
+            cache_file = f"{self.exchange.value.lower()}-{self.symbol.lower()}-{self.trade_type}-{intvl}" \
                        f"-{stime}-{etime}.csv"
             if os.path.isfile(self.cache_dir + '/' + cache_file):
                 # load from cache
@@ -127,7 +126,7 @@ class DataLoaderKline(DataLoader):
             # path = Path(self.data_file)
             if self.data_file is not None and os.path.isfile(self.data_file):
                 df_01 = pd.read_csv(self.data_file)
-                df_02 = regular_df(df_01, self.exchange, self.symbol, self.interval)
+                df_02 = regular_df(df_01, self.exchange, self.symbol, intvl)
             else:
                 return None
 
