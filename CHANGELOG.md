@@ -1,3 +1,6 @@
+## 0.8.2
+1. binances 配置项默认值处理
+1. binainces 支持市价单。
 
 ## 0.8.1
 1. 新增bybit B本位 gateway.

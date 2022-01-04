@@ -13,7 +13,7 @@ from requests.exceptions import SSLError
 from abquant.gateway.binances import DIRECTION_BINANCE2AB, DIRECTION_AB2BINANCE, INTERVAL_AB2BINANCE, ORDERTYPE_AB2BINANCE, ORDERTYPE_BINANCE2AB, STATUS_BINANCE2AB, Security, REST_HOST, TIMEDELTA_MAP, WEBSOCKET_TRADE_HOST, symbol_contract_map
 from abquant.gateway.accessor import RestfulAccessor
 from abquant.gateway.basegateway import Gateway
-from abquant.trader.common import Exchange, Product, Status
+from abquant.trader.common import Exchange, Offset, OrderType, Product, Status
 from abquant.trader.msg import BarData, OrderData
 from abquant.trader.object import AccountData, CancelRequest, ContractData, HistoryRequest, OrderRequest
 from abquant.trader.utility import round_to
@@ -205,6 +205,12 @@ class BinanceAccessor(RestfulAccessor):
             "newClientOrderId": orderid,
             "newOrderRespType": "ACK"
         }
+
+        if req.type == OrderType.MARKET:
+            params.pop('timeInForce')
+            params.pop('price')
+        # if req.offset == Offset.CLOSE:
+        #     params["reduceOnly"] = True
 
         self.add_request(
             method="POST",
