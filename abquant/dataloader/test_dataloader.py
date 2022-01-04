@@ -44,6 +44,13 @@ def main():
         for i in range(0, 10):
             d = next(newiter)
             print(d)
+    ds2 = dataset.copy()
+    n = 0
+    for d in ds2:
+        print(d)
+        n += 1
+        if n > 10:
+            break
 
 
 if __name__ == '__main__':

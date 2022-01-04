@@ -2,6 +2,7 @@
 from pandas.core.frame import DataFrame
 from typing import Tuple, Iterable
 from copy import copy
+from datetime import datetime
 
 from abquant.trader.msg import BarData
 from abquant.trader.utility import extract_ab_symbol
@@ -38,12 +39,13 @@ class DatasetKline(Dataset):
                 symbol=bar['symbol'],
                 exchange=self.exchange,
                 interval=self.interval,
-                datetime=bar['datetime'],
+                datetime=datetime.strptime(bar['datetime'], '%Y-%m-%d %H:%M:%S'),
                 gateway_name=None,
                 open_price=bar['open_price'],
                 high_price=bar['high_price'],
                 low_price=bar['low_price'],
                 close_price=bar['close_price'],
+                volume=bar['volume'],
             )
             return bardata
         else:

@@ -105,8 +105,6 @@ class DataLoaderKline(DataLoader):
         intvl = '1m' if self.interval == Interval.MINUTE else '1m'
         stime = self.start_time.strftime('%Y-%m-%d')
         etime = self.end_time.strftime('%Y-%m-%d')
-        # cache_file = f"{self.exchange.value.lower()}-{self.symbol.lower()}-{self.trade_type}-{intvl}" \
-        #     f"-{str(self.start_time)[:19].replace(' ', '-')}-{str(self.end_time)[:19].replace(' ', '-')}.csv"
         cache_file = f"{self.exchange.value.lower()}-{self.trade_type.lower()}-{self.symbol.lower()}-{intvl}" \
                      f"-{stime}-{etime}.csv"
 
