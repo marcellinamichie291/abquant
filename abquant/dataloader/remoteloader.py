@@ -31,7 +31,6 @@ class RemoteLoader:
         self.data_location = None
         self._s3 = boto3.resource('s3')
         self._bucket = self._s3.Bucket(S3_BUCKET_NAME)
-        self._rlock = threading.RLock()
         if not os.path.exists(LOCAL_PATH):
             try:
                 os.makedirs(LOCAL_PATH)
@@ -92,7 +91,6 @@ class RemoteLoader:
             self._logger.error('Short of parameters, cannot specify local s3 file')
 
         try:
-            self._logger.info(f'syncing {remote_dir} to {local_dir} ...')
             if not os.path.exists(local_dir):
                 os.makedirs(local_dir)
             dated = self.start_time
@@ -108,15 +106,14 @@ class RemoteLoader:
                 if oname == '' or '.' not in oname or intvl not in oname:
                     continue
                 odate = oname.split('.')[0].split(intvl)[1].strip('-')
-                self._rlock.acquire()
-                try:
-                    if odate in selected_days and oname[-3:] == 'csv' and not os.path.isfile(ofile):
-                        self._logger.info(threading.current_thread().name + f' downloading {AWS_S3_BASE_PATH + obj.key} to {ofile} ...')
-                        self._bucket.download_file(obj.key, ofile)
-                        n += 1
-                finally:
-                    self._rlock.release()
-            self._logger.info('sync over' + f', {str(n*2)} downloaded' if n > 0 else '')
+                if odate in selected_days and oname[-3:] == 'csv' and not os.path.isfile(ofile):
+                    if n == 0:
+                        self._logger.info(f'syncing {remote_dir} to {local_dir} ...')
+                    self._logger.info(threading.current_thread().name + f' downloading {AWS_S3_BASE_PATH + obj.key} to {ofile} ...')
+                    self._bucket.download_file(obj.key, ofile)
+                    n += 1
+            if n > 0:
+                self._logger.info('sync over' + f', {n} downloaded' if n > 0 else '')
         except Exception as e:
             self._logger.error("Error when syncing s3 files:")
             self._logger.error(e)

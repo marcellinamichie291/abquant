@@ -29,7 +29,7 @@ def main():
 
 def load_data(dataloader, day):
     print(threading.current_thread().name + ': start --------------')
-    dataset: DatasetKline = dataloader.load_data('ethusdt.BINANCE', datetime(2021, 10, day), datetime(2021, 10, 15))
+    dataset: DatasetKline = dataloader.load_data('ETHUSDT.BINANCE', datetime(2021, 12, day), datetime(2021, 12, 15))
     if dataset is None:
         return
     dataset.dataframe.info(memory_usage='deep')

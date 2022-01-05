@@ -1,7 +1,7 @@
-
+import os
 from typing import Dict
 from datetime import datetime
-import os
+import threading
 
 import pandas as pd
 
@@ -27,6 +27,7 @@ class DataLoaderKline(DataLoader):
         self.end_time: datetime = None
         self.data_file = None
         self.data_location = None
+        self._lock = threading.RLock()
         home_dir = os.environ['HOME']
         self.cache_dir = home_dir + '/.abquant/cache'
         if not os.path.exists(self.cache_dir):
@@ -98,6 +99,17 @@ class DataLoaderKline(DataLoader):
         load csv data, local file or remote aws s3 files
     """
     def load_data(self, ab_symbol: str, start: datetime, end: datetime,
+                  interval: Interval = Interval.MINUTE) -> Dataset:
+        self._lock.acquire()
+        try:
+            ds = self._load_data(ab_symbol, start, end, interval=interval)
+            return ds
+        except Exchange as e:
+            self._logger.error(e)
+        finally:
+            self._lock.release()
+
+    def _load_data(self, ab_symbol: str, start: datetime, end: datetime,
                   interval: Interval = Interval.MINUTE) -> Dataset:
         self._clean_loader()
         self._config_loader(ab_symbol, start, end, interval=interval)
