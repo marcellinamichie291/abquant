@@ -23,13 +23,13 @@ def main():
     }
 
     dataloader: DataLoaderKline = DataLoaderKline(dt_setting)
-    for i in range(20, 24):
-        threading.Thread(name='thread-'+str(i-19), target=load_data, args=(dataloader, i)).start()
+    for i in range(10, 14):
+        threading.Thread(name='thread-'+str(i-9), target=load_data, args=(dataloader, i)).start()
 
 
 def load_data(dataloader, day):
     print(threading.current_thread().name + ': start --------------')
-    dataset: DatasetKline = dataloader.load_data('ethusdt.BINANCE', datetime(2021, 12, day), datetime(2022, 1, 3))
+    dataset: DatasetKline = dataloader.load_data('ethusdt.BINANCE', datetime(2021, 10, day), datetime(2021, 10, 15))
     if dataset is None:
         return
     dataset.dataframe.info(memory_usage='deep')
