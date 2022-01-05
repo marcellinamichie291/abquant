@@ -1,5 +1,5 @@
-
 import argparse
+import threading
 
 from abquant.dataloader.dataloaderkline import DataLoaderKline
 from abquant.dataloader.datasetkline import DatasetKline
@@ -23,7 +23,13 @@ def main():
     }
 
     dataloader: DataLoaderKline = DataLoaderKline(dt_setting)
-    dataset: DatasetKline = dataloader.load_data('ETHUSDT.BINANCE', datetime(2021, 11, 24), datetime(2021, 12, 13))
+    for i in range(10, 14):
+        threading.Thread(name='thread-'+str(i-9), target=load_data, args=(dataloader, i)).start()
+
+
+def load_data(dataloader, day):
+    print(threading.current_thread().name + ': start --------------')
+    dataset: DatasetKline = dataloader.load_data('ETHUSDT.BINANCE', datetime(2021, 12, day), datetime(2021, 12, 15))
     if dataset is None:
         return
     dataset.dataframe.info(memory_usage='deep')
@@ -44,6 +50,14 @@ def main():
         for i in range(0, 10):
             d = next(newiter)
             print(d)
+    ds2 = dataset.copy()
+    n = 0
+    for d in ds2:
+        print(d)
+        n += 1
+        if n > 10:
+            break
+    print(threading.current_thread().name + ': end <<<<<<<<<<<<')
 
 
 if __name__ == '__main__':
