@@ -39,7 +39,7 @@ class DatasetKline(Dataset):
                 symbol=bar['symbol'],
                 exchange=self.exchange,
                 interval=self.interval,
-                datetime=datetime.strptime(bar['datetime'], '%Y-%m-%d %H:%M:%S'),
+                datetime=datetime.strptime(str(bar['datetime']), '%Y-%m-%d %H:%M:%S'),
                 gateway_name=None,
                 open_price=bar['open_price'],
                 high_price=bar['high_price'],

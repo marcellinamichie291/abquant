@@ -17,6 +17,7 @@ from abquant.monitor.logger import Logger
 
 class DataLoaderKline(DataLoader):
     def __init__(self, config: Dict = None):
+        super().__init__(config)
         self._logger = Logger("dataloader")
         self.exchange: Exchange = None
         self.symbol = None
@@ -32,7 +33,6 @@ class DataLoaderKline(DataLoader):
             os.makedirs(self.cache_dir)
             self._logger.info(f'Data loader cache dir: {self.cache_dir}')
         # self.set_config(config)
-        super().__init__(config)
 
     """
         config each item from setting dict
