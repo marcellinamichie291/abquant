@@ -1,3 +1,7 @@
+## 0.8.3
+1. dataloader修正输出bardata格式
+1. 采用全局锁处理多线程load_data
+
 ## 0.8.2
 1. binances 配置项默认值处理
 1. binainces 支持市价单。
