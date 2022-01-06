@@ -1,8 +1,6 @@
 import os
-from abc import ABC
 from typing import Dict
 from datetime import datetime
-import threading
 
 import pandas as pd
 
@@ -14,7 +12,6 @@ from abquant.dataloader.utility import regular_time, regular_df
 from abquant.trader.utility import generate_ab_symbol, extract_ab_symbol
 from abquant.trader.common import Exchange
 from abquant.monitor.logger import Logger
-
 
 
 class DataLoaderKline(DataLoader):
@@ -35,6 +32,14 @@ class DataLoaderKline(DataLoader):
         load csv data, local file or remote aws s3 files
     """
     def load_data(self, ab_symbol: str, start: datetime, end: datetime,
+                  interval: Interval = Interval.MINUTE) -> Dataset:
+        return self._load_data(ab_symbol, start, end, interval=interval)
+
+    def load_local_data(self, ab_symbol: str, start: datetime, end: datetime,
+                  interval: Interval = Interval.MINUTE, data_file: str = None) -> Dataset:
+        return self._load_data(ab_symbol, start, end, interval=interval, data_file=data_file)
+
+    def _load_data(self, ab_symbol: str, start: datetime, end: datetime,
                   interval: Interval = Interval.MINUTE, data_file: str = None) -> Dataset:
         loader = LoaderKline()
         loader.config_loader(ab_symbol, start, end, interval=interval, data_file=data_file)
@@ -58,7 +63,6 @@ class DataLoaderKline(DataLoader):
         df_01 = None
         df_02 = None
         if loader.data_location == DataLocation.LOCAL:
-            # path = Path(loader.data_file)
             if loader.data_file is not None and os.path.isfile(loader.data_file):
                 df_01 = pd.read_csv(loader.data_file)
                 df_02 = regular_df(df_01, loader.exchange, loader.symbol.upper(), intvl)
@@ -88,7 +92,6 @@ class DataLoaderKline(DataLoader):
 
         absymbol = generate_ab_symbol(loader.symbol, loader.exchange)
         dataset: DatasetKline = DatasetKline(loader.start_time, loader.end_time, absymbol, loader.interval)
-
         dataset.set_data(df_02.to_dict(orient="records"), df_02, rn)
 
         # check

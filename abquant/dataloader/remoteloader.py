@@ -113,8 +113,7 @@ class RemoteLoader:
                     if odate in selected_days and oname[-3:] == 'csv' and not os.path.isfile(ofile):
                         if n == 0:
                             self._logger.info(f'syncing {remote_dir} to {local_dir} ...')
-                        self._logger.info(
-                            threading.current_thread().name + f' downloading {AWS_S3_BASE_PATH + obj.key} to {ofile} ...')
+                        self._logger.info(f'downloading {AWS_S3_BASE_PATH + obj.key} to {ofile} ...')
                         self._bucket.download_file(obj.key, ofile)
                         n += 1
                 finally:
