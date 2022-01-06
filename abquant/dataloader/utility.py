@@ -125,7 +125,8 @@ def make_columns(headers: list) -> Tuple[List, List]:
     return select_hs, rename_hs
 
 
-def regular_df(df_01: DataFrame, exchange: str, symbol: str, interval: str) -> DataFrame:
+def regular_df(df_01: DataFrame, exchange: str, symbol: str, interval: str,
+               start: datetime = None, end: datetime = None) -> DataFrame:
     if df_01 is None or not isinstance(df_01, DataFrame):
         return df_01
     if df_01.shape[0] == 0:
@@ -149,6 +150,7 @@ def regular_df(df_01: DataFrame, exchange: str, symbol: str, interval: str) -> D
     df_02.loc[:, 'datetime'] = pd.to_datetime(df_02['datetime'], unit='ms')
     # print(df_02.head(1))
     # print(df_02.shape)
+    df_02 = df_02.loc[(df_02.datetime >= start) & (df_02.datetime < end)]
     return df_02
 
 

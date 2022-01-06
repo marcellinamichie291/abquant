@@ -4,16 +4,21 @@ import os
 import pandas as pd
 import gzip
 from pandas.core.frame import DataFrame
+import threading
+import boto3
 
 from abquant.trader.common import Exchange
 from abquant.dataloader.utility import regular_df
 from abquant.monitor.logger import Logger
+from abquant.trader.msg import Interval
 
 # s3 config
 S3_BUCKET_NAME = "abquant-binance-data"
 S3_HOME_FOLDER = ""
 LOCAL_PATH = os.environ['HOME'] + '/.abquant/data/aws/kline'
 AWS_S3_BASE_PATH = "s3://" + S3_BUCKET_NAME + S3_HOME_FOLDER
+
+s3_download_lock = threading.Lock()
 
 
 class RemoteLoader:
@@ -22,10 +27,12 @@ class RemoteLoader:
         self.exchange: Exchange = exchange
         self.symbol = symbol
         self.trade_type = trade_type
-        self.interval = interval
-        self.start_time = start_time
-        self.end_time = end_time
+        self.interval: Interval = interval
+        self.start_time: datetime = start_time
+        self.end_time: datetime = end_time
         self.data_location = None
+        self._s3 = boto3.resource('s3')
+        self._bucket = self._s3.Bucket(S3_BUCKET_NAME)
         if not os.path.exists(LOCAL_PATH):
             try:
                 os.makedirs(LOCAL_PATH)
@@ -73,9 +80,11 @@ class RemoteLoader:
 
     def load_remote(self):
         try:
-            sub_dir = f'/{self.exchange.value.lower()}/{self.trade_type}/daily/{self.symbol}/{self.interval}/'
+            intvl = '1m' if self.interval == Interval.MINUTE else '1m'
+            prefix = f'{self.exchange.value.lower()}/{self.trade_type}/daily/{self.symbol.upper()}/{intvl}/'
+            sub_dir = '/' + prefix
             enday = self.end_time.strftime('%Y-%m-%d')
-            file_name = f'{self.symbol}-{self.interval}-{enday}.csv'
+            file_name = f'{self.symbol.upper()}-{intvl}-{enday}.csv'
             remote_dir = AWS_S3_BASE_PATH + sub_dir
             local_dir = LOCAL_PATH + sub_dir
             local_file = LOCAL_PATH + sub_dir + file_name
@@ -83,14 +92,38 @@ class RemoteLoader:
             self._logger.error(e)
             self._logger.error('Short of parameters, cannot specify local s3 file')
 
-        if not os.path.isfile(local_file):
-            cmd = "aws s3 sync " + remote_dir + " " + local_dir
-            self._logger.info(f'syncing {remote_dir} to {local_dir} ...')
-            ret = os.system(cmd)
-            if ret != 0:
-                raise Exception('Sync AWS S3 failure: command=%s, status=%s' % (cmd, ret))
-            else:
-                self._logger.info("sync success!")
+        try:
+            if not os.path.exists(local_dir):
+                os.makedirs(local_dir)
+            dated = self.start_time
+            selected_days = []
+            while dated < self.end_time + timedelta(days=1):
+                enday = dated.strftime('%Y-%m-%d')
+                selected_days.append(enday)
+                dated = dated + timedelta(days=1)
+            n = 0
+            for obj in self._bucket.objects.filter(Prefix=prefix):
+                ofile = LOCAL_PATH + '/' + obj.key
+                oname = os.path.basename(obj.key)
+                if oname == '' or '.' not in oname or intvl not in oname:
+                    continue
+                odate = oname.split('.')[0].split(intvl)[1].strip('-')
+                s3_download_lock.acquire()
+                try:
+                    if odate in selected_days and oname[-3:] == 'csv' and not os.path.isfile(ofile):
+                        if n == 0:
+                            self._logger.info(f'syncing {remote_dir} to {local_dir} ...')
+                        self._logger.info(f'downloading {AWS_S3_BASE_PATH + obj.key} to {ofile} ...')
+                        self._bucket.download_file(obj.key, ofile)
+                        n += 1
+                finally:
+                    s3_download_lock.release()
+            if n > 0:
+                self._logger.info('sync over' + f', {n} downloaded' if n > 0 else '')
+        except Exception as e:
+            self._logger.error("Error when syncing s3 files:")
+            self._logger.error(e)
+            raise e
 
         try:
             if self.start_time >= self.end_time:
@@ -99,14 +132,14 @@ class RemoteLoader:
             df_all = None
             days = 0
             short_days = []
-            while dateday < self.end_time:
+            while dateday < self.end_time + timedelta(days=1):
                 enday = dateday.strftime('%Y-%m-%d')
-                file_base = f'{self.symbol}-{self.interval}-{enday}'
+                file_base = f'{self.symbol.upper()}-{intvl}-{enday}'
                 file_name = f'{file_base}.csv'
                 df1 = self.load_file(local_dir, file_base)
                 dateday = dateday + timedelta(days=1)
                 days += 1
-                df1 = regular_df(df1, self.exchange, self.symbol, self.interval)
+                df1 = regular_df(df1, self.exchange, self.symbol.upper(), intvl, self.start_time, self.end_time)
                 if df1 is None:
                     short_days.append(enday)
                     continue
@@ -115,8 +148,9 @@ class RemoteLoader:
                     df_all = df1
                 else:
                     df_all = df_all.append(df1)    # todo: 去重
-            self._logger.info(f'Searching {days} days, {len(short_days)} days not available: '
-                              f'{short_days[:10]} {"..." if len(short_days) > 10 else ""}')
+            self._logger.info(f'Searching {days} days, {len(short_days)} days not available'
+                              f'{": " + str(short_days[:10]) if len(short_days) > 0 else ""}'
+                              f'{" ..." if len(short_days) > 10 else ""}')
             return df_all
         except Exception as e:
             self._logger.error(e)
