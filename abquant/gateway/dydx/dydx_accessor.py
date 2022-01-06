@@ -35,7 +35,6 @@ from . import (
 from ..basegateway import Gateway
 from ..accessor import Request, RestfulAccessor
 from .dydx_util import (
-    TZ_DELTA,
     generate_datetime,
     api_key_credentials_map,
     generate_datetime_iso,
@@ -311,7 +310,7 @@ class DydxAccessor(RestfulAccessor):
                     break
                 if begin < start_dt:
                     break
-                end_dt = bar.datetime - TZ_DELTA
+                end_dt = bar.datetime
                 
 
         return list(reversed(history))
