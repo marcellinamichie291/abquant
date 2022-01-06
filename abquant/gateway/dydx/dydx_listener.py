@@ -12,7 +12,7 @@ from . import (
 )
 
 from ..listener import WebsocketListener
-from .dydx_getway import Gateway
+from .dydx_getway import DydxGateway
 from ...trader.object import (
     AccountData,
     OrderData,
@@ -34,7 +34,7 @@ class DydxWebsocketListener(WebsocketListener):
     dydx websocket
     """
 
-    def __init__(self, gateway: Gateway):
+    def __init__(self, gateway: DydxGateway):
         super(DydxWebsocketListener, self).__init__(gateway)
         self.ping_interval = 30
         self.gateway = gateway
@@ -253,7 +253,7 @@ class DydxWebsocketListener(WebsocketListener):
 class OrderBook():
     """储存dYdX订单簿数据"""
 
-    def __init__(self, symbol: str, exchange: Exchange, gateway: Gateway) -> None:
+    def __init__(self, symbol: str, exchange: Exchange, gateway: DydxGateway) -> None:
         """构造函数"""
 
         self.asks = dict()

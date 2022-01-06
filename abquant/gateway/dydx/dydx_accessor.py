@@ -6,6 +6,8 @@ from requests.exceptions import SSLError
 import uuid
 from threading import Lock
 
+from abquant.gateway.dydx.dydx_getway import DydxGateway
+
 from ..accessor import Request
 from ...trader.msg import BarData
 from ...trader.object import (
@@ -56,9 +58,9 @@ class DydxAccessor(RestfulAccessor):
     """
     ORDER_PREFIX = str(hex(uuid.getnode()))
 
-    def __init__(self, gateway: Gateway):
+    def __init__(self, gateway: DydxGateway):
         super(DydxAccessor, self).__init__(gateway)
-        self.gateway: Gateway = gateway
+        self.gateway: DydxGateway = gateway
         self.gateway.set_gateway_name(gateway.gateway_name)
         self.order_count: int = 0
         self.position_id = ""
@@ -397,10 +399,10 @@ class DydxAccessor(RestfulAccessor):
 
     def on_cancel_failed(self, status_code: str, request: Request) -> None:
         """撤单回报函数报错回报"""
-        if request.extra:
-            order: OrderData = request.extra
-            order.status = Status.REJECTED
-            self.gateway.on_order(order)
+        # if request.extra:
+        order: OrderData = request.extra
+        order.status = Status.REJECTED
+        self.gateway.on_order(order)
 
         msg: str = f"撤单失败，状态码：{status_code}，信息：{request.response.text}"
         self.gateway.write_log(msg)

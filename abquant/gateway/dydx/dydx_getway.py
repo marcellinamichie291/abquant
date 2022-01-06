@@ -21,10 +21,6 @@ from .dydx_listener import DydxWebsocketListener
 from .dydx_util import api_key_credentials_map
 
 
-# test 和官方客户端对比
-# from dydx3.modules.private import Private
-
-
 class DydxGateway(Gateway):
     default_setting = {
         "key": "",
