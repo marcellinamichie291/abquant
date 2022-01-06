@@ -100,21 +100,26 @@ class RemoteLoader:
                 enday = dated.strftime('%Y-%m-%d')
                 selected_days.append(enday)
                 dated = dated + timedelta(days=1)
+            self._rlock.acquire()
             n = 0
-            for obj in self._bucket.objects.filter(Prefix=prefix):
-                ofile = LOCAL_PATH + '/' + obj.key
-                oname = os.path.basename(obj.key)
-                if oname == '' or '.' not in oname or intvl not in oname:
-                    continue
-                odate = oname.split('.')[0].split(intvl)[1].strip('-')
-                if odate in selected_days and oname[-3:] == 'csv' and not os.path.isfile(ofile):
-                    if n == 0:
-                        self._logger.info(f'syncing {remote_dir} to {local_dir} ...')
-                    self._logger.info(threading.current_thread().name + f' downloading {AWS_S3_BASE_PATH + obj.key} to {ofile} ...')
-                    self._bucket.download_file(obj.key, ofile)
-                    n += 1
-            if n > 0:
-                self._logger.info('sync over' + f', {n} downloaded' if n > 0 else '')
+            try:
+                for obj in self._bucket.objects.filter(Prefix=prefix):
+                    ofile = LOCAL_PATH + '/' + obj.key
+                    oname = os.path.basename(obj.key)
+                    if oname == '' or '.' not in oname or intvl not in oname:
+                        continue
+                    odate = oname.split('.')[0].split(intvl)[1].strip('-')
+                    if odate in selected_days and oname[-3:] == 'csv' and not os.path.isfile(ofile):
+                        if n == 0:
+                            self._logger.info(f'syncing {remote_dir} to {local_dir} ...')
+                        self._logger.info(
+                            threading.current_thread().name + f' downloading {AWS_S3_BASE_PATH + obj.key} to {ofile} ...')
+                        self._bucket.download_file(obj.key, ofile)
+                        n += 1
+                if n > 0:
+                    self._logger.info('sync over' + f', {n} downloaded' if n > 0 else '')
+            finally:
+                self._rlock.release()
         except Exception as e:
             self._logger.error("Error when syncing s3 files:")
             self._logger.error(e)
