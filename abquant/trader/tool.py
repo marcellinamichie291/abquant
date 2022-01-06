@@ -182,6 +182,7 @@ class BarGenerator:
         if self.bar is None and self.last_bar:
 
             bar = self.last_bar
+            # TODO 
             bar.datetime += timedelta(minutes=1)
             bar.high_price = bar.close_price
             bar.low_price = bar.close_price
