@@ -8,6 +8,9 @@ setup(
     # package_dir={"":"./abquant"},
     # packages=find_packages(where='abquant'),
     packages=find_packages(where='./'),
+    package_data={
+        'abquantui': ['logging_template.yaml']
+    },
     install_requires=[
         'numpy',
         'requests',
