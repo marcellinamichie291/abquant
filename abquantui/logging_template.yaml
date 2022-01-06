@@ -1,0 +1,33 @@
+---
+version: 1
+disable_existing_loggers: False
+formatters:
+    default:
+        format: "[%(asctime)s][%(threadName)s][%(levelname)s] - %(message)s"
+
+handlers:
+    console:
+        class: logging.StreamHandler
+        level: INFO
+        formatter: default
+        stream: ext://sys.stdout
+
+    file_handler:
+        class: logging.handlers.TimedRotatingFileHandler
+        level: INFO
+        formatter: default
+        filename: {dest_filename}
+        when: d
+        interval: 1
+        backupCount: 7
+        encoding: utf8
+
+loggers:
+    my_module:
+        level: ERROR
+        handlers: [console]
+        propagate: no
+
+root:
+    level: INFO
+    handlers: [console, file_handler]

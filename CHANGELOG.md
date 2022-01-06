@@ -1,3 +1,8 @@
+
+## 0.9.0
+1. abquantui 横空出炉, 提供命令行交互的用户界面。
+1. dataloader线程安全。
+
 ## 0.8.3
 1. dataloader修正输出bardata格式
 1. 处理多线程中的load_data和remoteloader
