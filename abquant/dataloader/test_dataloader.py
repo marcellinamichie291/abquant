@@ -19,17 +19,17 @@ def main():
     args = parse()
 
     dt_setting = {
-        "data_file": args.data_file,
     }
 
     dataloader: DataLoaderKline = DataLoaderKline(dt_setting)
     for i in range(10, 14):
-        threading.Thread(name='thread-'+str(i-9), target=load_data, args=(dataloader, i)).start()
+        threading.Thread(name='thread-'+str(i-9), target=load_data, args=(dataloader, i, args.data_file)).start()
 
 
-def load_data(dataloader, day):
+def load_data(dataloader, day, data_file):
     print(threading.current_thread().name + ': start --------------')
-    dataset: DatasetKline = dataloader.load_data('ETHUSDT.BINANCE', datetime(2021, 12, day), datetime(2021, 12, 15))
+    dataset: DatasetKline = dataloader.load_data('ethusdt.BINANCE', datetime(2021, 11, day), datetime(2021, 11, 15),
+                                                 data_file=data_file)
     if dataset is None:
         return
     dataset.dataframe.info(memory_usage='deep')

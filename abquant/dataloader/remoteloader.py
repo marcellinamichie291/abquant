@@ -18,6 +18,8 @@ S3_HOME_FOLDER = ""
 LOCAL_PATH = os.environ['HOME'] + '/.abquant/data/aws/kline'
 AWS_S3_BASE_PATH = "s3://" + S3_BUCKET_NAME + S3_HOME_FOLDER
 
+s3_download_lock = threading.Lock()
+
 
 class RemoteLoader:
     def __init__(self, exchange: Exchange, symbol, trade_type, interval, start_time: datetime, end_time: datetime):
@@ -31,7 +33,6 @@ class RemoteLoader:
         self.data_location = None
         self._s3 = boto3.resource('s3')
         self._bucket = self._s3.Bucket(S3_BUCKET_NAME)
-        self._rlock = threading.RLock()
         if not os.path.exists(LOCAL_PATH):
             try:
                 os.makedirs(LOCAL_PATH)
@@ -100,15 +101,15 @@ class RemoteLoader:
                 enday = dated.strftime('%Y-%m-%d')
                 selected_days.append(enday)
                 dated = dated + timedelta(days=1)
-            self._rlock.acquire()
             n = 0
-            try:
-                for obj in self._bucket.objects.filter(Prefix=prefix):
-                    ofile = LOCAL_PATH + '/' + obj.key
-                    oname = os.path.basename(obj.key)
-                    if oname == '' or '.' not in oname or intvl not in oname:
-                        continue
-                    odate = oname.split('.')[0].split(intvl)[1].strip('-')
+            for obj in self._bucket.objects.filter(Prefix=prefix):
+                ofile = LOCAL_PATH + '/' + obj.key
+                oname = os.path.basename(obj.key)
+                if oname == '' or '.' not in oname or intvl not in oname:
+                    continue
+                odate = oname.split('.')[0].split(intvl)[1].strip('-')
+                s3_download_lock.acquire()
+                try:
                     if odate in selected_days and oname[-3:] == 'csv' and not os.path.isfile(ofile):
                         if n == 0:
                             self._logger.info(f'syncing {remote_dir} to {local_dir} ...')
@@ -116,10 +117,10 @@ class RemoteLoader:
                             threading.current_thread().name + f' downloading {AWS_S3_BASE_PATH + obj.key} to {ofile} ...')
                         self._bucket.download_file(obj.key, ofile)
                         n += 1
-                if n > 0:
-                    self._logger.info('sync over' + f', {n} downloaded' if n > 0 else '')
-            finally:
-                self._rlock.release()
+                finally:
+                    s3_download_lock.release()
+            if n > 0:
+                self._logger.info('sync over' + f', {n} downloaded' if n > 0 else '')
         except Exception as e:
             self._logger.error("Error when syncing s3 files:")
             self._logger.error(e)
