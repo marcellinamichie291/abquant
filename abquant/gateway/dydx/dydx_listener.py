@@ -1,6 +1,8 @@
-from typing import Dict, List
+from typing import Dict
 from datetime import datetime
 from copy import copy
+
+from abquant.gateway.basegateway import Gateway
 
 from . import (
     DIRECTION_DYDX2AB,
@@ -12,21 +14,19 @@ from . import (
 )
 
 from ..listener import WebsocketListener
-from .dydx_getway import DydxGateway
 from ...trader.object import (
     AccountData,
     OrderData,
-    HistoryRequest,
     PositionData,
     SubscribeRequest,
     HistoryRequest,
     Status,
     Direction
 )
-from ...trader.msg import BarData, TickData, TradeData, DepthData
-from ...trader.common import Exchange, Interval
+from ...trader.msg import TickData, TradeData, DepthData
+from ...trader.common import Exchange
 
-from .dydx_util import generate_datetime, api_key_credentials_map, sign, generate_now_iso, UTC_TZ
+from .dydx_util import generate_datetime, api_key_credentials_map, sign, generate_now_iso
 
 
 class DydxWebsocketListener(WebsocketListener):
@@ -34,7 +34,7 @@ class DydxWebsocketListener(WebsocketListener):
     dydx websocket
     """
 
-    def __init__(self, gateway: DydxGateway):
+    def __init__(self, gateway: Gateway):
         super(DydxWebsocketListener, self).__init__(gateway)
         self.ping_interval = 30
         self.gateway = gateway
@@ -253,7 +253,7 @@ class DydxWebsocketListener(WebsocketListener):
 class OrderBook():
     """储存dYdX订单簿数据"""
 
-    def __init__(self, symbol: str, exchange: Exchange, gateway: DydxGateway) -> None:
+    def __init__(self, symbol: str, exchange: Exchange, gateway: Gateway) -> None:
         """构造函数"""
 
         self.asks = dict()

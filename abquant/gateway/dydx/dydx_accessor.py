@@ -6,8 +6,6 @@ from requests.exceptions import SSLError
 import uuid
 from threading import Lock
 
-from abquant.gateway.dydx.dydx_getway import DydxGateway
-
 from ..accessor import Request
 from ...trader.msg import BarData
 from ...trader.object import (
@@ -58,9 +56,9 @@ class DydxAccessor(RestfulAccessor):
     """
     ORDER_PREFIX = str(hex(uuid.getnode()))
 
-    def __init__(self, gateway: DydxGateway):
+    def __init__(self, gateway: Gateway):
         super(DydxAccessor, self).__init__(gateway)
-        self.gateway: DydxGateway = gateway
+        self.gateway: Gateway = gateway
         self.gateway.set_gateway_name(gateway.gateway_name)
         self.order_count: int = 0
         self.position_id = ""
