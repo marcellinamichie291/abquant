@@ -97,7 +97,7 @@ class RemoteLoader:
                 os.makedirs(local_dir)
             dated = self.start_time
             selected_days = []
-            while dated < self.end_time:
+            while dated < self.end_time + timedelta(days=1):
                 enday = dated.strftime('%Y-%m-%d')
                 selected_days.append(enday)
                 dated = dated + timedelta(days=1)
@@ -132,14 +132,14 @@ class RemoteLoader:
             df_all = None
             days = 0
             short_days = []
-            while dateday < self.end_time:
+            while dateday < self.end_time + timedelta(days=1):
                 enday = dateday.strftime('%Y-%m-%d')
                 file_base = f'{self.symbol.upper()}-{intvl}-{enday}'
                 file_name = f'{file_base}.csv'
                 df1 = self.load_file(local_dir, file_base)
                 dateday = dateday + timedelta(days=1)
                 days += 1
-                df1 = regular_df(df1, self.exchange, self.symbol.upper(), intvl)
+                df1 = regular_df(df1, self.exchange, self.symbol.upper(), intvl, self.start_time, self.end_time)
                 if df1 is None:
                     short_days.append(enday)
                     continue

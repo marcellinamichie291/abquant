@@ -19,13 +19,13 @@ def main():
     args = parse()
 
     dataloader: DataLoaderKline = DataLoaderKline()
-    for i in range(10, 13):
-        threading.Thread(name='thread-'+str(i-9), target=load_data, args=(dataloader, i, args.data_file)).start()
+    for i in range(1, 2):
+        threading.Thread(name='thread-'+str(i), target=load_data, args=(dataloader, i, args.data_file)).start()
 
 
 def load_data(dataloader, day, data_file):
     print(threading.current_thread().name + ': start --------------')
-    dataset: DatasetKline = dataloader.load_data('ETHUSDT.BINANCE', datetime(2021, 12, day), datetime(2021, 12, 15))
+    dataset: DatasetKline = dataloader.load_data('BTCUSDT.BINANCE', datetime(2021, 12, 1, 8), datetime(2021, 12, 5, 12))
     if dataset is None:
         return
     dataset.dataframe.info(memory_usage='deep')

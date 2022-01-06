@@ -45,8 +45,8 @@ class DataLoaderKline(DataLoader):
         loader.config_loader(ab_symbol, start, end, interval=interval, data_file=data_file)
 
         intvl = '1m' if loader.interval == Interval.MINUTE else '1m'
-        stime = loader.start_time.strftime('%Y-%m-%d')
-        etime = loader.end_time.strftime('%Y-%m-%d')
+        stime = loader.start_time.strftime('%Y-%m-%d-%H-%M')
+        etime = loader.end_time.strftime('%Y-%m-%d-%H-%M')
         cache_file = f"{loader.exchange.value.lower()}-{loader.trade_type.lower()}-{loader.symbol.lower()}-{intvl}" \
                      f"-{stime}-{etime}.csv"
 
@@ -65,7 +65,8 @@ class DataLoaderKline(DataLoader):
         if loader.data_location == DataLocation.LOCAL:
             if loader.data_file is not None and os.path.isfile(loader.data_file):
                 df_01 = pd.read_csv(loader.data_file)
-                df_02 = regular_df(df_01, loader.exchange, loader.symbol.upper(), intvl)
+                df_02 = regular_df(df_01, loader.exchange, loader.symbol.upper(), intvl,
+                                   loader.start_time, loader.end_time)
             else:
                 return None
 
