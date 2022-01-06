@@ -1,5 +1,5 @@
-
 import argparse
+import threading
 
 from abquant.dataloader.dataloaderkline import DataLoaderKline
 from abquant.dataloader.datasetkline import DatasetKline
@@ -18,12 +18,14 @@ def parse():
 def main():
     args = parse()
 
-    dt_setting = {
-        "data_file": args.data_file,
-    }
+    dataloader: DataLoaderKline = DataLoaderKline()
+    for i in range(1, 2):
+        threading.Thread(name='thread-'+str(i), target=load_data, args=(dataloader, i, args.data_file)).start()
 
-    dataloader: DataLoaderKline = DataLoaderKline(dt_setting)
-    dataset: DatasetKline = dataloader.load_data('ETHUSDT.BINANCE', datetime(2021, 11, 24), datetime(2021, 12, 13))
+
+def load_data(dataloader, day, data_file):
+    print(threading.current_thread().name + ': start --------------')
+    dataset: DatasetKline = dataloader.load_data('BTCUSDT.BINANCE', datetime(2021, 12, 1, 8), datetime(2021, 12, 5, 12))
     if dataset is None:
         return
     dataset.dataframe.info(memory_usage='deep')
@@ -44,6 +46,14 @@ def main():
         for i in range(0, 10):
             d = next(newiter)
             print(d)
+    ds2 = dataset.copy()
+    n = 0
+    for d in ds2:
+        print(d)
+        n += 1
+        if n > 10:
+            break
+    print(threading.current_thread().name + ': end <<<<<<<<<<<<')
 
 
 if __name__ == '__main__':
