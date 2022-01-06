@@ -31,6 +31,7 @@ class RemoteLoader:
         self.data_location = None
         self._s3 = boto3.resource('s3')
         self._bucket = self._s3.Bucket(S3_BUCKET_NAME)
+        self._rlock = threading.RLock()
         if not os.path.exists(LOCAL_PATH):
             try:
                 os.makedirs(LOCAL_PATH)
