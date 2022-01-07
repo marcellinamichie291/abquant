@@ -29,7 +29,7 @@ class Logger:
         if htype == 'stdout':
             handler = logging.StreamHandler()
         elif htype == 'file':
-            handler = TimedRotatingFileHandler(log_path + "abquant.log", when="D", encoding="UTF-8", backupCount=7)
+            handler = TimedRotatingFileHandler(log_path + "abquant.log", when="D", encoding="UTF-8", backupCount=30)
         handler.setLevel(LOG_LEVEL)
         handler.setFormatter(self.get_formatter())
         return handler
