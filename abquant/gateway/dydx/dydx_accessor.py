@@ -24,7 +24,10 @@ from ...trader.object import (
 from ...trader.common import Exchange, OrderType
 from . import (
     DIRECTION_AB2DYDX,
+    DIRECTION_DYDX2AB,
+    ORDERTYPE_DYDX2AB,
     REST_HOST,
+    STATUS_DYDX2AB,
     TESTNET_REST_HOST,
     INTERVAL_AB2DYDX,
     ORDERTYPE_AB2DYDX,
@@ -119,6 +122,7 @@ class DydxAccessor(RestfulAccessor):
         self.start()
         self.query_contract()
         self.query_account()
+        # self.gateway.init_query()
 
         self.gateway.write_log("REST API启动成功")
 
@@ -241,10 +245,50 @@ class DydxAccessor(RestfulAccessor):
             extra=order
         )
 
-    def query_order(self, client_id: str) -> OrderData:
+    def query_canceled_orders(self) -> None:
+        """查询已经撤销订单"""
+        data: dict = {
+            "security": Security.PRIVATE,
+            "status": ["CANCELED"],
+            "tpye": ["LIMIT"],
+            "limit": 100,
+            
+        }
 
-        pass
+        self.add_request(
+            method="GET",
+            path=f"/v3/orders",
+            callback=self.on_query_canceled_orders,
+            data=data
+        )
 
+    def on_query_canceled_orders(self, data: dict, request: Request) -> None :
+        """查询未成交订单回报"""
+        # print("------on_query_orders-----", data)
+        for order_data in data["orders"]:
+            # 绑定本地和系统委托号映射
+            self.gateway.local_sys_map[order_data["clientId"]] = order_data["id"]
+            self.gateway.sys_local_map[order_data["id"]] = order_data["clientId"]
+            order: OrderData = OrderData(
+                symbol=order_data["market"],
+                exchange=Exchange.DYDX,
+                orderid=order_data["clientId"],
+                type=ORDERTYPE_DYDX2AB[order_data["type"]],
+                direction=DIRECTION_DYDX2AB[order_data["side"]],
+                # offset=Offset.NONE,
+                price=float(order_data["price"]),
+                volume=float(order_data["size"]),
+                traded=float(order_data["size"]) - \
+                float(order_data["remainingSize"]),
+                status=STATUS_DYDX2AB.get(
+                    order_data["status"], Status.SUBMITTING),
+                datetime=generate_datetime(order_data["createdAt"]),
+                gateway_name=self.gateway_name
+            )
+            if 0 < order.traded < order.volume:
+                order.status = Status.PARTTRADED
+            self.gateway.on_order(order)
+    
     def query_history(self, req: HistoryRequest) -> List[BarData]:
         """查询历史数据"""
         limit = 100
