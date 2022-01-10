@@ -22,7 +22,8 @@ s3_download_lock = threading.Lock()
 
 
 class RemoteLoader:
-    def __init__(self, exchange: Exchange, symbol, trade_type, interval, start_time: datetime, end_time: datetime):
+    def __init__(self, exchange: Exchange, symbol, trade_type, interval, start_time: datetime, end_time: datetime,
+                 aws_access_key_id=None, aws_secret_access_key=None):
         self._logger = Logger("dataloader")
         self.exchange: Exchange = exchange
         self.symbol = symbol
@@ -31,8 +32,21 @@ class RemoteLoader:
         self.start_time: datetime = start_time
         self.end_time: datetime = end_time
         self.data_location = None
-        self._s3 = boto3.resource('s3')
+        if aws_access_key_id is not None and aws_secret_access_key is not None:
+            self._s3 = boto3.resource('s3', aws_access_key_id=aws_access_key_id,
+                                aws_secret_access_key=aws_secret_access_key)
+        else:
+            self._s3 = boto3.resource('s3')
         self._bucket = self._s3.Bucket(S3_BUCKET_NAME)
+        certificated = False
+        try:
+            for obj in self._bucket.objects.filter(Prefix=f'/{self.exchange.value.lower()}/'):
+                certificated = True
+                break
+        except Exception as e:
+            raise e
+        if not certificated:
+            raise Exception(f'S3 Credential incorrect or no data for exchange {self.exchange}')
         if not os.path.exists(LOCAL_PATH):
             try:
                 os.makedirs(LOCAL_PATH)

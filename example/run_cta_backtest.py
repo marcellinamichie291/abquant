@@ -12,22 +12,26 @@ from strategy.doublemeanaverage import DoubleMAStrategy
 if __name__ == '__main__':
     dl_setting = {
         # "dir_path": '/Users/abakus/Desktop/projects/abquant/example_my/binance_history_data_all'
+        "aws_access_key_id": "AKIA5U5U7HQ2PGYMOU46",
+        "aws_secret_access_key": "tXEGX04SCAXy3J/qDNgr+pvk3+rpz8I9tF+1+kFG",
     }
 
     start = datetime(2021, 8, 1)
-    end = datetime(2021, 9, 12)
+    end = datetime(2021, 10, 1)
     dataloader: DataLoader = DataLoaderKline(dl_setting)
-    # dataloader: DataLoader = DFDataLoader(dl_setting)
 
-    # dataset = dataloader.load_data('BTCUSDT.BINANCE', start, end)
-    # for bar in dataset:
-    #     print(bar)
-    #     time.sleep(1)
+    # dataset1 = dataloader.load_data('BTCUSDT.BINANCE', start, end)
+    # dataset2 = dataloader.load_data('btcusdt.BINANCE', start, end)
+    # for bar1, bar2 in zip(dataset1, dataset2):
+    #     if bar1.datetime != bar2.datetime:
+    #         print(bar1)
+    #         print(bar2)
+    #         time.sleep(1)
 
     # 合约
     ab_symbol1 = 'BTCUSDT.BINANCE'
     # 现货
-    ab_symbol2 = 'btcusdt.BINANCE'
+    ab_symbol2 = 'ETHUSDT.BINANCE'
 
     backtest_parameter = BacktestParameter(
         ab_symbols=[ab_symbol1, ab_symbol2],
@@ -50,13 +54,13 @@ if __name__ == '__main__':
         # 最小价格变化
         priceticks={
             ab_symbol1: 0.01,
-            ab_symbol1: 0.01,
+            ab_symbol2: 0.01,
         },
         capital=200000,
         # 反向合约。 正向合约可以支持多产品，反向合约只能支持一个产品(处于计算收益的原因)
         inverses={
             ab_symbol1: False,
-            ab_symbol1: False
+            ab_symbol2: False
         },
         annual_days=365,
         mode=BacktestingMode.BAR

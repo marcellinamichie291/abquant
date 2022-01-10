@@ -36,7 +36,7 @@ class DatasetKline(Dataset):
         if self.cur_pos < self.len:
             bar = self.bars[self.cur_pos]  # todo: return BarData
             bardata = BarData(
-                symbol=bar['symbol'],
+                symbol=self.symbol,
                 exchange=self.exchange,
                 interval=self.interval,
                 datetime=datetime.strptime(str(bar['datetime']), '%Y-%m-%d %H:%M:%S'),

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable, Optional, Tuple
-from abquant.trader.common import Status
+from abquant.trader.common import OrderType, Status
 from abquant.trader.msg import DepthData, BarData, EntrustData, OrderData, TickData, TradeData
 
 class OrderBook(ABC):
@@ -20,13 +20,15 @@ class OrderBook(ABC):
     # type not specified
     @abstractmethod
     def insert_order(self, order: OrderData) -> str:
-        if order.status != Status.SUBMITTING:
+        self.pre_matching()
+        if order.status != Status.SUBMITTING or order.type != OrderType.LIMIT:
             raise ValueError("order status must be submitting.")
         self.active_limit_orders[order.ab_orderid] = order
         return order.ab_orderid
 
     @abstractmethod
     def cancel_order(self, ab_orderid: str) -> Optional[OrderData]:
+        self.pre_matching()
         if ab_orderid not in self.active_limit_orders:
             return None
         order = self.active_limit_orders.pop(ab_orderid)
@@ -35,13 +37,19 @@ class OrderBook(ABC):
     
     @abstractmethod
     def match_orders(self) -> Iterable[Tuple[OrderData, TradeData]]:
+        self.pre_matching()
         pass
 
     def submitting_orders(self) -> Iterable[OrderData]:
+        self.pre_matching()
         return (order for order in self.active_limit_orders.values() if order.status == Status.SUBMITTING)
     
     def accept_submitting_orders(self) -> Iterable[OrderData]:
+        self.pre_matching()
         for order in self.submitting_orders():
             order.status = Status.NOTTRADED
             yield order
+    
+    def pre_matching(self):
+        pass
     

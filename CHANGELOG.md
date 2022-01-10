@@ -1,4 +1,8 @@
 
+## 0.9.1
+1. 修改aws s3认证方式, 与配置setting
+1. 修复dataloader，加载现货的的大小写问题。
+
 ## 0.9.0
 1. abquantui 横空出炉, 提供命令行交互的用户界面。
 1. dataloader线程安全。
