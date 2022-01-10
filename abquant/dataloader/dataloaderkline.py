@@ -23,7 +23,6 @@ class DataLoaderKline(DataLoader):
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
             self._logger.info(f'Data loader cache dir: {self.cache_dir}')
-        # self.set_config(config)
 
     def set_config(self, setting):
         super().set_config(setting)
@@ -72,7 +71,9 @@ class DataLoaderKline(DataLoader):
 
         elif loader.data_location == DataLocation.REMOTE:
             loader = RemoteLoader(loader.exchange, loader.symbol, loader.trade_type, loader.interval,
-                                  loader.start_time, loader.end_time)
+                                  loader.start_time, loader.end_time,
+                                  aws_access_key_id=self._config.get('aws_access_key_id'),
+                                  aws_secret_access_key=self._config.get('aws_secret_access_key'))
             df_01 = loader.load_remote()
             df_02 = df_01
 

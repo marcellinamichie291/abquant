@@ -1,6 +1,6 @@
 import os
 import logging
-from logging.handlers import RotatingFileHandler
+from logging.handlers import TimedRotatingFileHandler
 import json
 from datetime import datetime
 
@@ -29,9 +29,7 @@ class Logger:
         if htype == 'stdout':
             handler = logging.StreamHandler()
         elif htype == 'file':
-            # handler = TimedRotatingFileHandler(**config)
-            handler = RotatingFileHandler(log_path + "abquant.log", maxBytes=10 * 1024 * 1024, encoding="UTF-8",
-                                          backupCount=10)
+            handler = TimedRotatingFileHandler(log_path + "abquant.log", when="D", encoding="UTF-8", backupCount=30)
         handler.setLevel(LOG_LEVEL)
         handler.setFormatter(self.get_formatter())
         return handler
