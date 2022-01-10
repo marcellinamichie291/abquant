@@ -11,6 +11,10 @@ def parse():
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--data_file', type=str, required=False,
                         help='Full path of data file you want to use')
+    parser.add_argument('-k', '--aws_access_key_id', type=str, required=False,
+                        help='s3 aws_access_key_id')
+    parser.add_argument('-s', '--aws_secret_access_key', type=str, required=False,
+                        help='s3 aws_secret_access_key')
     args = parser.parse_args()
     return args
 
@@ -18,14 +22,20 @@ def parse():
 def main():
     args = parse()
 
-    dataloader: DataLoaderKline = DataLoaderKline()
+    setting = {
+        "aws_access_key_id": args.aws_access_key_id,
+        "aws_secret_access_key": args.aws_secret_access_key,
+    }
+
+    dataloader: DataLoaderKline = DataLoaderKline(setting)
     for i in range(1, 2):
         threading.Thread(name='thread-'+str(i), target=load_data, args=(dataloader, i, args.data_file)).start()
 
 
 def load_data(dataloader, day, data_file):
     print(threading.current_thread().name + ': start --------------')
-    dataset: DatasetKline = dataloader.load_data('BTCUSDT.BINANCE', datetime(2021, 12, 1, 8), datetime(2021, 12, 5, 12))
+    dataset: DatasetKline = dataloader.load_data('BTCUSDT.BINANCE',
+                                                 datetime(2021, 12, day, 9), datetime(2021, 12, 5, 12))
     if dataset is None:
         return
     dataset.dataframe.info(memory_usage='deep')

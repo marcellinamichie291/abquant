@@ -1,18 +1,19 @@
 
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from logging import INFO
 from typing import Iterable
 from abquant.monitor import Monitor, DummyMonitor
 from abquant.trader.common import Direction, Interval, Offset, OrderType
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from abquant.strategytrading.template import StrategyTemplate
 
 LOG_LEVEL = int
 
 
-class StrategyManager:
+class StrategyManager(ABC):
     @abstractmethod
     def add_strategy(
             self,
@@ -35,7 +36,7 @@ class StrategyManager:
         pass
 
 
-class StrategyRunner:
+class StrategyRunner(ABC):
 
     def __init__(self):
         self.monitor = DummyMonitor()
