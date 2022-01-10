@@ -26,6 +26,8 @@ class BarOrderBook(OrderBook):
         if last_bar and bar.datetime - last_bar.datetime != timedelta(minutes=1):
             print(
                 "Warning: bar.datetime - self.bars[bar.ab_symbol] != timedelta(minutes=1)")
+            print("last_bar: {}".format(last_bar))
+            print("bar: {}".format(bar))
 
         self.bars[bar.ab_symbol] = bar
 

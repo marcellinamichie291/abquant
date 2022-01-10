@@ -20,6 +20,7 @@ class OrderBook(ABC):
     # type not specified
     @abstractmethod
     def insert_order(self, order: OrderData) -> str:
+        self.pre_matching()
         if order.status != Status.SUBMITTING:
             raise ValueError("order status must be submitting.")
         self.active_limit_orders[order.ab_orderid] = order
@@ -27,6 +28,7 @@ class OrderBook(ABC):
 
     @abstractmethod
     def cancel_order(self, ab_orderid: str) -> Optional[OrderData]:
+        self.pre_matching()
         if ab_orderid not in self.active_limit_orders:
             return None
         order = self.active_limit_orders.pop(ab_orderid)
@@ -35,13 +37,19 @@ class OrderBook(ABC):
     
     @abstractmethod
     def match_orders(self) -> Iterable[Tuple[OrderData, TradeData]]:
+        self.pre_matching()
         pass
 
     def submitting_orders(self) -> Iterable[OrderData]:
+        self.pre_matching()
         return (order for order in self.active_limit_orders.values() if order.status == Status.SUBMITTING)
     
     def accept_submitting_orders(self) -> Iterable[OrderData]:
+        self.pre_matching()
         for order in self.submitting_orders():
             order.status = Status.NOTTRADED
             yield order
+    
+    def pre_matching(self):
+        pass
     

@@ -15,7 +15,7 @@ if __name__ == '__main__':
     }
 
     start = datetime(2021, 8, 1)
-    end = datetime(2021, 9, 12)
+    end = datetime(2021, 10, 1)
     dataloader: DataLoader = DataLoaderKline(dl_setting)
     # dataloader: DataLoader = DFDataLoader(dl_setting)
 
@@ -50,13 +50,13 @@ if __name__ == '__main__':
         # 最小价格变化
         priceticks={
             ab_symbol1: 0.01,
-            ab_symbol1: 0.01,
+            ab_symbol2: 0.01,
         },
         capital=200000,
         # 反向合约。 正向合约可以支持多产品，反向合约只能支持一个产品(处于计算收益的原因)
         inverses={
             ab_symbol1: False,
-            ab_symbol1: False
+            ab_symbol2: False
         },
         annual_days=365,
         mode=BacktestingMode.BAR
