@@ -16,10 +16,7 @@ class BarOrderBook(OrderBook):
         self.trade_count = 0
 
     def newest_bars(self) -> Dict[str, BarData]:
-        if self.check_datetime():
-            return self.bars
-        raise RuntimeError(
-            "BarOrderBook.match_orders: bars not all in the same minute")
+        return self.bars
 
     def update_bar(self, bar: BarData) -> None:
         last_bar = self.bars.get(bar.ab_symbol, None)
@@ -43,12 +40,12 @@ class BarOrderBook(OrderBook):
             first = next(iterator)
         except StopIteration:
             return True
-        return all(first == x for x in iterator)
+        return all(first.datetime == x.datetime for x in iterator)
 
     def match_orders(self) -> Iterable[Tuple[OrderData, TradeData]]:
         if not self.check_datetime():
             raise RuntimeError(
-                "BarOrderBook.match_orders: bars not all in the same minute")
+                "BarOrderBook.match_orders: bars not all in the same minute, bars, {}".format(self.bars))
 
         for order in list(self.active_limit_orders.values()):
             if order.type != OrderType.LIMIT:
