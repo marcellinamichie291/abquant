@@ -7,13 +7,14 @@ HEADER = """
 
 Welcome to Abquant, wish you Good Luck!
 
-
 """
 
 HELP_TEXT = '''
 Useful Commands:
 - connect   connect to gateway, and then call add_init_strategy()
 - config    get current config info
+    - config reload  reload config file
+    - config update key value  update config with key and value
 - start     start the strategy
 - stop      stop the strategy
 - status    
@@ -27,5 +28,5 @@ class HelpCommand:
 
     def help(self: "AbquantApplication"):
 
-        self._notify('\n' + HELP_TEXT)
+        self._notify(HELP_TEXT)
 

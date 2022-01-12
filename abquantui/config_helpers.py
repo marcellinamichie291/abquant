@@ -11,7 +11,7 @@ yaml = YAML()
 
 def parse_yaml(config_path: str):
     with open(config_path, encoding='utf-8') as f:
-        str = f.read();
+        str = f.read()
         return yaml.load(str)
 
 def yaml_config_to_str(config: Dict):
@@ -24,7 +24,7 @@ def _get_logging_config_from_template(log_file_name):
     ppath = Path(__file__).resolve().parent
     template_path = os.path.join(ppath, 'logging_template.yaml')
     with open(template_path, encoding='utf-8') as f:
-        tmp_str = f.read();
+        tmp_str = f.read()
         return tmp_str.replace('{dest_filename}', log_file_name)
 
 

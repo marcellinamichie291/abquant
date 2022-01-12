@@ -4,12 +4,15 @@ import asyncio
 import logging
 import os.path
 from typing import Optional, Dict
+from argparse import ArgumentParser
 
 from prompt_toolkit.completion.word_completer import WordCompleter
 
 from abquantui.abquant_cli import AbquantCLI
 from abquantui.commands import __all__ as commands
+from abquantui.commands.command_parser import load_parser
 from abquantui.config_helpers import parse_yaml
+from abquantui.exceptions import ArgumentParserError
 from abquantui.keybindings import load_key_bindings
 from abquantui.strategy_lifecycle import StrategyLifecycle
 
@@ -34,6 +37,7 @@ class AbquantApplication(*commands):
 
     def __init__(self, config_file: str,
                  strategy_lifecycle_class: StrategyLifecycle):
+        self._config = None
         self.strategy_lifecycle_class = strategy_lifecycle_class
         self._config: Dict = parse_yaml(config_file)
         self.strategy_name = self._config.get('strategy_name')
@@ -41,6 +45,8 @@ class AbquantApplication(*commands):
         self.log_file = os.path.join(self._config.get('log_path'), self.strategy_name + '.log')
         self.strategy_lifecycle: StrategyLifecycle = None
         self.ev_loop: asyncio.BaseEventLoop = asyncio.get_event_loop()
+        self._parser: ArgumentParser = load_parser(self)
+        self.placeholder_mode = False
         self.completer = WordCompleter(
             [
                 "connect",
@@ -65,16 +71,24 @@ class AbquantApplication(*commands):
         self.app.log(msg)
 
     def _handle_command(self, raw_command: str):
-        if not raw_command or raw_command.strip() == '':
+
+        if not raw_command or raw_command.strip() == '' or self.placeholder_mode:
             return
         try:
-            getattr(self, raw_command)()
-        except AttributeError:
-            logging.warning('command [ %s ] not supported', raw_command)
-        except Exception:
-            logging.exception('')
+            args = self._parser.parse_args(args = raw_command.split())
+            kwargs = vars(args)
+            f = args.func
+            del kwargs["func"]
+            f(**kwargs)
+        except Exception as e:
+            self._notify(str(e))
+            self.logger().error(e, exc_info=True)
 
     async def run(self):
         self.strategy_lifecycle = self.strategy_lifecycle_class(self._config)
         await self.app.run()
         
+
+if __name__ == '__main__':
+    parser = load_parser(None)
+    parser.parse_args(['a'])

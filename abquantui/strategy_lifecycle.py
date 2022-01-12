@@ -2,7 +2,7 @@ import time
 from abc import ABC, abstractmethod
 from typing import Dict, List
 
-from abquant.event import EventDispatcher
+from abquant.event import EventDispatcher, EventType
 from abquant.gateway import BitmexGateway, Gateway, BinanceUBCGateway, BinanceBBCGateway, BinanceSGateway, DydxGateway
 from abquant.monitor import Monitor
 from abquant.strategytrading import LiveStrategyRunner
@@ -28,8 +28,8 @@ SUPPORTED_GATEWAY = {
     GatewayName.BITMEX: BitmexGateway,
     GatewayName.BINANCEUBC: BinanceUBCGateway,
     GatewayName.BINANCEBBC: BinanceBBCGateway,
-    GatewayName.BINANCES : BinanceSGateway,
-    GatewayName.DYDX : DydxGateway
+    GatewayName.BINANCES: BinanceSGateway,
+    GatewayName.DYDX: DydxGateway
 }
 
 
@@ -52,6 +52,16 @@ class StrategyLifecycle(ABC):
         self._strategy_runner.set_monitor(monitor)
         logging.info('LiveStrategyRunner init')
         self.gateways: Dict[str: Gateway] = {}
+
+    @property
+    def config(self):
+        return self._config
+
+    @config.setter
+    def config(self, new_config: Dict):
+        if new_config:
+            self._config = new_config
+            logging.info('config updated')
 
     def connect_gateway(self):
         if len(self.gateways) > 0:
@@ -91,6 +101,8 @@ class StrategyLifecycle(ABC):
     def add_init_strategy(self):
         pass
 
-    def config(self) -> str:
+    def command_config(self) -> str:
+        """
+        called by ui command config,and must return a str
+        """
         return yaml_config_to_str(self._config)
-

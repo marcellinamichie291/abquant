@@ -1,4 +1,9 @@
 
+## 0.9.2
+1. abquantui增加异常
+1. abquantui config 命令列出配置项， reload子命令加载配置文件
+1. abquantui config update key value 实时修改配置， 并回写至配置文件
+
 ## 0.9.1
 1. 修改aws s3认证方式, 与配置setting
 1. 修复dataloader，加载现货的的大小写问题。
