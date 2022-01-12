@@ -11,13 +11,11 @@ from strategy.doublemeanaverage import DoubleMAStrategy
 
 if __name__ == '__main__':
     dl_setting = {
-        # "dir_path": '/Users/abakus/Desktop/projects/abquant/example_my/binance_history_data_all'
-        "aws_access_key_id": "AKIA5U5U7HQ2PGYMOU46",
-        "aws_secret_access_key": "tXEGX04SCAXy3J/qDNgr+pvk3+rpz8I9tF+1+kFG",
+
     }
 
     start = datetime(2021, 8, 1)
-    end = datetime(2021, 10, 1)
+    end = datetime(2021, 10, 5)
     dataloader: DataLoader = DataLoaderKline(dl_setting)
 
     # dataset1 = dataloader.load_data('BTCUSDT.BINANCE', start, end)
@@ -31,7 +29,8 @@ if __name__ == '__main__':
     # 合约
     ab_symbol1 = 'BTCUSDT.BINANCE'
     # 现货
-    ab_symbol2 = 'ETHUSDT.BINANCE'
+    ab_symbol2 = 'btcusdt.BINANCE'
+    ab_symbol3 = 'ETHUSDT.BINANCE'
 
     backtest_parameter = BacktestParameter(
         ab_symbols=[ab_symbol1, ab_symbol2],
@@ -76,6 +75,19 @@ if __name__ == '__main__':
                                           ab_symbols=[ab_symbol1],
                                           setting={}
                                           )
+    # backtest_strategy_runner.add_strategy(strategy_class=DoubleMAStrategy,
+    #                                       strategy_name='strategy_2',
+    #                                       ab_symbols=[ab_symbol1],
+    #                                       setting={}
+    #   )
 
     # output_log 代表是否 输出 策略本身的日志。
-    backtest_strategy_runner.run_backtest(start_dt=start, end_dt=end, output_log=False)
+    trade_datas, daily_results, statistics = backtest_strategy_runner.run_backtest(
+        start_dt=start, end_dt=end, output_log=False)
+
+    for strategy_name, trade_data, daily_result, statistic in zip(trade_datas.keys(), trade_datas.values(), daily_results.values(), statistics.values()):
+        # 什么类型自己根据type hint看哈。
+        print(strategy_name)
+        print(trade_data)
+        print(daily_result)
+        print(statistic)
