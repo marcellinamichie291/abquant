@@ -10,21 +10,22 @@ from ..listener import WebsocketListener
 
 from . import (
     DIRECTION_BYBIT2AB,
-    INVERSE_WEBSOCKET_HOST, 
-    ORDER_TYPE_BYBIT2AB, 
-    PRIVATE_WEBSOCKET_HOST, 
-    PUBLIC_WEBSOCKET_HOST, 
+    INVERSE_WEBSOCKET_HOST,
+    ORDER_TYPE_BYBIT2AB,
+    PRIVATE_WEBSOCKET_HOST,
+    PUBLIC_WEBSOCKET_HOST,
     STATUS_BYBIT2AB,
-    TESTNET_INVERSE_WEBSOCKET_HOST, 
-    TESTNET_PRIVATE_WEBSOCKET_HOST, 
-    TESTNET_PUBLIC_WEBSOCKET_HOST, 
+    TESTNET_INVERSE_WEBSOCKET_HOST,
+    TESTNET_PRIVATE_WEBSOCKET_HOST,
+    TESTNET_PUBLIC_WEBSOCKET_HOST,
     local_orderids,
     ubc_symbol_contract_map,
     bbc_symbol_contract_map,
     future_symbol_contract_map
-    )
+)
 
 from .bybit_util import generate_datetime, generate_datetime_2, generate_timestamp, get_float_value, sign
+
 
 class BybitUBCMarketWebsocketListener(WebsocketListener):
     """U本位合约的行情Websocket接口"""
@@ -38,7 +39,7 @@ class BybitUBCMarketWebsocketListener(WebsocketListener):
 
         self.ticks: Dict[str, TickData] = {}
         self.transactions: Dict[str, TransactionData] = {}
-        self.depths: Dict[str, DepthData] = {}        
+        self.depths: Dict[str, DepthData] = {}
 
         self.subscribed: Dict[str, SubscribeRequest] = {}
 
@@ -67,15 +68,15 @@ class BybitUBCMarketWebsocketListener(WebsocketListener):
 
     def subscribe(self, req: SubscribeRequest) -> None:
         """订阅行情"""
-        
+
         if req.symbol not in ubc_symbol_contract_map:
             self.gateway.write_log(f"找不到该合约代码{req.symbol}")
             return
         # 缓存订阅记录
         self.subscribed[req.symbol] = req
-        
+
         symbol = req.symbol
-        
+
         tick, depth, transaction, _ = self.make_data(symbol, Exchange.BYBIT, datetime.now(), self.gateway_name)
         self.ticks[symbol] = tick
         self.transactions[symbol] = transaction
@@ -92,13 +93,12 @@ class BybitUBCMarketWebsocketListener(WebsocketListener):
             channels.append(f"trade.{symbol}")
         if subscribe_mode.depth:
             channels.append(f"orderBook_200.100ms.{symbol}")
-        
+
         req_dict: dict = {
-            "op": "subscribe", 
+            "op": "subscribe",
             "args": channels
         }
         self.send_packet(req_dict)
-    
 
     def on_packet(self, packet: dict):
         if "topic" not in packet:
@@ -112,7 +112,7 @@ class BybitUBCMarketWebsocketListener(WebsocketListener):
             symbol: str = channel.replace("instrument_info.100ms.", "")
             tick: TickData = self.ticks[symbol]
             if type_ == "snapshot":
-                if not data["last_price"]:           # 过滤最新价为0的数据
+                if not data["last_price"]:  # 过滤最新价为0的数据
                     return
 
                 tick.trade_price = float(data["last_price"])
@@ -122,14 +122,14 @@ class BybitUBCMarketWebsocketListener(WebsocketListener):
             else:
                 update: dict = data["update"][0]
 
-                if "last_price" not in update:      # 过滤最新价为0的数据
+                if "last_price" not in update:  # 过滤最新价为0的数据
                     return
 
                 tick.trade_price = float(update["last_price"])
                 if update["volume_24h_e8"]:
                     tick.trade_volume = int(update["volume_24h_e8"]) / 100000000
                 tick.datetime = generate_datetime(update["updated_at"])
-                
+
             tick.localtime = datetime.now()
             self.gateway.on_tick(copy(tick))
 
@@ -195,19 +195,19 @@ class BybitUBCMarketWebsocketListener(WebsocketListener):
             tick.datetime = generate_datetime_2(int(packet["timestamp_e6"]) / 1000000)
             tick.localtime = datetime.now()
             self.gateway.on_tick(copy(tick))
-            
+
         if "trade" in channel:
             # transaction
             symbol: str = channel.replace("trade.", "")
             l = packet["data"]
             for data in l:
                 transaction: TradeData = self.transactions[symbol]
-                
+
                 transaction.datetime = generate_datetime_2(int(data["trade_time_ms"]) / 1000)
                 transaction.volume = data["size"]
                 transaction.price = data["price"]
                 transaction.direction = Direction.SHORT if data["side"] == "Sell" else Direction.LONG
-                
+
                 self.gateway.on_transaction(copy(transaction))
 
         if "orderBook_200" in channel:
@@ -219,7 +219,7 @@ class BybitUBCMarketWebsocketListener(WebsocketListener):
             depth.localtime = datetime.now()
             if not data:
                 return
-            
+
             depth.datetime = generate_datetime_2(int(packet["timestamp_e6"]) / 1000000)
             if type_ == "snapshot":
                 buf = data["order_book"]
@@ -236,13 +236,14 @@ class BybitUBCMarketWebsocketListener(WebsocketListener):
                             depth.volume = 0
                             depth.direction = Direction.SHORT if d["side"] == "Sell" else Direction.LONG
                             self.gateway.on_depth(copy(depth))
-                    
+
                     if key == "update" or key == "insert":
                         for d in buf:
                             depth.price = float(d["price"])
                             depth.volume = d["size"]
                             depth.direction = Direction.SHORT if d["side"] == "Sell" else Direction.LONG
                             self.gateway.on_depth(copy(depth))
+
 
 class BybitUBCTradeWebsocketListener(WebsocketListener):
     """u本位 合约的交易Websocket接口"""
@@ -266,12 +267,12 @@ class BybitUBCTradeWebsocketListener(WebsocketListener):
         self.symbol_asks: Dict[str, dict] = {}
 
     def connect(
-        self,
-        key: str,
-        secret: str,
-        server: str,
-        proxy_host: str,
-        proxy_port: int
+            self,
+            key: str,
+            secret: str,
+            server: str,
+            proxy_host: str,
+            proxy_port: int
     ) -> None:
         """连接Websocket私有频道"""
         self.key = key
@@ -301,9 +302,9 @@ class BybitUBCTradeWebsocketListener(WebsocketListener):
         self.send_packet(req)
 
     def subscribe_topic(
-        self,
-        topic: str,
-        callback: Callable[[str, dict], Any]
+            self,
+            topic: str,
+            callback: Callable[[str, dict], Any]
     ) -> None:
         """订阅私有频道"""
         self.callbacks[topic] = callback
@@ -333,6 +334,10 @@ class BybitUBCTradeWebsocketListener(WebsocketListener):
             channel: str = packet["topic"]
             callback: callable = self.callbacks[channel]
             callback(packet)
+            try:
+                self.gateway.on_raw(packet)
+            except:
+                pass
 
     def on_login(self, packet: dict):
         """用户登录请求回报"""
@@ -427,21 +432,21 @@ class BybitUBCTradeWebsocketListener(WebsocketListener):
 
 class BybitBBCMarketWebsocketListener(WebsocketListener):
     """币本位合约行情Websocket接口"""
-    
+
     def __init__(self, gateway: Gateway):
         super(BybitBBCMarketWebsocketListener, self).__init__(gateway)
-        
+
         self.gateway = gateway
         self.ping_interval = 30
 
         self.ticks: Dict[str, TickData] = {}
         self.transactions: Dict[str, TransactionData] = {}
-        self.depths: Dict[str, DepthData] = {}                
-        
+        self.depths: Dict[str, DepthData] = {}
+
         self.subscribed: Dict[str, SubscribeRequest] = {}
 
         self.symbol_bids: Dict[str, dict] = {}
-        self.symbol_asks: Dict[str, dict] = {}        
+        self.symbol_asks: Dict[str, dict] = {}
 
     def connect(self, server: str, proxy_host: str, proxy_port: int) -> None:
         """ws行情"""
@@ -454,30 +459,29 @@ class BybitBBCMarketWebsocketListener(WebsocketListener):
             url = TESTNET_INVERSE_WEBSOCKET_HOST
 
         self.init(url, proxy_host, proxy_port)
-        
+
     def on_connected(self) -> None:
         """"""
         self.gateway.write_log("行情Websocket API连接成功")
 
         for req in list(self.subscribed.values()):
-            self.subscribe(req)    
-        
+            self.subscribe(req)
+
     def on_disconnected(self) -> None:
         """"""
         self.gateway.write_log("行情Websocket API连接断开")
-    
 
     def subscribe(self, req: SubscribeRequest) -> None:
         """订阅行情"""
-        
+
         # if req.symbol not in ubc_symbol_contract_map and req.symbol not in future_symbol_contract_map:
         #     self.gateway.write_log(f"找不到该合约代码{req.symbol}")
         #     return
         # 缓存订阅记录
         self.subscribed[req.symbol] = req
-        
+
         symbol = req.symbol
-        
+
         tick, depth, transaction, _ = self.make_data(symbol, Exchange.BYBIT, datetime.now(), self.gateway_name)
         self.ticks[symbol] = tick
         self.transactions[symbol] = transaction
@@ -494,14 +498,14 @@ class BybitBBCMarketWebsocketListener(WebsocketListener):
             channels.append(f"trade.{symbol}")
         if subscribe_mode.depth:
             channels.append(f"orderBook_200.100ms.{symbol}")
-        
+
         req_dict: dict = {
-            "op": "subscribe", 
+            "op": "subscribe",
             "args": channels
         }
 
         self.send_packet(req_dict)
-    
+
     def on_packet(self, packet: dict):
 
         if "topic" not in packet:
@@ -515,7 +519,7 @@ class BybitBBCMarketWebsocketListener(WebsocketListener):
             symbol: str = channel.replace("instrument_info.100ms.", "")
             tick: TickData = self.ticks[symbol]
             if type_ == "snapshot":
-                if not data["last_price"]:           # 过滤最新价为0的数据
+                if not data["last_price"]:  # 过滤最新价为0的数据
                     return
 
                 tick.trade_price = float(data["last_price"])
@@ -530,7 +534,7 @@ class BybitBBCMarketWebsocketListener(WebsocketListener):
             else:
                 update: dict = data["update"][0]
 
-                if "last_price" not in update:      # 过滤最新价为0的数据
+                if "last_price" not in update:  # 过滤最新价为0的数据
                     return
 
                 tick.trade_price = float(update["last_price"])
@@ -605,19 +609,19 @@ class BybitBBCMarketWebsocketListener(WebsocketListener):
             tick.datetime = generate_datetime_2(int(packet["timestamp_e6"]) / 1000000)
             tick.localtime = datetime.now()
             self.gateway.on_tick(copy(tick))
-            
+
         if "trade" in channel:
             # transaction
             symbol: str = channel.replace("trade.", "")
             l = packet["data"]
             for data in l:
                 transaction: TradeData = self.transactions[symbol]
-                
+
                 transaction.datetime = generate_datetime_2(int(data["trade_time_ms"]) / 1000)
                 transaction.volume = data["size"]
                 transaction.price = data["price"]
                 transaction.direction = Direction.SHORT if data["side"] == "Sell" else Direction.LONG
-                
+
                 self.gateway.on_transaction(copy(transaction))
 
         if "orderBook_200" in channel:
@@ -629,7 +633,7 @@ class BybitBBCMarketWebsocketListener(WebsocketListener):
             depth.localtime = datetime.now()
             if not data:
                 return
-            
+
             depth.datetime = generate_datetime_2(int(packet["timestamp_e6"]) / 1000000)
             if type_ == "snapshot":
                 for d in data:
@@ -645,17 +649,18 @@ class BybitBBCMarketWebsocketListener(WebsocketListener):
                             depth.volume = 0
                             depth.direction = Direction.SHORT if d["side"] == "Sell" else Direction.LONG
                             self.gateway.on_depth(copy(depth))
-                    
+
                     if key == "update" or key == "insert":
                         for d in buf:
                             depth.price = float(d["price"])
                             depth.volume = d["size"]
                             depth.direction = Direction.SHORT if d["side"] == "Sell" else Direction.LONG
                             self.gateway.on_depth(copy(depth))
-        
+
+
 class BybitBBCTradeWebsocketListener(WebsocketListener):
     """币本位合约交易websocket接口"""
-    
+
     def __init__(self, gateway: Gateway) -> None:
         """构造函数"""
         super(BybitBBCTradeWebsocketListener, self).__init__(gateway)
@@ -673,14 +678,14 @@ class BybitBBCTradeWebsocketListener(WebsocketListener):
 
         self.symbol_bids: Dict[str, dict] = {}
         self.symbol_asks: Dict[str, dict] = {}
-        
+
     def connect(
-        self,
-        key: str,
-        secret: str,
-        server: str,
-        proxy_host: str,
-        proxy_port: int
+            self,
+            key: str,
+            secret: str,
+            server: str,
+            proxy_host: str,
+            proxy_port: int
     ) -> None:
         """连接Websocket私有频道"""
         self.key = key
@@ -696,7 +701,7 @@ class BybitBBCTradeWebsocketListener(WebsocketListener):
 
         self.init(url, self.proxy_host, self.proxy_port)
         self.start()
-        
+
     def login(self) -> None:
         """用户登录"""
         expires: int = generate_timestamp(30)
@@ -708,11 +713,11 @@ class BybitBBCTradeWebsocketListener(WebsocketListener):
             "args": [self.key, expires, signature]
         }
         self.send_packet(req)
-        
+
     def subscribe_topic(
-        self,
-        topic: str,
-        callback: Callable[[str, dict], Any]
+            self,
+            topic: str,
+            callback: Callable[[str, dict], Any]
     ) -> None:
         """订阅私有频道"""
         self.callbacks[topic] = callback
@@ -722,7 +727,7 @@ class BybitBBCTradeWebsocketListener(WebsocketListener):
             "args": [topic],
         }
         self.send_packet(req)
-        
+
     def on_connected(self) -> None:
         """连接成功回报"""
         self.gateway.write_log("交易Websocket API连接成功")
@@ -742,7 +747,7 @@ class BybitBBCTradeWebsocketListener(WebsocketListener):
             channel: str = packet["topic"]
             callback: callable = self.callbacks[channel]
             callback(packet)
-    
+
     def on_login(self, packet: dict):
         """用户登录请求回报"""
         success: bool = packet.get("success", False)
@@ -754,7 +759,7 @@ class BybitBBCTradeWebsocketListener(WebsocketListener):
 
         else:
             self.gateway.write_log("交易Websocket API登录失败")
-            
+
     def on_trade(self, packet: dict) -> None:
         """成交更新推送"""
         for d in packet["data"]:
@@ -775,7 +780,7 @@ class BybitBBCTradeWebsocketListener(WebsocketListener):
             )
 
             self.gateway.on_trade(trade)
-            
+
     def on_order(self, packet: dict) -> None:
         """委托更新推送"""
         for d in packet["data"]:
@@ -802,7 +807,7 @@ class BybitBBCTradeWebsocketListener(WebsocketListener):
             )
 
             self.gateway.on_order(order)
-    
+
     def on_position(self, packet: dict) -> None:
         """持仓更新推送"""
         for d in packet["data"]:
