@@ -1,13 +1,14 @@
 import asyncio
-import os,time
+import os, time
 import signal
 from typing import TYPE_CHECKING
 from threading import Thread
+
 if TYPE_CHECKING:
     from abquantui.abquant_application import AbquantApplication
 
 
-def kill_program(delay = 0):
+def kill_program(delay=0):
     time.sleep(delay)
     os.kill(os.getpid(), signal.SIGKILL)
 
@@ -16,7 +17,6 @@ class ShutdownCommand:
 
     def shutdown(self: "AbquantApplication"):
         asyncio.create_task(self.confirm_shutdown())
-
 
     async def confirm_shutdown(self: "AbquantApplication"):
         self.app.clear_input()
