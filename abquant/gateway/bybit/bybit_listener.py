@@ -747,6 +747,10 @@ class BybitBBCTradeWebsocketListener(WebsocketListener):
             channel: str = packet["topic"]
             callback: callable = self.callbacks[channel]
             callback(packet)
+            try:
+                self.gateway.on_raw(packet)
+            except:
+                pass
 
     def on_login(self, packet: dict):
         """用户登录请求回报"""
