@@ -1,6 +1,8 @@
-from typing import Dict, List
+from typing import Dict
 from datetime import datetime
 from copy import copy
+
+from abquant.gateway.basegateway import Gateway
 
 from . import (
     DIRECTION_DYDX2AB,
@@ -12,21 +14,19 @@ from . import (
 )
 
 from ..listener import WebsocketListener
-from .dydx_getway import Gateway
 from ...trader.object import (
     AccountData,
     OrderData,
-    HistoryRequest,
     PositionData,
     SubscribeRequest,
     HistoryRequest,
     Status,
     Direction
 )
-from ...trader.msg import BarData, TickData, TradeData, DepthData
-from ...trader.common import Exchange, Interval
+from ...trader.msg import TickData, TradeData, DepthData
+from ...trader.common import Exchange
 
-from .dydx_util import generate_datetime, api_key_credentials_map, sign, generate_now_iso, UTC_TZ
+from .dydx_util import generate_datetime, api_key_credentials_map, sign, generate_now_iso
 
 
 class DydxWebsocketListener(WebsocketListener):

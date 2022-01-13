@@ -52,7 +52,7 @@ class BybitGateway(Gateway):
             "proxy_port", self.default_setting["proxy_port"])
         position_mode = setting.get("position_mode", self.default_setting["position_mode"][0])
         
-        if self.gateway_name == "BYBITUBC":
+        if "UBC" in self.gateway_name:
             self.rest_accessor = BybitUBCAccessor(self)
             self.trade_listener = BybitUBCTradeWebsocketListener(self)
             self.market_listener = BybitUBCMarketWebsocketListener(self)
