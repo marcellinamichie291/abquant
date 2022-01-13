@@ -21,10 +21,6 @@ from .dydx_listener import DydxWebsocketListener
 from .dydx_util import api_key_credentials_map
 
 
-# test 和官方客户端对比
-# from dydx3.modules.private import Private
-
-
 class DydxGateway(Gateway):
     default_setting = {
         "key": "",
@@ -97,6 +93,10 @@ class DydxGateway(Gateway):
     def query_account(self) -> None:
         """查询资金"""
         self.rest_accessor.query_account()
+        
+    def query_canceled_orders(self) -> None:
+        """查询已经撤销的订单"""
+        self.rest_accessor.query_canceled_orders()
 
     def query_position(self) -> None:
         """查询持仓"""
@@ -130,7 +130,9 @@ class DydxGateway(Gateway):
         if self.count < 10:
             return
         self.count = 0
-        self.query_account()
+        # self.query_account()
+        self.query_canceled_orders()
+        
 
     def init_query(self) -> None:
         """初始化查询任务"""
