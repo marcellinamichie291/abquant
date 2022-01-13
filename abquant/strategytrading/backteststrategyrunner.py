@@ -81,8 +81,8 @@ class BacktestStrategyRunner(StrategyManager):
             raise AttributeError("data_loader is not set")
         trade_datas, daily_results, statistics = OrderedDictionary(), OrderedDictionary(), OrderedDictionary()
 
-        start_dt = start_dt.date()
-        end_dt = end_dt.date()
+        start_dt = datetime.fromordinal(start_dt.date().toordinal())
+        end_dt = datetime.fromordinal(end_dt.date().toordinal())
         while self.strategies:
             strategy_name, strategy = self.strategies.popitem()
             ab_symbols = strategy.ab_symbols
