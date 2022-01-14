@@ -1,3 +1,16 @@
+## 0.10.2
+1. 样例与BarGenerator入参提示修改。
+1. abquantui 支持bybit
+
+## 0.10.1
+1. dydx订单回报丢失,增加restful查询
+1. bybit best tick bug修复
+
+## 0.10.0
+1. abquant 回测登场。
+1. 目前支持多金融产品，分钟级回测，后续会推出多策略回测。（请注意阅读readme，有一些新依赖需要安装，以及回测的使用样例）
+1. 回测目前仅支持binance， 数据自2021.7月起，且binance提供的历史现货数据似乎有小概率丢失的情况。数据的完整性后续会陆续补足。
+1. bybit监控所需的on_raw数据。
 
 ## 0.9.2
 1. abquantui增加异常

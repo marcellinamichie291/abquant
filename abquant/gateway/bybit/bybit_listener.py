@@ -19,10 +19,7 @@ from . import (
     TESTNET_PRIVATE_WEBSOCKET_HOST,
     TESTNET_PUBLIC_WEBSOCKET_HOST,
     local_orderids,
-    ubc_symbol_contract_map,
-    bbc_symbol_contract_map,
-    future_symbol_contract_map
-)
+    )
 
 from .bybit_util import generate_datetime, generate_datetime_2, generate_timestamp, get_float_value, sign
 
@@ -77,10 +74,7 @@ class BybitUBCMarketWebsocketListener(WebsocketListener):
 
     def subscribe(self, req: SubscribeRequest) -> None:
         """订阅行情"""
-
-        if req.symbol not in ubc_symbol_contract_map:
-            self.gateway.write_log(f"找不到该合约代码{req.symbol}")
-            return
+        
         # 缓存订阅记录
         self.subscribed[req.symbol] = req
 
@@ -94,9 +88,9 @@ class BybitUBCMarketWebsocketListener(WebsocketListener):
         # 发送订阅请求
         subscribe_mode = self.gateway.subscribe_mode
         channels = []
-        if subscribe_mode.best_tick:
-            channels.append(f"instrument_info.100ms.{symbol}")
-        if subscribe_mode.tick_5:
+        if subscribe_mode.best_tick or subscribe_mode.tick_5:
+            # channels.append(f"instrument_info.100ms.{symbol}")
+        # if subscribe_mode.tick_5:
             channels.append(f"orderBookL2_25.{symbol}")
         if subscribe_mode.transaction:
             channels.append(f"trade.{symbol}")
@@ -153,7 +147,7 @@ class BybitUBCMarketWebsocketListener(WebsocketListener):
             tick: TickData = self.ticks[symbol]
             bids: dict = self.symbol_bids.setdefault(symbol, {})
             asks: dict = self.symbol_asks.setdefault(symbol, {})
-
+            
             if type_ == "snapshot":
 
                 buf: list = data["order_book"]
@@ -201,6 +195,13 @@ class BybitUBCMarketWebsocketListener(WebsocketListener):
                 setattr(tick, f"ask_price_{n}", ask_price)
                 setattr(tick, f"ask_volume_{n}", ask_data["size"])
 
+            if self.gateway.subscribe_mode.best_tick:
+                tick.best_bid_price = tick.bid_price_1
+                tick.best_bid_volume = tick.bid_volume_1
+                tick.best_ask_price = tick.ask_price_1
+                tick.best_ask_volume = tick.ask_volume_1
+            tick.trade_price = 0
+            tick.trade_volume = 0
             tick.datetime = generate_datetime_2(int(packet["timestamp_e6"]) / 1000000)
             tick.localtime = datetime.now()
             self.gateway.on_tick(copy(tick))
@@ -211,12 +212,23 @@ class BybitUBCMarketWebsocketListener(WebsocketListener):
             l = packet["data"]
             for data in l:
                 transaction: TradeData = self.transactions[symbol]
-
-                transaction.datetime = generate_datetime_2(int(data["trade_time_ms"]) / 1000)
-                transaction.volume = data["size"]
-                transaction.price = data["price"]
+                tick: TickData = self.ticks[symbol]
+                dt = generate_datetime_2(int(data["trade_time_ms"]) / 1000)
+                dt_now = datetime.now()
+                p = float(data["price"])
+                v = data["size"]
+                
+                tick.trade_price = p
+                tick.trade_volume = v
+                tick.datetime = dt
+                tick.localtime = dt_now
+                
+                transaction.datetime = dt
+                transaction.volume = v
+                transaction.price = p
                 transaction.direction = Direction.SHORT if data["side"] == "Sell" else Direction.LONG
-
+                
+                self.gateway.on_tick(copy(tick))
                 self.gateway.on_transaction(copy(transaction))
 
         if "orderBook_200" in channel:
@@ -479,10 +491,7 @@ class BybitBBCMarketWebsocketListener(WebsocketListener):
 
     def subscribe(self, req: SubscribeRequest) -> None:
         """订阅行情"""
-
-        # if req.symbol not in ubc_symbol_contract_map and req.symbol not in future_symbol_contract_map:
-        #     self.gateway.write_log(f"找不到该合约代码{req.symbol}")
-        #     return
+        
         # 缓存订阅记录
         self.subscribed[req.symbol] = req
 
@@ -496,9 +505,9 @@ class BybitBBCMarketWebsocketListener(WebsocketListener):
         # 发送订阅请求
         subscribe_mode = self.gateway.subscribe_mode
         channels = []
-        if subscribe_mode.best_tick:
-            channels.append(f"instrument_info.100ms.{symbol}")
-        if subscribe_mode.tick_5:
+        if subscribe_mode.best_tick or subscribe_mode.tick_5:
+            # channels.append(f"instrument_info.100ms.{symbol}")
+        # if subscribe_mode.tick_5:
             channels.append(f"orderBookL2_25.{symbol}")
         if subscribe_mode.transaction:
             channels.append(f"trade.{symbol}")
@@ -611,7 +620,16 @@ class BybitBBCMarketWebsocketListener(WebsocketListener):
                 setattr(tick, f"bid_volume_{n}", bid_data["size"])
                 setattr(tick, f"ask_price_{n}", ask_price)
                 setattr(tick, f"ask_volume_{n}", ask_data["size"])
-
+                
+            if self.gateway.subscribe_mode.best_tick:
+                tick.best_bid_price = tick.bid_price_1
+                tick.best_bid_volume = tick.bid_volume_1
+                tick.best_ask_price = tick.ask_price_1
+                tick.best_ask_volume = tick.ask_volume_1
+            
+            tick.trade_price = 0
+            tick.trade_volume = 0
+            
             tick.datetime = generate_datetime_2(int(packet["timestamp_e6"]) / 1000000)
             tick.localtime = datetime.now()
             self.gateway.on_tick(copy(tick))
@@ -622,13 +640,25 @@ class BybitBBCMarketWebsocketListener(WebsocketListener):
             l = packet["data"]
             for data in l:
                 transaction: TradeData = self.transactions[symbol]
-
-                transaction.datetime = generate_datetime_2(int(data["trade_time_ms"]) / 1000)
-                transaction.volume = data["size"]
-                transaction.price = data["price"]
+                tick: TickData = self.ticks[symbol]
+                dt = generate_datetime_2(int(data["trade_time_ms"]) / 1000)
+                dt_now = datetime.now()
+                p = float(data["price"])
+                v = data["size"]
+                
+                tick.trade_price = p
+                tick.trade_volume = v
+                tick.datetime = dt
+                tick.localtime = dt_now
+                
+                transaction.datetime = dt
+                transaction.volume = v
+                transaction.price = p
                 transaction.direction = Direction.SHORT if data["side"] == "Sell" else Direction.LONG
-
+                
+                self.gateway.on_tick(copy(tick))
                 self.gateway.on_transaction(copy(transaction))
+
 
         if "orderBook_200" in channel:
             # depth

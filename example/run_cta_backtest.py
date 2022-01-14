@@ -12,10 +12,12 @@ from strategy.doublemeanaverage import DoubleMAStrategy
 if __name__ == '__main__':
     dl_setting = {
 
+        "aws_access_key_id": "",
+        "aws_secret_access_key": "",
     }
 
-    start = datetime(2021, 8, 1)
-    end = datetime(2021, 10, 5)
+    start = datetime(2021, 7, 1)
+    end = datetime(2021, 12, 1)
     dataloader: DataLoader = DataLoaderKline(dl_setting)
 
     # dataset1 = dataloader.load_data('BTCUSDT.BINANCE', start, end)
@@ -87,7 +89,8 @@ if __name__ == '__main__':
 
     for strategy_name, trade_data, daily_result, statistic in zip(trade_datas.keys(), trade_datas.values(), daily_results.values(), statistics.values()):
         # 什么类型自己根据type hint看哈。
-        print(strategy_name)
-        print(trade_data)
-        print(daily_result)
-        print(statistic)
+        # print(strategy_name)
+        # print(trade_data)
+        # print(daily_result)
+        # print(statistic)
+        pass
