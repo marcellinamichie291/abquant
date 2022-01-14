@@ -27,6 +27,15 @@ from . import (
 from .bybit_util import generate_datetime, generate_datetime_2, generate_timestamp, get_float_value, sign
 
 
+def build_raw_data(data, gateway_name: str, data_type):
+    return {
+        'type': 'data_websocket',
+        'gateway_name': gateway_name,
+        'data_type': data_type,
+        'payload': data
+    }
+
+
 class BybitUBCMarketWebsocketListener(WebsocketListener):
     """U本位合约的行情Websocket接口"""
 
@@ -334,8 +343,7 @@ class BybitUBCTradeWebsocketListener(WebsocketListener):
             channel: str = packet["topic"]
             callback: callable = self.callbacks[channel]
             callback(packet)
-            self.gateway.on_raw(packet)
-
+            self.gateway.on_raw(build_raw_data(packet, self.gateway_name, channel))
 
     def on_login(self, packet: dict):
         """用户登录请求回报"""
@@ -745,7 +753,7 @@ class BybitBBCTradeWebsocketListener(WebsocketListener):
             channel: str = packet["topic"]
             callback: callable = self.callbacks[channel]
             callback(packet)
-            self.gateway.on_raw(packet)
+            self.gateway.on_raw(build_raw_data(packet, self.gateway_name, channel))
 
     def on_login(self, packet: dict):
         """用户登录请求回报"""
@@ -755,6 +763,7 @@ class BybitBBCTradeWebsocketListener(WebsocketListener):
             self.subscribe_topic("order", self.on_order)
             self.subscribe_topic("execution", self.on_trade)
             self.subscribe_topic("position", self.on_position)
+            self.subscribe_topic("wallet", self.on_account)
 
         else:
             self.gateway.write_log("交易Websocket API登录失败")
