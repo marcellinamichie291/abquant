@@ -768,6 +768,9 @@ class BybitBBCTradeWebsocketListener(WebsocketListener):
         else:
             self.gateway.write_log("交易Websocket API登录失败")
 
+    def on_account(self, packet: dict):
+        pass
+
     def on_trade(self, packet: dict) -> None:
         """成交更新推送"""
         for d in packet["data"]:
