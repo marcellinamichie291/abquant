@@ -78,7 +78,7 @@ class TheStrategy(StrategyTemplate):
 
     def on_init(self):
         for ab_symbol in self.ab_symbols:
-            self.bgs[ab_symbol] = BarGenerator(lambda bar: None, interval=5)
+            self.bgs[ab_symbol] = BarGenerator(lambda bar: None)
         # 聚合 bars 生成 window_bars， 根据k线生成 比如window分钟k线的barData， 并且调用 on_window_bars 回调函数。
         self.bar_accumulator = BarAccumulater(
             window=self.window, on_window_bars=self.on_window_bars)
