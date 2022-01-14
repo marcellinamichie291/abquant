@@ -82,9 +82,10 @@ class BarGenerator:
     def __init__(
         self,
         on_bar: Callable[[BarData], None],
+        # 后面这仨参数都没用了。但是为了向后兼容留着占位。
         window: int = 0,
         on_window_bar: Callable = None,
-        interval: Interval = Interval.MINUTE
+        interval:int = 1
     ):
         self.bar: BarData = None
         self.on_bar: Callable = on_bar
