@@ -53,6 +53,7 @@ def create_output_field():
         read_only=False,
         scrollbar=True,
         max_line_count=MAXIMUM_OUTPUT_PANE_LINE_COUNT,
+        line_numbers=True,
         initial_text=HEADER,
         lexer=FormattedTextLexer()
     )
@@ -62,6 +63,7 @@ def create_output_field_ab():
         focus_on_click=False,
         read_only=False,
         scrollbar=True,
+        line_numbers=True,
         max_line_count=MAXIMUM_OUTPUT_PANE_LINE_COUNT,
         initial_text=HEADER
     )
@@ -112,6 +114,7 @@ def create_log_field(search_field: SearchToolbar):
         read_only=False,
         scrollbar=True,
         max_line_count=MAXIMUM_LOG_PANE_LINE_COUNT,
+        line_numbers=True,
         initial_text="Running Logs \n",
         search_field=search_field,
         preview_search=False,

@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List
 
 from abquant.event import EventDispatcher, EventType
-from abquant.gateway import BitmexGateway, Gateway, BinanceUBCGateway, BinanceBBCGateway, BinanceSGateway, DydxGateway
+from abquant.gateway import BitmexGateway, Gateway, BinanceUBCGateway, BinanceBBCGateway, BinanceSGateway, DydxGateway, BybitBBCGateway, BybitUBCGateway
 from abquant.monitor import Monitor
 from abquant.strategytrading import LiveStrategyRunner
 import logging
@@ -22,6 +22,8 @@ class GatewayName:
     BINANCEBBC = 'BINANCEBBC'
     BINANCES = 'BINANCES',
     DYDX = 'DYDX'
+    BYBITBBC = 'BYBITBBC'
+    BYBITUBC = 'BYBITUBC'
 
 
 SUPPORTED_GATEWAY = {
@@ -29,7 +31,9 @@ SUPPORTED_GATEWAY = {
     GatewayName.BINANCEUBC: BinanceUBCGateway,
     GatewayName.BINANCEBBC: BinanceBBCGateway,
     GatewayName.BINANCES: BinanceSGateway,
-    GatewayName.DYDX: DydxGateway
+    GatewayName.DYDX: DydxGateway,
+    GatewayName.BYBITUBC: BybitUBCGateway,
+    GatewayName.BYBITBBC: BybitBBCGateway
 }
 
 
@@ -40,7 +44,6 @@ class StrategyLifecycle(ABC):
         self._config = config
         self._event_dispatcher: EventDispatcher = EventDispatcher(interval=config.get('interval', 1))
         logging.info('EventDispatcher started')
-        self._live_strategy_runner: LiveStrategyRunner
         common_setting = {
             "log_path": self._config.get('log_path'),
         }
@@ -52,6 +55,14 @@ class StrategyLifecycle(ABC):
         self._strategy_runner.set_monitor(monitor)
         logging.info('LiveStrategyRunner init')
         self.gateways: Dict[str: Gateway] = {}
+
+    @property
+    def strategy_runner(self):
+        return self._strategy_runner
+
+    @property
+    def event_dispatcher(self):
+        return self.event_dispatcher
 
     @property
     def config(self):
