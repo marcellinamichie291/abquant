@@ -1,3 +1,7 @@
+## 0.10.2
+1. 样例与BarGenerator入参提示修改。
+1. abquantui 支持bybit
+
 ## 0.10.1
 1. dydx订单回报丢失,增加restful查询
 1. bybit best tick bug修复
