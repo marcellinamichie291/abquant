@@ -19,6 +19,8 @@ class PositionData(BaseData):
     volume: float = 0
     frozen: float = 0
     price: float = 0
+    liq_price: float = 0
+    bust_price: float = 0
     pnl: float = 0
     yd_volume: float = 0
 

@@ -433,8 +433,10 @@ class BybitUBCTradeWebsocketListener(WebsocketListener):
                 symbol=d["symbol"],
                 exchange=Exchange.BYBIT,
                 direction=Direction.NET if d["mode"] == "MergedSingle" else DIRECTION_BYBIT2AB[d["side"]],
-                volume=d["size"] if d["side"] == "Buy" else -d["size"],
+                volume=-d["size"] if d["side"] == "Sell" and d["mode"] == "MergedSingle" else d["size"],
                 price=float(d["entry_price"]),
+                liq_price=float(d["liq_price"]),
+                bust_price=float(d["bust_price"]),
                 gateway_name=self.gateway_name
             )
             self.gateway.on_position(position)
