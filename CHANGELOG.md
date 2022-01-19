@@ -1,3 +1,9 @@
+## 0.10.3
+1. bybit 增加on_raw 处理仓位，账户和挂单的监控。
+1. binance 检测请求耗时监控。
+1. raw事件 readme
+1. abquant ui 简化启动代码
+
 ## 0.10.2
 1. 样例与BarGenerator入参提示修改。
 1. abquantui 支持bybit
