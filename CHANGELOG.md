@@ -1,6 +1,3 @@
-## 0.10.3
-1. 添加强平类以及demo程序
-
 ## 0.10.2
 1. 样例与BarGenerator入参提示修改。
 1. abquantui 支持bybit
