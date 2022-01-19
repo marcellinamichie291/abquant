@@ -340,12 +340,12 @@ class BybitUBCTradeWebsocketListener(WebsocketListener):
         """连接成功回报"""
         self.gateway.write_log("交易Websocket API连接成功")
         self.login()
-        self.gateway.on_raw(build_raw_data('', self.gateway_name, 'status_websocket_connected'))
+        self.gateway.on_raw({'type': 'status_websocket_user_connected', 'gateway_name': self.gateway.gateway_name})
 
     def on_disconnected(self) -> None:
         """连接断开回报"""
         self.gateway.write_log("交易Websocket API连接断开")
-        self.gateway.on_raw(build_raw_data('', self.gateway_name, 'status_websocket_disconnected'))
+        self.gateway.on_raw({'type': 'status_websocket_disconnected', 'gateway_name': self.gateway.gateway_name})
 
     def on_packet(self, packet: dict) -> None:
         """推送数据回报"""
@@ -770,12 +770,12 @@ class BybitBBCTradeWebsocketListener(WebsocketListener):
         """连接成功回报"""
         self.gateway.write_log("交易Websocket API连接成功")
         self.login()
-        self.gateway.on_raw(build_raw_data('', self.gateway_name, 'status_websocket_connected'))
+        self.gateway.on_raw({'type': 'status_websocket_user_connected', 'gateway_name': self.gateway.gateway_name})
 
     def on_disconnected(self) -> None:
         """连接断开回报"""
         self.gateway.write_log("交易Websocket API连接断开")
-        self.gateway.on_raw(build_raw_data('', self.gateway_name, 'status_websocket_disconnected'))
+        self.gateway.on_raw({'type': 'status_websocket_user_disconnected', 'gateway_name': self.gateway.gateway_name})
 
     def on_packet(self, packet: dict) -> None:
         """推送数据回报"""
