@@ -32,10 +32,10 @@ def main():
         threading.Thread(name='thread-'+str(i), target=load_data, args=(dataloader, i, args.data_file)).start()
 
 
-def load_data(dataloader, day, data_file):
+def load_data(dataloader, day, data_file=None):
     print(threading.current_thread().name + ': start --------------')
-    dataset: DatasetKline = dataloader.load_data('BTCUSDT.BINANCE',
-                                                 datetime(2021, 12, day, 9), datetime(2021, 12, 5, 12))
+    dataset: DatasetKline = dataloader.load_data('btcusdt.BINANCE',
+                                                 datetime(2021, 8, day, 9), datetime(2021, 8, 15, 12))
     if dataset is None:
         return
     dataset.dataframe.info(memory_usage='deep')
