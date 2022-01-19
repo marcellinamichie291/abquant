@@ -332,3 +332,33 @@ class StrategyTemplate(ABC):
         raise NotImplementedError("do not use for now.")
         if self.trading:
             self.strategy_runner.sync_strategy_data(self)
+
+
+class DummyStrategy(StrategyTemplate):
+    def __init__(self, strategy_runner: StrategyRunner, strategy_name: str, ab_symbols: List[str], setting: dict):
+        super().__init__(strategy_runner, strategy_name, ab_symbols, setting)
+    
+
+    def on_init(self) -> None:
+        return super().on_init()
+
+    def on_start(self) -> None:
+        return super().on_start()
+    
+    def on_tick(self, tick: TickData) -> None:
+        pass
+
+    def on_bars(self, bars: Dict[str, BarData]) -> None:
+        pass
+    
+    def on_stop(self) -> None:
+        return super().on_stop()
+
+    def on_exception(self, exception: Exception) -> None:
+        pass
+    
+    def update_order(self, order: OrderData) -> None:
+        return super().update_order(order)
+    
+    def update_trade(self, trade: TradeData) -> None:
+        return super().update_trade(trade)

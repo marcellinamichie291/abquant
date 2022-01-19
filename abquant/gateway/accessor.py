@@ -1,3 +1,4 @@
+import time
 from logging import ERROR, WARNING
 import sys
 import traceback
@@ -54,6 +55,7 @@ class Request:
 
         self.response: requests.Response = None
         self.status: RequestStatus = RequestStatus.ready
+        self.time = time.time()
 
     def __str__(self):
         """"""
