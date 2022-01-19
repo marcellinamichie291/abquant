@@ -226,7 +226,7 @@ class ReplayRunner(StrategyRunner):
                 start = end
                 end += (progress_delta)
 
-            self.output(f"{ab_symbol}历史数据加载完成，数据天数:{data_count}")
+            self.output(f"{ab_symbol}历史数据加载完成，数据分钟数:{data_count}")
 
         self.output("所有历史数据加载完成")
 
@@ -456,6 +456,11 @@ class ReplayRunner(StrategyRunner):
         Output message of backtesting engine.
         """
         print(f"{datetime.now()}\t{msg}")
+    
+    def load_trades(self, strategy_name: str, trades: Iterable[TradeData]):
+        for trade in trades:
+            self.trades[strategy_name + trade.ab_tradeid] = copy(trade)
+
     
     def sorted_trades(self):
         return sorted(self.trades.values(), key= lambda x: x.datetime)
