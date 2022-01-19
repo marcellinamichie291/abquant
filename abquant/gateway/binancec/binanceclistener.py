@@ -217,7 +217,7 @@ class BinanceCTradeWebsocketListener(WebsocketListener):
     def on_connected(self) -> None:
         """"""
         raw_data = {
-            'type': 'status_websocket_connected',
+            'type': 'status_websocket_user_connected',
             'gateway_name': self.gateway_name
         }
         self.gateway.on_raw(raw_data)
@@ -226,7 +226,7 @@ class BinanceCTradeWebsocketListener(WebsocketListener):
     
     def on_disconnected(self):
         raw_data = {
-            'type': 'status_websocket_disconnected',
+            'type': 'status_websocket_user_disconnected',
             'gateway_name': self.gateway_name
         }
         self.gateway.on_raw(raw_data)

@@ -408,7 +408,8 @@ class BinanceCAccessor(RestfulAccessor):
             'type': 'data_restful',
             'gateway_name': self.gateway_name,
             'data_type': 'account',
-            'payload': data
+            'payload': data,
+            'time': time.time() - request.time
         }
         self.gateway.on_raw(raw_data)
 
@@ -452,7 +453,8 @@ class BinanceCAccessor(RestfulAccessor):
             'type': 'data_restful',
             'gateway_name': self.gateway_name,
             'data_type': 'position',
-            'payload': data
+            'payload': data,
+            'time': time.time() - request.time
         }
         self.gateway.on_raw(raw_data)
 
@@ -485,7 +487,8 @@ class BinanceCAccessor(RestfulAccessor):
             'type': 'data_restful',
             'gateway_name': self.gateway_name,
             'data_type': 'order',
-            'payload': data
+            'payload': data,
+            'time': time.time() - request.time
         }
         self.gateway.on_raw(raw_data)
 
