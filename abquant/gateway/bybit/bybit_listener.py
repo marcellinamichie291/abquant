@@ -345,7 +345,7 @@ class BybitUBCTradeWebsocketListener(WebsocketListener):
     def on_disconnected(self) -> None:
         """连接断开回报"""
         self.gateway.write_log("交易Websocket API连接断开")
-        self.gateway.on_raw({'type': 'status_websocket_disconnected', 'gateway_name': self.gateway.gateway_name})
+        self.gateway.on_raw({'type': 'status_websocket_user_disconnected', 'gateway_name': self.gateway.gateway_name})
 
     def on_packet(self, packet: dict) -> None:
         """推送数据回报"""
