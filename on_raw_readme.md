@@ -4,8 +4,8 @@
 可选项：
    - data_restfull （API请求的返回结果）
    - data_websocket （websocket通知消息）
-   - status_websocket_connected （websocket链接建立消息）
-   - status_websocket_disconnected （websocket链接断开消息）
+   - status_websocket_user_connected （websocket用户数据链接建立消息）
+   - status_websocket_user_disconnected （websocket用户数据链接断开消息）
 
         
 - **gateway_name** ->str:<br>
