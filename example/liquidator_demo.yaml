@@ -1,0 +1,22 @@
+
+strategy_name: stg_test
+log_path: ./logs
+interval: 1
+
+gateway:
+  BINANCEUBC:
+    key: YOUR_BINANCE_API_KEY
+    secret: YOUR_BINANCE_API_SECRET
+    test_net: REAL #REAL or TESTNET
+    proxy_host: localhost
+    proxy_port: 1087
+    minute_limit: 1000
+    second_limit: 200
+  BITMEX:
+    key: YOUR_BITMEX_API_KEY
+    secret: YOUR_BITMEX_API_SECRET
+    test_net: TESTNET #REAL or TESTNET
+    proxy_host: localhost
+    proxy_port: 1087
+    minute_limit: 60
+    second_limit: 60
