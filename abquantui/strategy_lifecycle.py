@@ -48,7 +48,7 @@ class StrategyLifecycle(ABC):
             "log_path": self._config.get('log_path'),
         }
 
-        monitor = Monitor(common_setting)
+        monitor = Monitor(common_setting, disable_logger=True)
         monitor.start()
 
         self._strategy_runner = LiveStrategyRunner(self._event_dispatcher)
