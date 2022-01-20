@@ -458,17 +458,18 @@ class LiveStrategyRunner(StrategyRunner, StrategyManager):
             raise ConnectionError("contract is not found or history_data is not set.")
         return data
 
-    def load_bars(self,
+
+    def load_bars_warm_up(self,
                   strategy: StrategyTemplate,
-                  days: int,
-                  interval: Interval = Interval.MINUTE, on_interval: Callable[[Dict[str, BarData]], None]=None):
+                  start: datetime,
+                  end: datetime,
+                  interval: Interval = Interval.MINUTE, 
+                  on_interval: Callable[[Dict[str, BarData]], None]=None):
+
         ab_symbols = strategy.ab_symbols
         dts: Set[datetime] = set()
-        history_data: Dict[Tuple, BarData] = {}
+        history_data: Dict[Tuple, BarData] = {}       
 
-        end = datetime.now()
-        start = end - timedelta(days=days)
-        # Load data from gateway/database
         for ab_symbol in ab_symbols:
             data = self.load_bar_(ab_symbol, start, end, interval)
 
@@ -506,7 +507,20 @@ class LiveStrategyRunner(StrategyRunner, StrategyManager):
             else:
                 raise NotImplementedError("non-minute-interval load_bars are not supported yet.")
         
-            
+ 
+
+
+    def load_bars(self,
+                  strategy: StrategyTemplate,
+                  days: int,
+                  interval: Interval = Interval.MINUTE, on_interval: Callable[[Dict[str, BarData]], None]=None):
+        end = datetime.now()
+        start = end - timedelta(days=days)
+        # Load data from gateway/database
+        self.load_bars_warm_up(strategy, start, end, interval, on_interval)
+        self.load_bars_warm_up(strategy, end, datetime.now(), interval, on_interval)
+
+           
 
     def write_log(self, msg: str, strategy: StrategyTemplate = None, level: LOG_LEVEL = INFO):
         if strategy:
