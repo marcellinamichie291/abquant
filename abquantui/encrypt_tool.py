@@ -46,15 +46,14 @@ class EncryptTool:
 
 
 if __name__ == '__main__':
-    abpwd = os.getenv("ABPWD", "TEST")
-    print(f"******ABPWD={abpwd}******")
-
+    abpwd = os.getenv("ABPWD", "abquanT%go2moon!")
+    # print(f"******ABPWD={abpwd}******")
     pr = EncryptTool(abpwd, 'ECB', 'utf8')
-
     etargs = parse()
     if etargs.encrypt:
+        dtext = pr.aesencrypt(etargs.encrypt)
         print(f'Before encrypt:\t{etargs.encrypt}')
-        print(f'After encrypt:\t{pr.aesencrypt(etargs.encrypt)}')
+        print(f'After encrypt:\t{dtext}')
     if etargs.decrypt:
         print(f'Before decrypt:\t{etargs.decrypt}')
         print(f'After decrypt:\t{pr.aesdecrypt(etargs.decrypt)}')
