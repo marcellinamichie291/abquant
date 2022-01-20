@@ -29,9 +29,9 @@ class Monitor(Thread):
     lark_url = None
     _logger = None
 
-    def __init__(self, setting: dict):
+    def __init__(self, setting: dict, disable_logger=False):
         Thread.__init__(self)
-        self._logger = Logger("monitor")
+        self._logger = Logger("abquant", disable_logger=disable_logger)
         self.setting = setting
         self.strategy = setting.get("strategy", None)
         if self.strategy is None and USE_WS_TRANSMITTER:

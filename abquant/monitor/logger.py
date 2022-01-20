@@ -12,11 +12,12 @@ FORMAT = "%(message)s"
 
 
 class Logger:
-    def __init__(self, name="monitor"):
+    def __init__(self, name="abquant", disable_logger=False):
         # print(f"Logger {name} init")
         self._logger = logging.getLogger(name)
-        self._logger.setLevel(LOG_LEVEL)
-        self.config_logger()
+        if not disable_logger:
+            self._logger.setLevel(LOG_LEVEL)
+            self.config_logger()
 
     def get_logger(self):
         return self._logger
@@ -106,16 +107,16 @@ class Logger:
                 if payload is not None:
                     if event_type == 'order':
                         if payload.get('datetime') is None:
-                            formatStr += f"ORDER: {payload.get('exchange')} - {payload.get('symbol')} - {payload.get('direction')} ts: {event_time}, status: {payload.get('status')}, price: {payload.get('price')}, volume: {payload.get('volume')}, type: {payload.get('type')}, order_id: {payload.get('orderid')} "
+                            formatStr += f"ORDER: {payload.get('gateway_name')} - {payload.get('symbol')} - {payload.get('direction')} ts: {event_time}, status: {payload.get('status')}, price: {payload.get('price')}, volume: {payload.get('volume')}, type: {payload.get('type')}, order_id: {payload.get('orderid')} "
                         else:
-                            formatStr += f"ORDER: {payload.get('exchange')} - {payload.get('symbol')} - {payload.get('direction')} ts: {payload.get('datetime')}, status: {payload.get('status')}, price: {payload.get('price')}, volume: {payload.get('volume')}, type: {payload.get('type')}, order_id: {payload.get('orderid')} "
+                            formatStr += f"ORDER: {payload.get('gateway_name')} - {payload.get('symbol')} - {payload.get('direction')} ts: {payload.get('datetime')}, status: {payload.get('status')}, price: {payload.get('price')}, volume: {payload.get('volume')}, type: {payload.get('type')}, order_id: {payload.get('orderid')} "
                     elif event_type == 'order_trade':
                         if payload.get('datetime') is None:
-                            formatStr += f"TRADE: {payload.get('exchange')} - {payload.get('symbol')} - {payload.get('direction')} ts: {event_time}, price: {payload.get('price')}, volume: {payload.get('volume')}, order_id: {payload.get('orderid')}, trade_id: {payload.get('tradeid')} "
+                            formatStr += f"TRADE: {payload.get('gateway_name')} - {payload.get('symbol')} - {payload.get('direction')} ts: {event_time}, price: {payload.get('price')}, volume: {payload.get('volume')}, order_id: {payload.get('orderid')}, trade_id: {payload.get('tradeid')} "
                         else:
-                            formatStr += f"TRADE: {payload.get('exchange')} - {payload.get('symbol')} - {payload.get('direction')} ts: {payload.get('datetime')}, price: {payload.get('price')}, volume: {payload.get('volume')}, order_id: {payload.get('orderid')}, trade_id: {payload.get('tradeid')} "
+                            formatStr += f"TRADE: {payload.get('gateway_name')} - {payload.get('symbol')} - {payload.get('direction')} ts: {payload.get('datetime')}, price: {payload.get('price')}, volume: {payload.get('volume')}, order_id: {payload.get('orderid')}, trade_id: {payload.get('tradeid')} "
                     elif event_type == 'position':
-                        formatStr += f'POSITION: {payload.get("exchange")} - {payload.get("symbol")}:  {payload.get("position")}'
+                        formatStr += f'POSITION: {payload.get("gateway_name")} - {payload.get("symbol")}:  {payload.get("position")}'
                     elif event_type == 'parameter':
                         formatStr += f'PARAMETER: {payload.get("name")}:  {payload.get("value")}'
                     elif event_type == 'status_report':
