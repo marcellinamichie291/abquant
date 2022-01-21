@@ -81,7 +81,6 @@ class StrategyLifecycle(ABC):
         if len(self.gateways) > 0:
             return '\n gateways not empty, do nothing, existed -> {}'.format(self.gateways.keys())
         abpwd = os.getenv("ABPWD", "abquanT%go2moon!")
-        print(f"******ABPWD={abpwd}******")
         for name, cls in SUPPORTED_GATEWAY.items():
             conf = self._config.get('gateway').get(name)
             if conf:
@@ -95,7 +94,7 @@ class StrategyLifecycle(ABC):
                         conf.pop('encrypt_key')
                         conf.pop('encrypt_secret')
                     except Exception as e:
-                        logging.info(f'Error occurs when decrypting key and secret for gateway {name}: \n', e)
+                        logging.error(f'Error occurs when decrypting key and secret for gateway {name}')
                         continue
                 else:
                     logging.info(f'Error: no (encrypted) key and secret config for gateway {name}')
