@@ -7,13 +7,9 @@ from datetime import datetime
 LOG_LEVEL = logging.INFO
 FORMAT = "%(message)s"
 
-# logging.basicConfig(format=FORMAT)
-# logger = logging.getLogger('abquant')
-
 
 class Logger:
     def __init__(self, name="abquant", disable_logger=False):
-        # print(f"Logger {name} init")
         self._logger = logging.getLogger(name)
         if not disable_logger:
             self._logger.setLevel(LOG_LEVEL)
@@ -55,9 +51,6 @@ class Logger:
         if not wret:
             print("log_path cannot write")
             return
-        # global logger
-        # logger.setLevel(LOG_LEVEL)
-        # logger.addHandler(get_handler('stdout'))
         logger2.addHandler(self.get_handler('file', log_path))
 
     def debug(self, msg, *args, **kwargs):
@@ -89,7 +82,6 @@ class Logger:
                 strategy_name = data.get("strategy_name")
                 event_type = data.get("event_type")
                 event_time = data.get("event_time")
-                # run_id = data.get("run_id")
                 payload = data.get("payload")
                 if strategy_name is None and event_type is None and payload is None:
                     logger2.info(json.dumps(data))
@@ -102,8 +94,6 @@ class Logger:
                 formatStr = f'{event_time} '
                 if strategy_name is not None and strategy_name != '':
                     formatStr += f'[{strategy_name}] '
-                # if run_id is not None and run_id[:2] != '0x':
-                #     formatStr += f'[{run_id}] '
                 if payload is not None:
                     if event_type == 'order':
                         if payload.get('datetime') is None:
