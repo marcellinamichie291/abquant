@@ -198,8 +198,17 @@ class TheStrategy(StrategyTemplate):
 def main():
     parent_path = pathlib.Path(__file__).parent
     config_path = parent_path.joinpath('run_strategy.yaml')
-
     config = parse_yaml(config_path)
+
+    # 初始化monitor
+    common_setting = {
+        "log_path": config.get('log_path') if 'log_path' in config else None,
+        "lark_url": config.get('lark_url') if 'lark_url' in config else None,
+    }
+    monitor = Monitor(common_setting)
+    monitor.start()
+
+    # 配置gateway
     gw_name = 'BINANCEUBC'
     gw_conf = config.get('gateway').get(gw_name)
     if 'encrypt_key' in gw_conf and 'encrypt_secret' in gw_conf:
@@ -210,12 +219,11 @@ def main():
             gw_conf.pop('encrypt_key')
             gw_conf.pop('encrypt_secret')
         except Exception as e:
-            print(f'Error occurs when decrypting key and secret for gateway {gw_name}')
+            monitor.error(f'Error decrypting key and secret for gateway {gw_name}: {gw_conf["encrypt_key"]}')
             return
     else:
-        print(f'Error: no (encrypted) key and secret config for gateway {gw_name}')
+        monitor.error(f'Error: no (encrypted) key and secret config for gateway {gw_name}')
         return
-
     binance_setting = {
         "key": gw_conf['key'],
         "secret": gw_conf['secret'],
@@ -224,20 +232,11 @@ def main():
         "proxy_host": config['proxy_host'] if 'proxy_host' in config else "",
         # 1087 int类型
         "proxy_port": config['proxy_port'] if 'proxy_port' in config else 0,
-        "test_net": config['test_net'] if 'test_net' in gw_conf else 'TESTNET',
+        "test_net": gw_conf['test_net'] if 'test_net' in gw_conf else 'TESTNET',
     }
-
-    common_setting = {
-        "lark_url": config.get('lark_url') if 'lark_url' in config else None,
-        "log_path": config.get('log_path') if 'log_path' in config else None,
-    }
-    # 初始化 monitor
-    monitor = Monitor(common_setting)
-    monitor.start()
 
     event_dispatcher = EventDispatcher(interval=1)
     strategy_runner = LiveStrategyRunner(event_dispatcher)
-    #设置monitor
     strategy_runner.set_monitor(monitor)
 
     # 注册一下 log 事件的回调函数， 该函数决定了如何打log。
