@@ -7,7 +7,7 @@ ecdsa
 telegram
 #ta-lib
 boto3
-tabulate
+pycrypto
 
 prompt_toolkit==3.0.20
 psutil==5.7.2
