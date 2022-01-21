@@ -91,8 +91,6 @@ class ReplayRunner(StrategyRunner):
         self.dts: Set[datetime] = set()
 
         self.limit_order_count = 0
-        self.limit_orders = {}
-        # self.active_limit_orders = {}
 
         # self.trade_count = 0
         self.trades: Dict[str, TradeData] = {}
@@ -373,6 +371,7 @@ class ReplayRunner(StrategyRunner):
         if (self.end - self.start) <= timedelta(days=self.days):
             raise ValueError(
                 "days of backtesting duration is less than days in data warm up( staregyTemplate.load_bars(days) ).")
+        self.output("注意啦，数据预热使用了{}天的历史数据, 模拟撮合将在剩余的历史数据中进行。".format(self.days))
 
     def submiting_order(self):
         """"""
@@ -392,9 +391,7 @@ class ReplayRunner(StrategyRunner):
     ) -> List[str]:
         """"""
         price = round_to(price, self.priceticks[ab_symbol])
-        if volume == 0:
-            # TODO rejected
-            self.output(" WARNING! order's volumn is not allowed to be 0")
+
         symbol, exchange = extract_ab_symbol(ab_symbol)
 
         self.limit_order_count += 1
@@ -411,9 +408,12 @@ class ReplayRunner(StrategyRunner):
             datetime=self.datetime,
             gateway_name=self.gateway_name,
         )
+        if volume <= 0:
+            order.status = Status.REJECTED
+            self.strategy.update_order(order)
+            return
 
         self.order_book.insert_order(order)
-        self.limit_orders[order.ab_orderid] = order
 
         return [order.ab_orderid]
 
@@ -421,8 +421,6 @@ class ReplayRunner(StrategyRunner):
         """
         Cancel order by ab_orderid.
         """
-        # if ab_orderid not in self.active_limit_orders:
-        #     return
 
         # order.status = Status.CANCELLED
         order = self.order_book.cancel_order(ab_orderid)
@@ -556,7 +554,8 @@ class ReplayRunner(StrategyRunner):
         else:
             # Calculate balance related time series data
             df["balance"] = df["net_pnl"].cumsum() + self.capital
-            # TODO
+            if (df["balance"] < 0).any():
+                self.output("WARNING: balance can not be less than zero, otherwise some statistic may wrongly calculated. raise up the your initial capital")
             df["return"] = np.log(
                 df["balance"] / df["balance"].shift(1)).fillna(0)
             df["highlevel"] = (
