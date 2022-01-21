@@ -21,9 +21,9 @@ if __name__ == '__main__':
         exit(1)
     etargs = parse()
     if etargs.encrypt:
-        dtext = encrypt(etargs.encrypt)
+        dtext = encrypt(etargs.encrypt, abpwd)
         print(f'Before encrypt:\t{etargs.encrypt}')
         print(f'After encrypt:\t{dtext}')
     if etargs.decrypt:
         print(f'Before decrypt:\t{etargs.decrypt}')
-        print(f'After decrypt:\t{decrypt(etargs.decrypt)}')
+        print(f'After decrypt:\t{decrypt(etargs.decrypt, abpwd)}')
