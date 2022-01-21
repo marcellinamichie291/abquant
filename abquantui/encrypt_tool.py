@@ -52,10 +52,8 @@ if __name__ == '__main__':
         print('Your password is too long (<=32)')
         exit(1)
     pr = EncryptTool(abpwd)
-    """
-      pr = EncryptTool(abpwd, 'ECB', 'utf8')
-      pr = EncryptTool(abpwd, 'CBC', 'utf8', '1234567890123456')    
-    """
+    # pr = EncryptTool(abpwd, 'ECB', 'utf8')
+    # pr = EncryptTool(abpwd, 'CBC', 'utf8', '1234567890123456')
     etargs = parse()
     if etargs.encrypt:
         dtext = pr.aesencrypt(etargs.encrypt)

@@ -85,9 +85,9 @@ class StrategyLifecycle(ABC):
         for name, cls in SUPPORTED_GATEWAY.items():
             conf = self._config.get('gateway').get(name)
             if conf:
-                if conf['key'] and conf['secret']:
+                if 'key' in conf and 'secret' in conf:
                     pass
-                elif conf['encrypt_key'] and conf['encrypt_secret']:
+                elif 'encrypt_key' in conf and 'encrypt_secret' in conf:
                     et = EncryptTool(abpwd)
                     try:
                         conf['key'] = et.aesdecrypt(conf['encrypt_key'])
@@ -97,6 +97,9 @@ class StrategyLifecycle(ABC):
                     except Exception as e:
                         logging.info(f'Error occurs when decrypting key and secret for gateway {name}: \n', e)
                         continue
+                else:
+                    logging.info(f'Error: no (encrypted) key and secret config for gateway {name}')
+                    continue
                 logging.info('connect gateway start: %s', name)
                 gw = cls(self._event_dispatcher)
                 gw.connect(conf)
