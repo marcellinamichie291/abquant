@@ -1,3 +1,4 @@
+import os
 import time
 from abc import ABC, abstractmethod
 from typing import Dict, List
@@ -11,6 +12,8 @@ import logging
 from typing import TYPE_CHECKING
 
 from abquantui.config_helpers import yaml_config_to_str
+from abquantui.encrypt_tool import EncryptTool
+
 
 if TYPE_CHECKING:
     from abquantui.abquant_application import AbquantApplication
@@ -77,9 +80,23 @@ class StrategyLifecycle(ABC):
     def connect_gateway(self):
         if len(self.gateways) > 0:
             return '\n gateways not empty, do nothing, existed -> {}'.format(self.gateways.keys())
+        abpwd = os.getenv("ABPWD", "abquanT%go2moon!")
+        print(f"******ABPWD={abpwd}******")
         for name, cls in SUPPORTED_GATEWAY.items():
             conf = self._config.get('gateway').get(name)
             if conf:
+                if conf['key'] and conf['secret']:
+                    pass
+                elif conf['encrypt_key'] and conf['encrypt_secret']:
+                    et = EncryptTool(abpwd)
+                    try:
+                        conf['key'] = et.aesdecrypt(conf['encrypt_key'])
+                        conf['secret'] = et.aesdecrypt(conf['encrypt_secret'])
+                        conf.pop('encrypt_key')
+                        conf.pop('encrypt_secret')
+                    except Exception as e:
+                        logging.info(f'Error occurs when decrypting key and secret for gateway {name}: \n', e)
+                        continue
                 logging.info('connect gateway start: %s', name)
                 gw = cls(self._event_dispatcher)
                 gw.connect(conf)
