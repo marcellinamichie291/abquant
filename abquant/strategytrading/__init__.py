@@ -25,7 +25,7 @@ class BacktestParameter:
         sizes: Dict[str, float],
         priceticks: Dict[str, float],
         capital: int = 0,
-        risk_free: float = 0,
+        risk_free: float = 0.15,
         inverses: DefaultDict[str, bool] = defaultdict(lambda: False),
         mode: BacktestingMode = BacktestingMode.BAR,
         annual_days: int = 365,
