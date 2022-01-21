@@ -16,7 +16,7 @@ from .transmitter import Transmitter
 from .logger import Logger
 
 MAX_QUEUE_SIZE = 10000
-MAX_BUFFER_SIZE = 100000
+MAX_BUFFER_SIZE = 10000
 USE_WS_TRANSMITTER = False
 
 
@@ -29,9 +29,9 @@ class Monitor(Thread):
     lark_url = None
     _logger = None
 
-    def __init__(self, setting: dict):
+    def __init__(self, setting: dict, disable_logger=False):
         Thread.__init__(self)
-        self._logger = Logger("monitor")
+        self._logger = Logger("abquant", disable_logger=disable_logger)
         self.setting = setting
         self.strategy = setting.get("strategy", None)
         if self.strategy is None and USE_WS_TRANSMITTER:
@@ -174,7 +174,6 @@ class Monitor(Thread):
                 except Exception as e:
                     self._logger.debug(f'Error: Queue send: {e},  put into buffer')
                     self.push_buffer(data)
-                    # time.sleep(1)
                     cycles += 1
                     if cycles > 10 and USE_WS_TRANSMITTER:
                         self.txmt = Transmitter(self.strategy)

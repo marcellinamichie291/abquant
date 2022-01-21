@@ -1,3 +1,4 @@
+import os
 import time
 from abc import ABC, abstractmethod
 from typing import Dict, List
@@ -11,6 +12,8 @@ import logging
 from typing import TYPE_CHECKING
 
 from abquantui.config_helpers import yaml_config_to_str
+from abquantui.encrypt_tool import EncryptTool
+
 
 if TYPE_CHECKING:
     from abquantui.abquant_application import AbquantApplication
@@ -48,7 +51,7 @@ class StrategyLifecycle(ABC):
             "log_path": self._config.get('log_path'),
         }
 
-        monitor = Monitor(common_setting)
+        monitor = Monitor(common_setting, disable_logger=True)
         monitor.start()
 
         self._strategy_runner = LiveStrategyRunner(self._event_dispatcher)
@@ -77,9 +80,25 @@ class StrategyLifecycle(ABC):
     def connect_gateway(self):
         if len(self.gateways) > 0:
             return '\n gateways not empty, do nothing, existed -> {}'.format(self.gateways.keys())
+        abpwd = os.getenv("ABPWD", "abquanT%go2moon!")
         for name, cls in SUPPORTED_GATEWAY.items():
             conf = self._config.get('gateway').get(name)
             if conf:
+                if 'key' in conf and 'secret' in conf:
+                    pass
+                elif 'encrypt_key' in conf and 'encrypt_secret' in conf:
+                    et = EncryptTool(abpwd)
+                    try:
+                        conf['key'] = et.aesdecrypt(conf['encrypt_key'])
+                        conf['secret'] = et.aesdecrypt(conf['encrypt_secret'])
+                        conf.pop('encrypt_key')
+                        conf.pop('encrypt_secret')
+                    except Exception as e:
+                        logging.error(f'Error occurs when decrypting key and secret for gateway {name}')
+                        continue
+                else:
+                    logging.info(f'Error: no (encrypted) key and secret config for gateway {name}')
+                    continue
                 logging.info('connect gateway start: %s', name)
                 gw = cls(self._event_dispatcher)
                 gw.connect(conf)
