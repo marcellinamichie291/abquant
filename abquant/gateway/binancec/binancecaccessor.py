@@ -259,7 +259,8 @@ class BinanceCAccessor(RestfulAccessor):
 
     def send_order(self, req: OrderRequest) -> str:
         """"""
-        if not self.check_rate_limit(request=1, order=1):
+        if not self.check_rate_limit(request=1, order=1, if_send=True):
+            self.gateway.write_log("下单操作过于频繁: {}".format(req))
             return ""
         orderid = self.ORDER_PREFIX + \
             str(self.connect_time + self._new_order_id())
@@ -280,7 +281,6 @@ class BinanceCAccessor(RestfulAccessor):
             price_tick = contract.pricetick
             price = round_to(req.price, price_tick)
             volume = round_to(req.volume, contract.step_size)
-
 
         params = {
             "symbol": req.symbol,
@@ -319,7 +319,8 @@ class BinanceCAccessor(RestfulAccessor):
 
     def cancel_order(self, req: CancelRequest) -> Request:
         """"""
-        if not self.check_rate_limit(request=1, order=0):
+        if not self.check_rate_limit(request=1, order=1, if_send=False):
+            self.gateway.write_log("撤单操作过于频繁: {}".format(req))
             return
         data = {
             "security": Security.SIGNED
@@ -393,6 +394,16 @@ class BinanceCAccessor(RestfulAccessor):
 
     def on_query_account(self, data: dict, request: Request) -> None:
         """"""
+
+        raw_data = {
+            'type': 'data_restful',
+            'gateway_name': self.gateway_name,
+            'data_type': 'account',
+            'payload': data,
+            'time': time.time() - request.time
+        }
+
+        self.gateway.on_raw(raw_data)
         for asset in data["assets"]:
             account = AccountData(
                 accountid=asset["asset"],
@@ -403,15 +414,6 @@ class BinanceCAccessor(RestfulAccessor):
 
             if account.balance:
                 self.gateway.on_account(account)
-
-        raw_data = {
-            'type': 'data_restful',
-            'gateway_name': self.gateway_name,
-            'data_type': 'account',
-            'payload': data,
-            'time': time.time() - request.time
-        }
-        self.gateway.on_raw(raw_data)
 
         self.gateway.write_log("账户资金查询成功")
 
@@ -426,9 +428,18 @@ class BinanceCAccessor(RestfulAccessor):
                 elif rateLimits['interval'] == 'SECOND':
                     self.seconds_orders_limit = rateLimits['limit']
 
-
     def on_query_position(self, data: dict, request: Request) -> None:
         """"""
+        raw_data = {
+            'type': 'data_restful',
+            'gateway_name': self.gateway_name,
+            'data_type': 'position',
+            'payload': data,
+            'time': time.time() - request.time
+        }
+        self.gateway.on_raw(raw_data)
+
+
         for d in data:
             position = PositionData(
                 symbol=d["symbol"],
@@ -449,19 +460,19 @@ class BinanceCAccessor(RestfulAccessor):
 
                 self.gateway.on_position(position)
 
+        self.gateway.write_log("持仓信息查询成功")
+
+    def on_query_order(self, data: dict, request: Request) -> None:
+        """"""
         raw_data = {
             'type': 'data_restful',
             'gateway_name': self.gateway_name,
-            'data_type': 'position',
+            'data_type': 'order',
             'payload': data,
             'time': time.time() - request.time
         }
         self.gateway.on_raw(raw_data)
 
-        self.gateway.write_log("持仓信息查询成功")
-
-    def on_query_order(self, data: dict, request: Request) -> None:
-        """"""
         for d in data:
             key = (d["type"], d["timeInForce"])
             order_type = ORDERTYPE_BINANCEC2AB.get(key, None)
@@ -482,15 +493,6 @@ class BinanceCAccessor(RestfulAccessor):
                 gateway_name=self.gateway_name,
             )
             self.gateway.on_order(order)
-
-        raw_data = {
-            'type': 'data_restful',
-            'gateway_name': self.gateway_name,
-            'data_type': 'order',
-            'payload': data,
-            'time': time.time() - request.time
-        }
-        self.gateway.on_raw(raw_data)
 
         self.gateway.write_log("交易单信息查询成功")
 
@@ -605,7 +607,7 @@ class BinanceCAccessor(RestfulAccessor):
             self.server_datetime = server_datetime
         # self.gateway.write_log("threadid: {}, after reset ratelimt: request used: {}, seconds_userd: {}, minite_used: {};;; server_datetime: {}".format(threading.get_ident(), self.request_used, self.seconds_orders_used, self.minite_orders_used, server_datetime), level=DEBUG)
 
-    def check_rate_limit(self, request: int = 1, order: int = 0) -> bool:
+    def check_rate_limit(self, request: int = 1, order: int = 0, if_send=False) -> bool:
         waiting_request_number = self.get_waiting_request_number()
         with self.rate_limit_lock:
             self.seconds_orders_used += order
@@ -615,15 +617,21 @@ class BinanceCAccessor(RestfulAccessor):
             # self.gateway.write_log("threadid: {}, check rate limit READY: request used: {}, seconds_userd: {}, minite_used: {}, queue size: {}".format(threading.get_ident(), self.request_used, self.seconds_orders_used, self.minite_orders_used, waiting_request_number), level=DEBUG)
             if self.seconds_orders_used + waiting_request_number > self.seconds_orders_limit:
                 # self.gateway.write_log("threadid: {}, check rate limit: request used: {}, seconds_userd: {}, minite_used: {}, queue size: {}".format(threading.get_ident(), self.request_used, self.seconds_orders_used, self.minite_orders_used, waiting_request_number), level=DEBUG)
-                msg = f"下单过于频繁，已被Binance限制, 10s内尝试下单{self.seconds_orders_used}, 可能超过{self.seconds_orders_limit}次每10s的限制， 该次订单被拦截。当前servertime: {self.server_datetime}"
+                if if_send:
+                    msg = f"下单过于频繁，已被Binance限制, 10s内尝试下撤单{self.seconds_orders_used}, 待请求队列长度{waiting_request_number}, 可能超过{self.seconds_orders_limit}次每10s的限制， 该次订单被拦截。当前servertime: {self.server_datetime}"
+                else:
+                    msg = f"撤单过于频繁，已被Binance限制, 10s内尝试下撤单{self.seconds_orders_used}, 带请求对列长度{waiting_request_number},可能超过{self.seconds_orders_limit}次每10s的限制， 该次订单被拦截。当前servertime: {self.server_datetime}"
                 self.gateway.write_log(msg, level=WARNING)
                 return False
             if self.minite_orders_used + waiting_request_number > self.minite_orders_limit:
-                msg = f"下单过于频繁，已被Binance限制, 分钟内尝试下单{self.minite_orders_used}，可能超过{self.seconds_orders_limit}次每分钟的限制。该次订单被拦截。"
+                if if_send:
+                    msg = f"下单过于频繁，已被Binance限制, 10s内尝试下撤单{self.seconds_orders_used}, 待请求队列长度{waiting_request_number}, 可能超过{self.seconds_orders_limit}次每10s的限制， 该次订单被拦截。当前servertime: {self.server_datetime}"
+                else:
+                    msg = f"撤单过于频繁，已被Binance限制, 10s内尝试下撤单{self.seconds_orders_used}, 带请求对列长度{waiting_request_number},可能超过{self.seconds_orders_limit}次每10s的限制， 该次订单被拦截。当前servertime: {self.server_datetime}"
                 self.gateway.write_log(msg, level=WARNING)
                 return False
             if self.request_used + waiting_request_number > self.request_limit:
-                msg = f"请求过于频繁，已被Binance限制, 分钟内试图请求{self.request_used}，可能超过{self.request_limit}次每分钟的限制。该次请求被拦截。"
+                msg = f"请求过于频繁，已被Binance限制, 分钟内试图请求{self.request_used}, 带请求对列长度{waiting_request_number},可能超过{self.request_limit}次每分钟的限制。该次请求被拦截。"
                 self.gateway.write_log(msg, level=WARNING)
                 return False
 
@@ -649,7 +657,6 @@ class BinanceCAccessor(RestfulAccessor):
     def query_history(self, req: HistoryRequest) -> Iterable[BarData]:
         """"""
 
-
         history = []
         limit = 1500
         if self.usdt_base:
@@ -665,7 +672,8 @@ class BinanceCAccessor(RestfulAccessor):
                 "limit": limit
             }
             if not self.check_rate_limit(request=10, order=0):
-                self.gateway.write_log("retry query history after 10s. Don't worry, rate limit will be check before request sending.")
+                self.gateway.write_log(
+                    "retry query history after 10s. Don't worry, rate limit will be check before request sending.")
                 time.sleep(10)
                 continue
 
