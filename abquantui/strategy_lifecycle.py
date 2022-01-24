@@ -48,7 +48,8 @@ class StrategyLifecycle(ABC):
         self._event_dispatcher: EventDispatcher = EventDispatcher(interval=config.get('interval', 1))
         logging.info('EventDispatcher started')
         common_setting = {
-            "log_path": self._config.get('log_path'),
+            "log_path": self._config.get('log_path') if 'lark_url' in config else None,
+            "lark_url": self._config.get('lark_url') if 'lark_url' in config else None,
         }
 
         monitor = Monitor(common_setting, disable_logger=True)
