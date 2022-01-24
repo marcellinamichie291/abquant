@@ -180,9 +180,6 @@ class TheStrategy(StrategyTemplate):
     def on_window_bars(self, bars: Dict[str, BarData]):
         # window分钟级策略在这里实现， 注意设置 window参数。方便
         # self.write_log("WINDOW BAR: {}".format(bars))
-
-        # 如果需要报警功能，配置好 monitor后可以通过该方法实现。
-        self.notify_lark("send msg to lark")
         pass
 
     def on_entrust(self, entrust: EntrustData) -> None:
@@ -235,7 +232,6 @@ def main():
         "lark_url": None,  # "https://open.larksuite.com/open-apis/bot/v2/hook/2b92f893-83c2-48c1-b366-2e6e38a09efe",
         "log_path": args.log_path,
     }
-    # Monitor.init_monitor(common_setting)
     # 初始化 monitor
     monitor = Monitor(common_setting)
     monitor.start()
@@ -253,11 +249,10 @@ def main():
     #         event.data.gateway_name,
     #         event.data.msg)
     # ))
-    event_dispatcher.register(EventType.EVENT_ACCOUNT, lambda event: print(
-        str('ACCOUNT: ') + str(event.data)))  # pass accessor,  trade_listerer not done
-    # event_dispatcher.register(EventType.EVENT_CONTRACT, lambda event:  print(str('CONTRACT: ') + str(event.data))) # pass
-    event_dispatcher.register(EventType.EVENT_POSITION, lambda event: print(
-        str('POSITION: ') + str(event.data)))
+    # event_dispatcher.register(EventType.EVENT_ACCOUNT, lambda event: print(str('ACCOUNT: ') + str(event.data)))
+    # event_dispatcher.register(EventType.EVENT_CONTRACT, lambda event:  print(str('CONTRACT: ') + str(event.data)))
+    # event_dispatcher.register(EventType.EVENT_POSITION, lambda event: print(str('POSITION: ') + str(event.data)))
+    # event_dispatcher.register(EventType.EVENT_ORDER, lambda event: print(str('ORDER: ') + str(event.data)))
 
     binance_spot_gateway = BinanceSGateway(event_dispatcher)
     binance_spot_gateway.connect(binance_setting)
@@ -284,33 +279,26 @@ def main():
     # 有默认值，默认全订阅, 可以不调用下面两行。
     binance_spot_gateway.set_subscribe_mode(subscribe_mode)
     binance_ubc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
-    # binance_bbc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
+    binance_bbc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
 
 
 
     from abquant.gateway.binancec import symbol_contract_map
-    for k, v in symbol_contract_map.items():
-        print(v)
-    ab_symbols = [generate_ab_symbol(
-        symbol, exchange=Exchange.BINANCE) for symbol in symbol_contract_map.keys()]
+    # for k, v in symbol_contract_map.items():
+    #     print(v)
+    ab_symbols = [generate_ab_symbol(symbol, exchange=Exchange.BINANCE) for symbol in symbol_contract_map.keys()]
     # this is subscribe all
     time.sleep(5)
-    print("{} instrument symbol strategy0 subscribed: ".format(
-        len(ab_symbols)), ab_symbols)
+    print("{} instrument symbol strategy0 subscribed: ".format(len(ab_symbols)), ab_symbols)
     # strategy 订阅所有binance合约 的金融产品行情数据。
-    # strategy_runner.add_strategy(strategy_class=TheStrategy,
-    #                              strategy_name='the_strategy0',
-    #                              ab_symbols=ab_symbols,
-    #                              setting={"param1": 1, "param2": 2}
-    #                              )
 
     from abquant.gateway.binances import symbol_contract_map
-    for k, v in symbol_contract_map.items():
-        print(v)
+    # for k, v in symbol_contract_map.items():
+    #     print(v)
     strategy_runner.add_strategy(strategy_class=TheStrategy,
                                  strategy_name='the_strategy1',
                                  ab_symbols=["BTCUSDT.BINANCE",
-                                             "ETHUSDT.BINANCE"],
+                                             "btcusdt.BINANCE"],
                                  setting={"param1": 1, "param2": 2}
                                  )
     strategy_runner.add_strategy(strategy_class=TheStrategy,
@@ -319,29 +307,11 @@ def main():
                                              "ETHUSD_PERP.BINANCE"],
                                  setting={"param1": 3, "param2": 4}
                                  )
-    strategy_runner.add_strategy(strategy_class=TheStrategy,
-                                 strategy_name='the_strategy3',
-                                 ab_symbols=["XRPUSDT.BINANCE",
-                                             "ICPUSDT.BINANCE"],
-                                 # uncommnet for test trade operation.
-                                 setting={"param1": 3, "param2": 4,
-                                          "trade_flag": False}
-                                 )
-
-    strategy_runner.add_strategy(strategy_class=TheStrategy,
-                                 strategy_name='the_strategy4',
-                                 ab_symbols=["BTCUSDT.BINANCE",
-                                             "btcusdt.BINANCE"],
-                                 # uncommnet for test trade operation.
-                                 setting={"param1": 3, "param2": 4,
-                                          "trade_flag": False}
-                                 )
     strategy_runner.init_all_strategies()
 
     # 策略 start之前 sleepy一段时间， 新的策略实例有可能订阅新的产品行情，这使得abquant需要做一次与交易所的重连操作。
     time.sleep(5)
     strategy_runner.start_all_strategies()
-    # monitor.send_notify_lark("11111111", "message for lark", common_setting.get("lark_url"))
 
     import random
     while True:
@@ -352,15 +322,7 @@ def main():
                                  "param2": 2 * random.uniform(0, 1)}
         strategy_runner.edit_strategy(
             strategy_name='the_strategy1', setting=the_strategy1_setting)
-        # renew strategy2 setting.
-        # the_strategy2_setting = {"param1": 4,
-        #                          "param2": 4 * random.uniform(0, 1),
-        #                          }
-        # strategy_runner.edit_strategy(
-        #     strategy_name='the_strategy2', setting=the_strategy2_setting)
-        # monitor.send(the_strategy1_setting)
 
-    # print([c.func.id for c in ast.walk(ast.parse(inspect.getsource(TheStrategy))) if isinstance(c, ast.Call)])
 if __name__ == '__main__':
     main()
     # test()

@@ -1,13 +1,13 @@
 
 strategy_name: stg_test
 log_path: ./logs
-lark_url: https://open.larksuite.com/open-apis/bot/v2/hook/2b92f893-83c2-48c1-b366-2e6e38a09efe1
+lark_url: https://open.larksuite.com/open-apis/bot/v2/hook/34f059f6-d4d1-4854-95e1-df014172b2e0
 proxy_host: localhost
 proxy_port: 1087
 
 gateway:
   BINANCEUBC:
-    encrypt_key: 1+7eXeX29wGuVF1/rMQ1Eo+wuw2Gi5tAx5UuGfbdZ6B2mLt4EOmrTjCmqVWE7o6ZUcvGbBL3mkY07WRyfGWSr1Q==
+    encrypt_key: +7eXeX29wGuVF1/rMQ1Eo+wuw2Gi5tAx5UuGfbdZ6B2mLt4EOmrTjCmqVWE7o6ZUcvGbBL3mkY07WRyfGWSr1Q==
     encrypt_secret: OL9BvFPnQQE+GkD+qajGH/vQxH9153ifA5fwpJH7MGLCaLBdCWsJM+H5GqDCbLxQS7q9k4q/GXH3AAdT4v/B4Q==
     test_net: REAL #REAL or TESTNET
   BITMEX:

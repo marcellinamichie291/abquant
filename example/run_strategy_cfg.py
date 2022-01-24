@@ -25,7 +25,7 @@ class TheStrategy(StrategyTemplate):
     trade_flag = False
     check_pos_interval = 20
     balance = 10000
-    window = 2
+    window = 60
 
     # 声明可配置参数，本行之上是可配置参数的默认值。
     parameters = [
@@ -158,9 +158,6 @@ class TheStrategy(StrategyTemplate):
     def on_window_bars(self, bars: Dict[str, BarData]):
         # window分钟级策略在这里实现， 注意设置 window参数。方便
         # self.write_log("WINDOW BAR: {}".format(bars))
-
-        # 如果需要报警功能，配置好 monitor后可以通过该方法实现。
-        self.notify_lark("send msg to lark")
         pass
 
     def on_entrust(self, entrust: EntrustData) -> None:
@@ -214,7 +211,7 @@ def main():
     if 'encrypt_key' in gw_conf and 'encrypt_secret' in gw_conf:
         try:
             abpwd = os.getenv("ABPWD", "abquanT%go2moon!")
-            gw_conf['key'] = encrypt(gw_conf['encrypt_key'], abpwd)
+            gw_conf['key'] = decrypt(gw_conf['encrypt_key'], abpwd)
             gw_conf['secret'] = decrypt(gw_conf['encrypt_secret'], abpwd)
             gw_conf.pop('encrypt_key')
             gw_conf.pop('encrypt_secret')
@@ -250,6 +247,7 @@ def main():
     # event_dispatcher.register(EventType.EVENT_ACCOUNT, lambda event: print(str('ACCOUNT: ') + str(event.data)))
     # event_dispatcher.register(EventType.EVENT_CONTRACT, lambda event:  print(str('CONTRACT: ') + str(event.data)))
     # event_dispatcher.register(EventType.EVENT_POSITION, lambda event: print(str('POSITION: ') + str(event.data)))
+    event_dispatcher.register(EventType.EVENT_ORDER, lambda event: print(str('ORDER: ') + str(event.data)))
 
     binance_spot_gateway = BinanceSGateway(event_dispatcher)
     binance_spot_gateway.connect(binance_setting)
@@ -281,12 +279,10 @@ def main():
     from abquant.gateway.binancec import symbol_contract_map
     # for k, v in symbol_contract_map.items():
     #     print(v)
-    ab_symbols = [generate_ab_symbol(
-        symbol, exchange=Exchange.BINANCE) for symbol in symbol_contract_map.keys()]
+    ab_symbols = [generate_ab_symbol(symbol, exchange=Exchange.BINANCE) for symbol in symbol_contract_map.keys()]
     # this is subscribe all
     time.sleep(5)
-    print("{} instrument symbol strategy0 subscribed: ".format(
-        len(ab_symbols)), ab_symbols)
+    print("{} instrument symbol strategy0 subscribed: ".format(len(ab_symbols)), ab_symbols)
     # strategy 订阅所有binance合约 的金融产品行情数据。
 
     from abquant.gateway.binances import symbol_contract_map
