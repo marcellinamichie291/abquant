@@ -89,7 +89,7 @@ class StrategyLifecycle(ABC):
                     pass
                 elif 'encrypt_key' in conf and 'encrypt_secret' in conf:
                     try:
-                        conf['key'] = encrypt(conf['encrypt_key'], abpwd)
+                        conf['key'] = decrypt(conf['encrypt_key'], abpwd)
                         conf['secret'] = decrypt(conf['encrypt_secret'], abpwd)
                         conf.pop('encrypt_key')
                         conf.pop('encrypt_secret')
