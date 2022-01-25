@@ -1,3 +1,7 @@
+## 0.10.6
+1. 增加run strategy with config
+1. 增加run strategy with ui
+
 ## 0.10.5
 1. binance monitor测时精确
 1. binance ratelimiter，对cancel技术orderlimit fixed。 log补充。
