@@ -61,7 +61,7 @@ class Gateway(ABC):
         orveride method should call this base method for orderequest check
         """
         if order_request.type == OrderType.MARKET and order_request.price:
-            self.write_log("markert order sent with price, order: \n{}".format(order_request), level=WARNING)
+            self.write_log("market order sent with price, order: \n{}".format(order_request), level=WARNING)
 
     
     @abstractmethod

@@ -11,25 +11,34 @@ from ..accessor import Request, RestfulAccessor
 from ..basegateway import Gateway
 from .bybit_util import generate_timestamp, generate_datetime_2, generate_datetime, sign
 from . import (
-    DIRECTION_AB2BYBIT, 
-    DIRECTION_BYBIT2AB, 
-    INTERVAL_AB2BYBIT, 
-    ORDER_TYPE_AB2BYBIT, 
-    ORDER_TYPE_BYBIT2AB, 
-    REST_HOST, 
-    STATUS_BYBIT2AB, 
-    TESTNET_REST_HOST, 
-    TIMEDELTA_MAP, 
-    ubc_symbol_contract_map, 
+    DIRECTION_AB2BYBIT,
+    DIRECTION_BYBIT2AB,
+    INTERVAL_AB2BYBIT,
+    ORDER_TYPE_AB2BYBIT,
+    ORDER_TYPE_BYBIT2AB,
+    REST_HOST,
+    STATUS_BYBIT2AB,
+    TESTNET_REST_HOST,
+    TIMEDELTA_MAP,
+    ubc_symbol_contract_map,
     bbc_symbol_contract_map,
     future_symbol_contract_map,
     local_orderids
 )
 
+
+def build_raw_data(data, gateway_name: str, data_type):
+    return {
+        'type': 'data_restfull',
+        'gateway_name': gateway_name,
+        'data_type': data_type,
+        'payload': data
+    }
+
+
 class BybitUBCAccessor(RestfulAccessor):
     """U本位合约的REST接口"""
     ORDER_PREFIX = str(hex(uuid.getnode()))
-
 
     def __init__(self, gateway: Gateway):
         """构造函数"""
@@ -40,7 +49,7 @@ class BybitUBCAccessor(RestfulAccessor):
         self.key: str = ""
         self.secret: bytes = b""
         self.position_mode: str = ""
-        
+
         self.connect_time: int = 0
 
         self.order_count: int = 1_000_000
@@ -70,13 +79,13 @@ class BybitUBCAccessor(RestfulAccessor):
         return request
 
     def connect(
-        self,
-        key: str,
-        secret: str,
-        position_mode: str,
-        server: str,
-        proxy_host: str,
-        proxy_port: int,
+            self,
+            key: str,
+            secret: str,
+            position_mode: str,
+            server: str,
+            proxy_host: str,
+            proxy_port: int,
     ) -> None:
         """连接服务器"""
         self.key = key
@@ -88,19 +97,18 @@ class BybitUBCAccessor(RestfulAccessor):
         else:
             self.init(TESTNET_REST_HOST, proxy_host, proxy_port)
         self.connect_time = (
-            int(datetime.now().strftime("%y%m%d%H%M%S")) * self.order_count
+                int(datetime.now().strftime("%y%m%d%H%M%S")) * self.order_count
         )
         self.start()
         self.query_contract()
         self.gateway.write_log("REST API启动成功")
-
 
     def _new_order_id(self) -> int:
         """"""
         with self.order_count_lock:
             self.order_count += 1
             return self.order_count
-        
+
     def send_order(self, req: OrderRequest) -> str:
         """委托下单"""
         # 检查委托类型是否正确
@@ -117,7 +125,7 @@ class BybitUBCAccessor(RestfulAccessor):
 
         # 生成本地委托号
         orderid = self.ORDER_PREFIX + \
-            str(self.connect_time + self._new_order_id())        
+                  str(self.connect_time + self._new_order_id())
         # 推送提交中事件
         order: OrderData = req.create_order_data(orderid, self.gateway_name)
         order_type, time_in_force = ORDER_TYPE_AB2BYBIT[req.type]
@@ -138,7 +146,7 @@ class BybitUBCAccessor(RestfulAccessor):
 
         if req.offset == Offset.CLOSE:
             data["reduce_only"] = True
-            
+
         self.add_request(
             "POST",
             path,
@@ -153,9 +161,9 @@ class BybitUBCAccessor(RestfulAccessor):
         return order.ab_orderid
 
     def on_send_order_failed(
-        self,
-        status_code: int,
-        request: Request
+            self,
+            status_code: int,
+            request: Request
     ) -> None:
         """委托下单失败服务器报错回报"""
         order: OrderData = request.extra
@@ -169,11 +177,11 @@ class BybitUBCAccessor(RestfulAccessor):
         self.gateway.write_log(data)
 
     def on_send_order_error(
-        self,
-        exception_type: type,
-        exception_value: Exception,
-        tb,
-        request: Request
+            self,
+            exception_type: type,
+            exception_value: Exception,
+            tb,
+            request: Request
     ) -> None:
         """委托下单回报函数报错回报"""
         order: OrderData = request.extra
@@ -249,6 +257,8 @@ class BybitUBCAccessor(RestfulAccessor):
                 )
                 self.gateway.on_position(position)
 
+        self.gateway.on_raw(build_raw_data(data, self.gateway_name, "position"))
+
     def on_query_contract(self, data: dict, request: Request) -> None:
         """合约查询回报"""
         if self.check_error("查询合约", data):
@@ -296,6 +306,8 @@ class BybitUBCAccessor(RestfulAccessor):
                 self.gateway.on_account(account)
                 self.gateway.write_log(f"{key}资金信息查询成功")
 
+        self.gateway.on_raw(build_raw_data(data, self.gateway_name, "account"))
+
     def on_query_order(self, data: dict, request: Request):
         """未成交委托查询回报"""
         if self.check_error("查询委托", data):
@@ -335,6 +347,8 @@ class BybitUBCAccessor(RestfulAccessor):
             self.gateway.on_order(order)
 
         self.gateway.write_log(f"{order.symbol}委托信息查询成功")
+
+        self.gateway.on_raw(build_raw_data(data, self.gateway_name, "order"))
 
     def query_contract(self) -> None:
         """查询合约信息"""
@@ -470,20 +484,20 @@ class BybitUBCAccessor(RestfulAccessor):
 class BybitBBCAccessor(RestfulAccessor):
     "币本位永续、交割合约REST接口"
     ORDER_PREFIX = str(hex(uuid.getnode()))
-    
+
     def __init__(self, gateway: Gateway):
         super(BybitBBCAccessor, self).__init__(gateway)
-        
+
         self.gateway: Gateway = gateway
-        
+
         self.key: str = ""
         self.secret: bytes = b""
-        
+
         self.connect_time: int = 0
 
         self.order_count: int = 1_000_000
         self.order_count_lock: Lock = Lock()
-        
+
     def sign(self, request: Request) -> Request:
         """生成签名"""
         request.headers = {"Referer": "abquant"}
@@ -505,16 +519,16 @@ class BybitBBCAccessor(RestfulAccessor):
         signature: str = sign(self.secret, data2sign.encode())
         api_params["sign"] = signature
 
-        return request    
-    
+        return request
+
     def connect(
-        self,
-        key: str,
-        secret: str,
-        position_mode: str,
-        server: str,
-        proxy_host: str,
-        proxy_port: int,
+            self,
+            key: str,
+            secret: str,
+            position_mode: str,
+            server: str,
+            proxy_host: str,
+            proxy_port: int,
     ) -> None:
         """连接服务器"""
         self.key = key
@@ -525,18 +539,18 @@ class BybitBBCAccessor(RestfulAccessor):
         else:
             self.init(TESTNET_REST_HOST, proxy_host, proxy_port)
         self.connect_time = (
-            int(datetime.now().strftime("%y%m%d%H%M%S")) * self.order_count
+                int(datetime.now().strftime("%y%m%d%H%M%S")) * self.order_count
         )
         self.start()
         self.query_contract()
         self.gateway.write_log("REST API启动成功")
-        
+
     def _new_order_id(self) -> int:
         """"""
         with self.order_count_lock:
             self.order_count += 1
             return self.order_count
-    
+
     def send_order(self, req: OrderRequest) -> str:
         """委托下单"""
         # 检查委托类型是否正确
@@ -555,7 +569,7 @@ class BybitBBCAccessor(RestfulAccessor):
 
         # 生成本地委托号
         orderid = self.ORDER_PREFIX + \
-            str(self.connect_time + self._new_order_id())        # 推送提交中事件
+                  str(self.connect_time + self._new_order_id())  # 推送提交中事件
 
         # 推送提交中事件
         order: OrderData = req.create_order_data(orderid, self.gateway_name)
@@ -576,7 +590,7 @@ class BybitBBCAccessor(RestfulAccessor):
 
         if req.offset == Offset.CLOSE:
             data["reduce_only"] = True
-            
+
         self.add_request(
             "POST",
             path,
@@ -589,11 +603,11 @@ class BybitBBCAccessor(RestfulAccessor):
 
         self.gateway.on_order(order)
         return order.ab_orderid
-    
+
     def on_send_order_failed(
-        self,
-        status_code: int,
-        request: Request
+            self,
+            status_code: int,
+            request: Request
     ) -> None:
         """委托下单失败服务器报错回报"""
         order: OrderData = request.extra
@@ -607,11 +621,11 @@ class BybitBBCAccessor(RestfulAccessor):
         self.gateway.write_log(msg)
 
     def on_send_order_error(
-        self,
-        exception_type: type,
-        exception_value: Exception,
-        tb,
-        request: Request
+            self,
+            exception_type: type,
+            exception_value: Exception,
+            tb,
+            request: Request
     ) -> None:
         """委托下单回报函数报错回报"""
         order: OrderData = request.extra
@@ -620,14 +634,14 @@ class BybitBBCAccessor(RestfulAccessor):
 
         if not issubclass(exception_type, ConnectionError):
             self.on_error(exception_type, exception_value, tb, request)
-            
+
     def on_send_order(self, data: dict, request: Request) -> None:
         """委托下单回报"""
         if self.check_error("委托下单", data):
             order: OrderData = request.extra
             order.status = Status.REJECTED
             self.gateway.on_order(order)
-            
+
     def cancel_order(self, req: CancelRequest) -> None:
         """委托撤单"""
         # 检查合约代码是否正确并根据合约类型判断撤单接口
@@ -653,7 +667,7 @@ class BybitBBCAccessor(RestfulAccessor):
             data=data,
             callback=self.on_cancel_order
         )
-        
+
     def on_cancel_order(self, data: dict, request: Request) -> None:
         """委托撤单回报"""
         
@@ -667,7 +681,7 @@ class BybitBBCAccessor(RestfulAccessor):
             msg = f"撤单失败，错误代码：{error_code}，信息：{error_msg}"
             self.gateway.write_log(msg)
             return
-        
+
     def on_failed(self, status_code: int, request: Request) -> None:
         """处理请求失败回报"""
         data: dict = request.response.json()
@@ -703,6 +717,7 @@ class BybitBBCAccessor(RestfulAccessor):
                 )
                 self.gateway.on_position(position)
 
+        self.gateway.on_raw(build_raw_data(data, self.gateway_name, "account"))
 
     def on_query_contract(self, data: dict, request: Request) -> None:
         """合约查询回报"""
@@ -717,7 +732,7 @@ class BybitBBCAccessor(RestfulAccessor):
                 name=d["name"],
                 pricetick=float(d["price_filter"]["tick_size"]),
                 size=1,
-                step_size=d["lot_size_filter"]["qty_step"],                
+                step_size=d["lot_size_filter"]["qty_step"],
                 min_volume=d["lot_size_filter"]["min_trading_qty"],
                 product=Product.FUTURES,
                 net_position=True,
@@ -755,6 +770,8 @@ class BybitBBCAccessor(RestfulAccessor):
                 self.gateway.on_account(account)
                 self.gateway.write_log(f"{key}资金信息查询成功")
 
+        self.gateway.on_raw(build_raw_data(data, self.gateway_name, "account"))
+
     def on_query_order(self, data: dict, request: Request):
         """未成交委托查询回报"""
         if self.check_error("查询委托", data):
@@ -788,6 +805,8 @@ class BybitBBCAccessor(RestfulAccessor):
             self.gateway.on_order(order)
 
         self.gateway.write_log(f"{order.symbol}委托信息查询成功")
+
+        self.gateway.on_raw(build_raw_data(data, self.gateway_name, "account"))
 
     def query_contract(self) -> None:
         """查询合约信息"""

@@ -19,14 +19,14 @@ class BarAccumulater:
 
     @staticmethod
     def check_datatime(bars: Dict[str, BarData]):
-        bar_time = None
+        bar_time = max(bars.values(), key=lambda x: x.datetime).datetime
         for ab_symbol, bar in bars.items():
             if bar is None:
                 continue
-            if bar_time is None:
-                bar_time = bar.datetime
-            assert bar_time == bar.datetime, "the BarData in bars has different timestamp."
-            bar_time = bar.datetime
+            # if bar_time is None:
+            #     bar_time = bar.datetime
+            if bar_time != bar.datetime:
+                bar.datetime = bar_time
 
     def update_bars(self, bars: Dict[str, BarData]):
         """

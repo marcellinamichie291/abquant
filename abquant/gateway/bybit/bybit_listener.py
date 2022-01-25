@@ -24,6 +24,15 @@ from . import (
 from .bybit_util import generate_datetime, generate_datetime_2, generate_timestamp, get_float_value, sign
 
 
+def build_raw_data(data, gateway_name: str, data_type):
+    return {
+        'type': 'data_websocket',
+        'gateway_name': gateway_name,
+        'data_type': data_type,
+        'payload': data
+    }
+
+
 class BybitUBCMarketWebsocketListener(WebsocketListener):
     """U本位合约的行情Websocket接口"""
 
@@ -331,10 +340,12 @@ class BybitUBCTradeWebsocketListener(WebsocketListener):
         """连接成功回报"""
         self.gateway.write_log("交易Websocket API连接成功")
         self.login()
+        self.gateway.on_raw({'type': 'status_websocket_user_connected', 'gateway_name': self.gateway.gateway_name})
 
     def on_disconnected(self) -> None:
         """连接断开回报"""
         self.gateway.write_log("交易Websocket API连接断开")
+        self.gateway.on_raw({'type': 'status_websocket_user_disconnected', 'gateway_name': self.gateway.gateway_name})
 
     def on_packet(self, packet: dict) -> None:
         """推送数据回报"""
@@ -346,8 +357,7 @@ class BybitUBCTradeWebsocketListener(WebsocketListener):
             channel: str = packet["topic"]
             callback: callable = self.callbacks[channel]
             callback(packet)
-            self.gateway.on_raw(packet)
-
+            self.gateway.on_raw(build_raw_data(packet, self.gateway_name, channel))
 
     def on_login(self, packet: dict):
         """用户登录请求回报"""
@@ -762,10 +772,12 @@ class BybitBBCTradeWebsocketListener(WebsocketListener):
         """连接成功回报"""
         self.gateway.write_log("交易Websocket API连接成功")
         self.login()
+        self.gateway.on_raw({'type': 'status_websocket_user_connected', 'gateway_name': self.gateway.gateway_name})
 
     def on_disconnected(self) -> None:
         """连接断开回报"""
         self.gateway.write_log("交易Websocket API连接断开")
+        self.gateway.on_raw({'type': 'status_websocket_user_disconnected', 'gateway_name': self.gateway.gateway_name})
 
     def on_packet(self, packet: dict) -> None:
         """推送数据回报"""
@@ -777,7 +789,7 @@ class BybitBBCTradeWebsocketListener(WebsocketListener):
             channel: str = packet["topic"]
             callback: callable = self.callbacks[channel]
             callback(packet)
-            self.gateway.on_raw(packet)
+            self.gateway.on_raw(build_raw_data(packet, self.gateway_name, channel))
 
     def on_login(self, packet: dict):
         """用户登录请求回报"""
@@ -787,9 +799,13 @@ class BybitBBCTradeWebsocketListener(WebsocketListener):
             self.subscribe_topic("order", self.on_order)
             self.subscribe_topic("execution", self.on_trade)
             self.subscribe_topic("position", self.on_position)
+            self.subscribe_topic("wallet", self.on_account)
 
         else:
             self.gateway.write_log("交易Websocket API登录失败")
+
+    def on_account(self, packet: dict):
+        pass
 
     def on_trade(self, packet: dict) -> None:
         """成交更新推送"""

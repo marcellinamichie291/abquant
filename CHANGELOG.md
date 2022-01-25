@@ -1,3 +1,20 @@
+## 0.10.5
+1. binance monitor测时精确
+1. binance ratelimiter，对cancel技术orderlimit fixed。 log补充。
+
+## 0.10.4
+1. monitor logger 重构
+1. aes 秘钥加密解密工具，并集成到abquantui中
+1. abquant回测 数值溢出warning
+1. 多产品gateway断联+1分钟导致的bargenerate可能的错误修复
+1. 长数据预热情况支持
+
+## 0.10.3
+1. bybit 增加on_raw 处理仓位，账户和挂单的监控。
+1. binance 检测请求耗时监控。
+1. raw事件 readme
+1. abquant ui 简化启动代码
+
 ## 0.10.2
 1. 样例与BarGenerator入参提示修改。
 1. abquantui 支持bybit

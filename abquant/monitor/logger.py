@@ -7,16 +7,13 @@ from datetime import datetime
 LOG_LEVEL = logging.INFO
 FORMAT = "%(message)s"
 
-# logging.basicConfig(format=FORMAT)
-# logger = logging.getLogger('abquant')
-
 
 class Logger:
-    def __init__(self, name="monitor"):
-        # print(f"Logger {name} init")
+    def __init__(self, name="abquant", disable_logger=False):
         self._logger = logging.getLogger(name)
-        self._logger.setLevel(LOG_LEVEL)
-        self.config_logger()
+        if not disable_logger:
+            self._logger.setLevel(LOG_LEVEL)
+            self.config_logger()
 
     def get_logger(self):
         return self._logger
@@ -54,9 +51,6 @@ class Logger:
         if not wret:
             print("log_path cannot write")
             return
-        # global logger
-        # logger.setLevel(LOG_LEVEL)
-        # logger.addHandler(get_handler('stdout'))
         logger2.addHandler(self.get_handler('file', log_path))
 
     def debug(self, msg, *args, **kwargs):
@@ -88,7 +82,6 @@ class Logger:
                 strategy_name = data.get("strategy_name")
                 event_type = data.get("event_type")
                 event_time = data.get("event_time")
-                # run_id = data.get("run_id")
                 payload = data.get("payload")
                 if strategy_name is None and event_type is None and payload is None:
                     logger2.info(json.dumps(data))
@@ -101,21 +94,19 @@ class Logger:
                 formatStr = f'{event_time} '
                 if strategy_name is not None and strategy_name != '':
                     formatStr += f'[{strategy_name}] '
-                # if run_id is not None and run_id[:2] != '0x':
-                #     formatStr += f'[{run_id}] '
                 if payload is not None:
                     if event_type == 'order':
                         if payload.get('datetime') is None:
-                            formatStr += f"ORDER: {payload.get('exchange')} - {payload.get('symbol')} - {payload.get('direction')} ts: {event_time}, status: {payload.get('status')}, price: {payload.get('price')}, volume: {payload.get('volume')}, type: {payload.get('type')}, order_id: {payload.get('orderid')} "
+                            formatStr += f"ORDER: {payload.get('gateway_name')} - {payload.get('symbol')} - {payload.get('direction')} ts: {event_time}, status: {payload.get('status')}, price: {payload.get('price')}, volume: {payload.get('volume')}, type: {payload.get('type')}, order_id: {payload.get('orderid')} "
                         else:
-                            formatStr += f"ORDER: {payload.get('exchange')} - {payload.get('symbol')} - {payload.get('direction')} ts: {payload.get('datetime')}, status: {payload.get('status')}, price: {payload.get('price')}, volume: {payload.get('volume')}, type: {payload.get('type')}, order_id: {payload.get('orderid')} "
+                            formatStr += f"ORDER: {payload.get('gateway_name')} - {payload.get('symbol')} - {payload.get('direction')} ts: {payload.get('datetime')}, status: {payload.get('status')}, price: {payload.get('price')}, volume: {payload.get('volume')}, type: {payload.get('type')}, order_id: {payload.get('orderid')} "
                     elif event_type == 'order_trade':
                         if payload.get('datetime') is None:
-                            formatStr += f"TRADE: {payload.get('exchange')} - {payload.get('symbol')} - {payload.get('direction')} ts: {event_time}, price: {payload.get('price')}, volume: {payload.get('volume')}, order_id: {payload.get('orderid')}, trade_id: {payload.get('tradeid')} "
+                            formatStr += f"TRADE: {payload.get('gateway_name')} - {payload.get('symbol')} - {payload.get('direction')} ts: {event_time}, price: {payload.get('price')}, volume: {payload.get('volume')}, order_id: {payload.get('orderid')}, trade_id: {payload.get('tradeid')} "
                         else:
-                            formatStr += f"TRADE: {payload.get('exchange')} - {payload.get('symbol')} - {payload.get('direction')} ts: {payload.get('datetime')}, price: {payload.get('price')}, volume: {payload.get('volume')}, order_id: {payload.get('orderid')}, trade_id: {payload.get('tradeid')} "
+                            formatStr += f"TRADE: {payload.get('gateway_name')} - {payload.get('symbol')} - {payload.get('direction')} ts: {payload.get('datetime')}, price: {payload.get('price')}, volume: {payload.get('volume')}, order_id: {payload.get('orderid')}, trade_id: {payload.get('tradeid')} "
                     elif event_type == 'position':
-                        formatStr += f'POSITION: {payload.get("exchange")} - {payload.get("symbol")}:  {payload.get("position")}'
+                        formatStr += f'POSITION: {payload.get("gateway_name")} - {payload.get("symbol")}:  {payload.get("position")}'
                     elif event_type == 'parameter':
                         formatStr += f'PARAMETER: {payload.get("name")}:  {payload.get("value")}'
                     elif event_type == 'status_report':
