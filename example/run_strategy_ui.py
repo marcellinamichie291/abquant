@@ -213,8 +213,8 @@ class MyLifecycle(StrategyLifecycle):
                                      )
         self._strategy_runner.add_strategy(strategy_class=TheStrategy,
                                      strategy_name='the_strategy2',
-                                     ab_symbols=["BTCUSD_PERP.BINANCE",
-                                                 "ETHUSD_PERP.BINANCE"],
+                                     ab_symbols=["ADAUSDT.BINANCE",
+                                                 "DOTUSDT.BINANCE"],
                                      setting={"param1": 3, "param2": 4}
                                      )
 
