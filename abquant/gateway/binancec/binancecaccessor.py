@@ -299,6 +299,13 @@ class BinanceCAccessor(RestfulAccessor):
         if req.offset == Offset.CLOSE:
             params["reduceOnly"] = True
 
+        # STOP_MARKET
+        if req.type == OrderType.STOP_MARKET:
+            params.pop("price")
+            params.pop("quantity")
+            params["stopPrice"] = float(price)
+            params["closePosition"] = True
+        
         if self.usdt_base:
             path = "/fapi/v1/order"
         else:

@@ -2,7 +2,7 @@ from datetime import datetime
 from threading import Lock
 from typing import List
 import uuid
-from abquant.trader.common import Exchange, Offset, Product, Status
+from abquant.trader.common import Direction, Exchange, Offset, Product, Status
 from abquant.trader.msg import BarData, OrderData
 
 from abquant.trader.object import AccountData, CancelRequest, ContractData, HistoryRequest, OrderRequest, PositionData
@@ -250,9 +250,11 @@ class BybitUBCAccessor(RestfulAccessor):
                 position: PositionData = PositionData(
                     symbol=d["symbol"],
                     exchange=Exchange.BYBIT,
-                    direction=DIRECTION_BYBIT2AB[d["side"]],
-                    volume=d["size"],
-                    price=d["entry_price"],
+                    direction=Direction.NET if d["mode"] == "MergedSingle" else DIRECTION_BYBIT2AB[d["side"]],
+                    volume=-d["size"] if d["side"] == "Sell" and d["mode"] == "MergedSingle" else d["size"],
+                    price=float(d["entry_price"]),
+                    liq_price=float(d["liq_price"]),
+                    bust_price=float(d["bust_price"]),
                     gateway_name=self.gateway_name
                 )
                 self.gateway.on_position(position)
@@ -581,7 +583,7 @@ class BybitBBCAccessor(RestfulAccessor):
             "side": DIRECTION_AB2BYBIT[req.direction],
             "order_type": order_type,
             "price": req.price,
-            "qty": req.volume,
+            "qty": int(req.volume),
             "order_link_id": orderid,
             "time_in_force": time_in_force,
             "reduce_only": False,
@@ -697,25 +699,27 @@ class BybitBBCAccessor(RestfulAccessor):
             return
 
         data = data["result"]
+        for d_ in data:
+            d = d_["data"]
 
-        for d in data:
-            d = d["data"]
-
-            if d["size"]:
-                if d["side"] == "Buy":
-                    volume = d["size"]
-                else:
-                    volume = -d["size"]
-
-                position: PositionData = PositionData(
-                    symbol=d["symbol"],
-                    exchange=Exchange.BYBIT,
-                    direction=DIRECTION_BYBIT2AB[d["side"]],
-                    volume=volume,
-                    price=d["entry_price"],
-                    gateway_name=self.gateway_name
-                )
-                self.gateway.on_position(position)
+            if d["position_idx"] == 0:
+                direction = Direction.NET
+            elif d["position_idx"] == 1:
+                direction = Direction.LONG
+            else:
+                direction = Direction.SHORT
+                
+            position: PositionData = PositionData(
+                symbol=d["symbol"],
+                exchange=Exchange.BYBIT,
+                direction=direction,
+                volume=-d["size"] if d["side"] == "Sell" and direction == Direction.NET else d["size"],
+                price=float(d["entry_price"]),
+                liq_price=float(d["liq_price"]),
+                bust_price=float(d["bust_price"]),
+                gateway_name=self.gateway_name
+            )
+            self.gateway.on_position(position)
 
         self.gateway.on_raw(build_raw_data(data, self.gateway_name, "account"))
 
