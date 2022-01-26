@@ -17,6 +17,8 @@ def setup_log_with_config(config_path: str):
     config = parse_yaml(config_path)
     strategy_name = config.get('strategy_name')
     log_file = os.path.join(config.get('log_path'), strategy_name + '.log')
+    if not os.access(os.path.dirname(log_file), os.F_OK):
+        os.makedirs(os.path.dirname(log_file))
     setup_logging(log_file)
 
 
