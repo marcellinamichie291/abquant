@@ -858,21 +858,27 @@ class BybitBBCTradeWebsocketListener(WebsocketListener):
     def on_position(self, packet: dict) -> None:
         """持仓更新推送"""
         for d in packet["data"]:
-            if d["side"] == "Buy":
-                volume = d["size"]
+            if d["position_idx"] == 0:
+                direction = Direction.NET
+            elif d["position_idx"] == 1:
+                direction = Direction.LONG
             else:
-                volume = -d["size"]
-
+                direction = Direction.SHORT
+                
             position: PositionData = PositionData(
                 symbol=d["symbol"],
                 exchange=Exchange.BYBIT,
-                direction=Direction.NET,
-                volume=volume,
+                direction=direction,
+                volume=-d["size"] if d["side"] == "Sell" and direction == Direction.NET else d["size"],
                 price=float(d["entry_price"]),
+                liq_price=float(d["liq_price"]),
+                bust_price=float(d["bust_price"]),
                 gateway_name=self.gateway_name
             )
             self.gateway.on_position(position)
-
+            
+            
+            
             balance: float = get_float_value(d, "wallet_balance")
             frozen: float = balance - get_float_value(d, "available_balance")
             account: AccountData = AccountData(
