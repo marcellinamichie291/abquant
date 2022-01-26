@@ -292,21 +292,27 @@ class BinanceCTradeWebsocketListener(WebsocketListener):
         self.gateway.on_raw(raw_data)
 
         ord_data = packet["o"]
-        key = (ord_data["o"], ord_data["f"])
+        key = (ord_data["ot"], ord_data["f"])
         order_type = ORDERTYPE_BINANCEC2AB.get(key, None)
         if not order_type:
             return
         # such an ugly code due to multi gateway consistency.
         elif order_type == OrderType.POSTONLYLIMIT:
             order_type = OrderType.LIMIT
-
+        
+        if order_type == OrderType.STOP_MARKET or order_type == OrderType.STOP:
+            price = float(ord_data["sp"])
+        else:
+            price = float(ord_data["p"])
+        
+        
         order = OrderData(
             symbol=ord_data["s"],
             exchange=Exchange.BINANCE,
             orderid=str(ord_data["c"]),
             type=order_type,
             direction=DIRECTION_BINANCEC2AB[ord_data["S"]],
-            price=float(ord_data["p"]),
+            price=price,
             volume=float(ord_data["q"]),
             traded=float(ord_data["z"]),
             status=STATUS_BINANCEC2AB[ord_data["X"]],
