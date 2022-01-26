@@ -1,17 +1,5 @@
-import os
 from Crypto.Cipher import AES
 import base64
-import argparse
-
-
-def parse():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-e', '--encrypt', type=str, required=False,
-                        help='encrypt text')
-    parser.add_argument('-d', '--decrypt', type=str, required=False,
-                        help='decrypt text')
-    args = parser.parse_args()
-    return args
 
 
 class EncryptTool:
@@ -45,20 +33,14 @@ class EncryptTool:
         return decrypt_text
 
 
-if __name__ == '__main__':
-    abpwd = os.getenv("ABPWD", "abquanT%go2moon!")
-    print(f"******ABPWD={abpwd}******")
-    if len(abpwd) > 32:
-        print('Your password is too long (<=32)')
-        exit(1)
-    pr = EncryptTool(abpwd)
-    # pr = EncryptTool(abpwd, 'ECB', 'utf8')
-    # pr = EncryptTool(abpwd, 'CBC', 'utf8', '1234567890123456')
-    etargs = parse()
-    if etargs.encrypt:
-        dtext = pr.aesencrypt(etargs.encrypt)
-        print(f'Before encrypt:\t{etargs.encrypt}')
-        print(f'After encrypt:\t{dtext}')
-    if etargs.decrypt:
-        print(f'Before decrypt:\t{etargs.decrypt}')
-        print(f'After decrypt:\t{pr.aesdecrypt(etargs.decrypt)}')
+def encrypt(text, password='abquanT%go2moon!'):
+    if not text:
+        return ''
+    et = EncryptTool(password)
+    return et.aesencrypt(text)
+
+def decrypt(text, password='abquanT%go2moon!'):
+    if not text:
+        return ''
+    et = EncryptTool(password)
+    return et.aesdecrypt(text)
