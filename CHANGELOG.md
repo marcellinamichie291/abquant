@@ -1,6 +1,7 @@
 ## 0.10.5
 1. binance monitor测时精确
 1. binance ratelimiter，对cancel技术orderlimit fixed。 log补充。
+1. encryptool 小改。
 
 ## 0.10.4
 1. monitor logger 重构
