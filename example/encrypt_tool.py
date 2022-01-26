@@ -15,7 +15,8 @@ def parse():
 
 if __name__ == '__main__':
     abpwd = os.getenv("ABPWD", "abquanT%go2moon!")
-    print(f"******ABPWD={abpwd}******")
+    print(f"{'-'*16} SET ABPWD={abpwd} {'-'*16}")
+    print(f"Usage: ABPWD=YourPassword python encrypt_tool.py -e YourKey\n{'-'*60}")
     if len(abpwd) > 32:
         print('Your password is too long (<=32)')
         exit(1)

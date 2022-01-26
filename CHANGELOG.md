@@ -1,6 +1,15 @@
+## 0.10.6
+1. 增加run strategy with config 样例
+1. 增加run strategy with ui 样例
+1. monitor 增加调试用接口
+1. bybit增加仓位强平价格, 修复币本位下单量bug, 币本位双向持仓仓位bug 
+1. binance合约增加STOP_MARKET订单, 用于提前挂止损单
+1. dataloader增加从clickhouse数据库加载行情
+
 ## 0.10.5
 1. binance monitor测时精确
 1. binance ratelimiter，对cancel技术orderlimit fixed。 log补充。
+1. encryptool 小改。
 
 ## 0.10.4
 1. monitor logger 重构

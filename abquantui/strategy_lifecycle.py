@@ -48,7 +48,8 @@ class StrategyLifecycle(ABC):
         self._event_dispatcher: EventDispatcher = EventDispatcher(interval=config.get('interval', 1))
         logging.info('EventDispatcher started')
         common_setting = {
-            "log_path": self._config.get('log_path'),
+            "log_path": self._config.get('log_path') if 'lark_url' in config else None,
+            "lark_url": self._config.get('lark_url') if 'lark_url' in config else None,
         }
 
         monitor = Monitor(common_setting, disable_logger=True)
@@ -88,7 +89,7 @@ class StrategyLifecycle(ABC):
                     pass
                 elif 'encrypt_key' in conf and 'encrypt_secret' in conf:
                     try:
-                        conf['key'] = encrypt(conf['encrypt_key'], abpwd)
+                        conf['key'] = decrypt(conf['encrypt_key'], abpwd)
                         conf['secret'] = decrypt(conf['encrypt_secret'], abpwd)
                         conf.pop('encrypt_key')
                         conf.pop('encrypt_secret')

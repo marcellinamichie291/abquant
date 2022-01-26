@@ -151,6 +151,24 @@ class Monitor(Thread):
         else:
             notify_lark.put(LarkMessage(run_id, self.lark_url, TypeEnum.POST, title=title, content=content))
 
+    def debug(self, msg, *args, **kwargs):
+        self._logger.debug(msg, *args, **kwargs)
+
+    def log(self, msg, *args, **kwargs):
+        self.debug(msg, *args, **kwargs)
+
+    def print(self, msg, *args, **kwargs):
+        self.debug(msg, *args, **kwargs)
+
+    def info(self, msg, *args, **kwargs):
+        self._logger.info(msg, *args, **kwargs)
+
+    def warn(self, msg, *args, **kwargs):
+        self._logger.warning(msg, *args, **kwargs)
+
+    def error(self, msg, *args, **kwargs):
+        self._logger.error(msg, *args, **kwargs)
+
     def consumer(self):
         if self.queue is None:
             self._logger.debug("Error: qu: queue is none.")
