@@ -55,6 +55,7 @@ class OrderType(Enum):
     STOP_LIMIT = "止损"
     TRAILING_STOP = "追踪止损"
     TAKE_PROFIT = "止盈"
+    STOP_MARKET = "STOP_MARKET"
 
 
 class OptionType(Enum):
