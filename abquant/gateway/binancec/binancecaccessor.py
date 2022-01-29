@@ -260,7 +260,7 @@ class BinanceCAccessor(RestfulAccessor):
     def send_order(self, req: OrderRequest) -> str:
         """"""
         if not self.check_rate_limit(request=1, order=1, if_send=True):
-            self.gateway.write_log("下单操作过于频繁: {}".format(req))
+            self.gateway.write_log("下单操作过于频繁: {}".format(req), level=WARNING)
             return ""
         orderid = self.ORDER_PREFIX + \
             str(self.connect_time + self._new_order_id())
@@ -327,7 +327,7 @@ class BinanceCAccessor(RestfulAccessor):
     def cancel_order(self, req: CancelRequest) -> Request:
         """"""
         if not self.check_rate_limit(request=1, order=1, if_send=False):
-            self.gateway.write_log("撤单操作过于频繁: {}".format(req))
+            self.gateway.write_log("撤单操作过于频繁: {}".format(req), level=WARNING)
             return
         data = {
             "security": Security.SIGNED

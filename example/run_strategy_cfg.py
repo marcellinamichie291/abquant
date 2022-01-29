@@ -1,42 +1,20 @@
-from datetime import datetime
-import threading
+import os, time
 from typing import Dict, List
-import argparse
-from logging import getLevelName
-import time
-from pprint import pprint
-from abquant.gateway.binances.binancegateway import BinanceSGateway
+import pathlib
 
-from abquant.trader.tool import BarAccumulater, BarGenerator
-from abquant.trader.common import Exchange, OrderType
-from abquant.trader.utility import generate_ab_symbol, round_up
+from abquant.event import EventDispatcher
 from abquant.event.event import EventType
-from abquant.strategytrading import StrategyTemplate, LiveStrategyRunner
-from abquant.event import EventDispatcher, Event
 from abquant.gateway import BinanceUBCGateway, BinanceBBCGateway
+from abquant.gateway.binances.binancegateway import BinanceSGateway
 from abquant.monitor import Monitor
+from abquant.strategytrading import StrategyTemplate, LiveStrategyRunner
+from abquant.trader.common import Exchange, OrderType
 from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
 from abquant.trader.object import SubscribeMode
-
-# 命令行参数的解析代码，交易员可以不用懂。
-def parse():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-k', '--key', type=str, required=True,
-                        help='api key')
-    parser.add_argument('-s', '--secret', type=str, required=True,
-                        help='api secret')
-    parser.add_argument('-t', '--strategy', type=str, required=True,
-                        help='策略分类名称，找@yaqiang添加')
-    parser.add_argument('-l', '--log_path', type=str, required=False,
-                        help='监控日志路径，默认本地logs文件夹')
-    parser.add_argument('-u', '--proxy_host', type=str,
-                        # default='127.0.0.1',
-                        help='proxy host')
-    parser.add_argument('-p', '--proxy_port', type=int,
-                        help='proxy port')
-    args = parser.parse_args()
-    return args
-
+from abquant.trader.tool import BarAccumulater, BarGenerator
+from abquant.trader.utility import generate_ab_symbol, round_up
+from abquantui.config_helpers import parse_yaml
+from abquantui.encryption import encrypt, decrypt
 
 
 # 策略的实现，所有细节都需要明确。务必先看完.
@@ -47,7 +25,7 @@ class TheStrategy(StrategyTemplate):
     trade_flag = False
     check_pos_interval = 20
     balance = 10000
-    window = 2
+    window = 3
 
     # 声明可配置参数，本行之上是可配置参数的默认值。
     parameters = [
@@ -215,30 +193,47 @@ class TheStrategy(StrategyTemplate):
 
 
 def main():
-    args = parse()
-    binance_setting = {
-        "key": args.key,
-        "secret": args.secret,
-        "session_number": 3,
-        # "127.0.0.1" str类型
-        "proxy_host": args.proxy_host if args.proxy_host else "",
-        # 1087 int类型
-        "proxy_port": args.proxy_port if args.proxy_port else 0,
-        "test_net": ["TESTNET", "REAL"][1],
-    }
+    parent_path = pathlib.Path(__file__).parent
+    config_path = parent_path.joinpath('run_strategy.yaml')
+    config = parse_yaml(config_path)
 
+    # 初始化monitor
     common_setting = {
-        "strategy": args.strategy,
-        "lark_url": None,  # "https://open.larksuite.com/open-apis/bot/v2/hook/2b92f893-83c2-48c1-b366-2e6e38a09efe",
-        "log_path": args.log_path,
+        "log_path": config.get('log_path') if 'log_path' in config else None,
+        "lark_url": config.get('lark_url') if 'lark_url' in config else None,
     }
-    # 初始化 monitor
     monitor = Monitor(common_setting)
     monitor.start()
 
+    # 配置gateway
+    gw_name = 'BINANCEUBC'
+    gw_conf = config.get('gateway').get(gw_name)
+    if 'encrypt_key' in gw_conf and 'encrypt_secret' in gw_conf:
+        try:
+            abpwd = os.getenv("ABPWD", "abquanT%go2moon!")
+            gw_conf['key'] = decrypt(gw_conf['encrypt_key'], abpwd)
+            gw_conf['secret'] = decrypt(gw_conf['encrypt_secret'], abpwd)
+            gw_conf.pop('encrypt_key')
+            gw_conf.pop('encrypt_secret')
+        except Exception as e:
+            monitor.error(f'Error decrypting key and secret for gateway {gw_name}: {gw_conf["encrypt_key"]}')
+            return
+    else:
+        monitor.error(f'Error: no (encrypted) key and secret config for gateway {gw_name}')
+        return
+    binance_setting = {
+        "key": gw_conf['key'],
+        "secret": gw_conf['secret'],
+        "session_number": 3,
+        # "127.0.0.1" str类型
+        "proxy_host": config['proxy_host'] if 'proxy_host' in config else "",
+        # 1087 int类型
+        "proxy_port": config['proxy_port'] if 'proxy_port' in config else 0,
+        "test_net": gw_conf['test_net'] if 'test_net' in gw_conf else 'TESTNET',
+    }
+
     event_dispatcher = EventDispatcher(interval=1)
     strategy_runner = LiveStrategyRunner(event_dispatcher)
-    #设置monitor
     strategy_runner.set_monitor(monitor)
 
     # 注册一下 log 事件的回调函数， 该函数决定了如何打log。
@@ -252,7 +247,7 @@ def main():
     # event_dispatcher.register(EventType.EVENT_ACCOUNT, lambda event: print(str('ACCOUNT: ') + str(event.data)))
     # event_dispatcher.register(EventType.EVENT_CONTRACT, lambda event:  print(str('CONTRACT: ') + str(event.data)))
     # event_dispatcher.register(EventType.EVENT_POSITION, lambda event: print(str('POSITION: ') + str(event.data)))
-    # event_dispatcher.register(EventType.EVENT_ORDER, lambda event: print(str('ORDER: ') + str(event.data)))
+    event_dispatcher.register(EventType.EVENT_ORDER, lambda event: print(str('ORDER: ') + str(event.data)))
 
     binance_spot_gateway = BinanceSGateway(event_dispatcher)
     binance_spot_gateway.connect(binance_setting)
@@ -281,8 +276,6 @@ def main():
     binance_ubc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
     binance_bbc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
 
-
-
     from abquant.gateway.binancec import symbol_contract_map
     # for k, v in symbol_contract_map.items():
     #     print(v)
@@ -298,7 +291,7 @@ def main():
     strategy_runner.add_strategy(strategy_class=TheStrategy,
                                  strategy_name='the_strategy1',
                                  ab_symbols=["BTCUSDT.BINANCE",
-                                             "btcusdt.BINANCE"],
+                                             "ethusdt.BINANCE"],
                                  setting={"param1": 1, "param2": 2}
                                  )
     strategy_runner.add_strategy(strategy_class=TheStrategy,
@@ -325,4 +318,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    # test()

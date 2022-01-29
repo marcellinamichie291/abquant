@@ -1,0 +1,12 @@
+
+strategy_name: stg_test
+log_path: ./logs
+lark_url: https://open.larksuite.com/open-apis/bot/v2/hook/34f059f6-d4d1-4854-95e1-df014172b2e0
+
+gateway:
+  BINANCEUBC:
+    encrypt_key: YOUR_ENCRYPTED_KEY_USING_ENCRYPT_TOOL_PY
+    encrypt_secret: YOUR_ENCRYPTED_SECRET_USING_ENCRYPT_TOOL_PY
+    test_net: REAL #REAL or TESTNET
+    proxy_host: localhost
+    proxy_port: 1087
