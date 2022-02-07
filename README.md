@@ -38,7 +38,7 @@ python -m pip install .
 # run_strategy_cfg.py   配置文件方式，读取run_strategy.yaml文件，启动前先编辑此配置文件
 # run_strateg_ui.py     ui方式启动，读取run_strategy.yaml文件，启动前先编辑此配置文件；启动后确认ok进入，可以使用命令分步骤执行策略，如连接交易所 connect、启动策略 start、停止策略 stop、策略状态 status
 
-# 如果使用encrypt_key，而不是key，则需要事先使用encrypt_tool.py获取encrypt_key，指定PASSWORD与需要加密的API_KEY或API_SECRET
+# 如果使用encrypt_key，而不是key，则需要事先使用encrypt_tool.py生成encrypt_key，指定PASSWORD与需要加密的API_KEY或API_SECRET
 cd abquant/example
 ABPWD=PASSWORD python encrypt_tool.py -e API_KEY
 ABPWD=PASSWORD python encrypt_tool.py -e API_SECRET
