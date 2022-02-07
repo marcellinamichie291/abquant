@@ -48,11 +48,13 @@ ABPWD=PASSWORD python encrypt_tool.py -e API_SECRET
 python run_strategy.py -k "api-key" -s "api-secret" [-proxy_host  proxy例如127.0.0.1 -proxy_port proxy端口例如1087] 
 # or 配置文件方式
 vi run_strategy.yaml
-python run_strategy_cfg.py
+ABPWD=PASSWORD python run_strategy_cfg.py
 # or ui方式启动
 vi run_strategy.yaml
+ABPWD=PASSWORD python run_strategy_ui.py
+# or 事先export ABPWD
+export ABPWD=PASSWORD
 python run_strategy_ui.py
-
 ```
 
 #  backtest example (0.10 以后支持)
