@@ -19,10 +19,6 @@ cd abquant
 #安装 talib，mac上可以brew install ta-lib， linux环境自行编译安装(截止v0.2.0 abquant暂时不需要talib，)
 pip install -r requirement.txt
 
-# aws安装(回测用)
-curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
-sudo installer -pkg AWSCLIV2.pkg -target
-
 
 # abquant安装
 python -m pip install .
@@ -38,18 +34,22 @@ python -m pip install .
 # 一切交易员须知，所有的api用法都在./example/run_strategy.py这个样例里。使用abquant编写策略前，务必确认该样例里的每一行代码都能读懂。
 # 如果有余力，请进入./abquant/strategytrading/template.py 并阅读所有注释。
 # example目录下包含3个示例
-# run_strategy.py
-# run_strategy_cfg.py   配置文件启动，读取run_strategy.yaml文件，启动前先编辑此配置文件
-# run_strateg_ui.py     ui方式启动，启动后确认ok进入，可以使用命令分步骤执行策略，如连接交易所connect、启动策略start、停止策略stop、策略状态status。ui方式仍然需要事先配置run_strategy.yaml文件
-cd abquant/example
-python run_strategy.py -k "api-key" -s "api-secret" [-proxy_host  proxy例如127.0.0.1 -proxy_port proxy端口例如1087] 
-# or
-vi run_strategy.yaml
-python run_strategy_cfg.py
+# run_strategy.py       命令行参数方式，读取命令行参数，启动策略
+# run_strategy_cfg.py   配置文件方式，读取run_strategy.yaml文件，启动前先编辑此配置文件
+# run_strateg_ui.py     ui方式启动，读取run_strategy.yaml文件，启动前先编辑此配置文件；启动后确认ok进入，可以使用命令分步骤执行策略，如连接交易所 connect、启动策略 start、停止策略 stop、策略状态 status
+
 # 如果使用encrypt_key，而不是key，则需要事先使用encrypt_tool.py获取encrypt_key，指定PASSWORD与需要加密的API_KEY或API_SECRET
+cd abquant/example
 ABPWD=PASSWORD python encrypt_tool.py -e API_KEY
 ABPWD=PASSWORD python encrypt_tool.py -e API_SECRET
-# or
+
+# 启动
+# 命令行参数方式
+python run_strategy.py -k "api-key" -s "api-secret" [-proxy_host  proxy例如127.0.0.1 -proxy_port proxy端口例如1087] 
+# or 配置文件方式
+vi run_strategy.yaml
+python run_strategy_cfg.py
+# or ui方式启动
 vi run_strategy.yaml
 python run_strategy_ui.py
 
