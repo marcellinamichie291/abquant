@@ -16,8 +16,8 @@ gateway:
   BINANCEUBC:
     encrypt_key: YOUR_ENCRYPTED_KEY_USING_ENCRYPT_TOOL_PY
     encrypt_secret: YOUR_ENCRYPTED_SECRET_USING_ENCRYPT_TOOL_PY
-    # uncomment test_net to specify test net
-    test_net: REAL #REAL or TESTNET
+    # specify test net, REAL or TESTNET
+    test_net: REAL
     # uncomment proxy_host and proxy_port to specify proxy, usually for local running
     # proxy_host: localhost
     # proxy_port: 1087
