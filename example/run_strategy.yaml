@@ -1,12 +1,22 @@
 
 strategy_name: stg_test
-log_path: ./logs
-lark_url: https://open.larksuite.com/open-apis/bot/v2/hook/34f059f6-d4d1-4854-95e1-df014172b2e0
+# uncomment log_path to specify log dir for log files, default: ./logs
+# log_path: ./logs
+# uncomment lark_url to specify your lark group robot url
+# lark_url: https://open.larksuite.com/open-apis/bot/v2/hook/34f059f6-d4d1-4854-95e1-df014172b2e0
 
 gateway:
+  #
+  # gateway names:
+  # Binance:  BINANCES, BINANCEUBC, BINANCEBBC
+  # BitMEX :  BITMEX
+  # Bybit  :  BYBIT, BYBITUBC, BYBITBBC
+  #
   BINANCEUBC:
     encrypt_key: YOUR_ENCRYPTED_KEY_USING_ENCRYPT_TOOL_PY
     encrypt_secret: YOUR_ENCRYPTED_SECRET_USING_ENCRYPT_TOOL_PY
-    test_net: REAL #REAL or TESTNET
-    proxy_host: localhost
-    proxy_port: 1087
+    # uncomment test_net to specify test net
+    # test_net: REAL #REAL or TESTNET
+    # uncomment proxy_host and proxy_port to specify local proxy, usually for test
+    # proxy_host: localhost
+    # proxy_port: 1087
