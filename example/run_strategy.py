@@ -36,7 +36,6 @@ def parse():
     return args
 
 
-
 # 策略的实现，所有细节都需要明确。务必先看完.
 class TheStrategy(StrategyTemplate):
     # 一下类属性/成员， 均由交易员自行决定并声明。
@@ -288,8 +287,6 @@ def main():
     binance_ubc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
     binance_bbc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
 
-
-
     from abquant.gateway.binancec import symbol_contract_map
     # for k, v in symbol_contract_map.items():
     #     print(v)
@@ -331,4 +328,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    # test()
