@@ -30,7 +30,6 @@ class Monitor:
     _logger = None
 
     def __init__(self, setting: dict, disable_logger=False):
-        # Thread.__init__(self)
         self._logger = Logger("abquant", disable_logger=disable_logger)
         self.setting = setting
         self.strategy = setting.get("strategy", None)
@@ -64,7 +63,7 @@ class Monitor:
 
     def start(self) -> None:
         self._active = True
-        self._logger.info('Monitor Log started')
+        self._logger.info('Monitor started')
         self._thread.start()
 
     def stop(self) -> None:
@@ -184,7 +183,7 @@ class Monitor:
         if self.queue is None:
             self._logger.debug("Error: qu: queue is none.")
             return
-        self._logger.info("Monitor Started")
+        # self._logger.info("Monitor Started")
         cycles = 1
         while True:
             try:
