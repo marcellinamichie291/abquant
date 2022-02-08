@@ -42,7 +42,7 @@ class AbquantApplication(*commands):
         self._config: Dict = parse_yaml(config_file)
         self.strategy_name = self._config.get('strategy_name')
         self.config_path = config_file
-        self.log_file = os.path.join(self._config.get('log_path'), self.strategy_name + '.log')
+        self.log_file = os.path.join(self._config.get('log_path') if 'log_path' in self._config else 'logs', self.strategy_name + '.log')
         self.strategy_lifecycle: StrategyLifecycle = None
         self.ev_loop: asyncio.BaseEventLoop = asyncio.get_event_loop()
         self._parser: ArgumentParser = load_parser(self)
