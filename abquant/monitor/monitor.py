@@ -20,7 +20,7 @@ MAX_BUFFER_SIZE = 10000
 USE_WS_TRANSMITTER = False
 
 
-class Monitor(Thread):
+class Monitor:
     queue = None
     txmt: Transmitter = None
     setting = None
@@ -30,7 +30,7 @@ class Monitor(Thread):
     _logger = None
 
     def __init__(self, setting: dict, disable_logger=False):
-        Thread.__init__(self)
+        # Thread.__init__(self)
         self._logger = Logger("abquant", disable_logger=disable_logger)
         self.setting = setting
         self.strategy = setting.get("strategy", None)
@@ -44,10 +44,12 @@ class Monitor(Thread):
             self._logger.info("Monitor: No log path config, default to ./logs/")
         self.buffer = []
         self.queue: Queue = Queue(maxsize=MAX_QUEUE_SIZE)
+        self._active = False
+        self._thread: Thread = Thread(target=self._run, name='abquant', daemon=True)
         self._logger.debug("Monitor: queue length {}".format(MAX_QUEUE_SIZE))
         self._logger.info("Monitor initiated")
 
-    def run(self):
+    def _run(self):
         try:
             if self.txmt is None and USE_WS_TRANSMITTER:
                 self.txmt = Transmitter(self.strategy)
@@ -59,6 +61,15 @@ class Monitor(Thread):
             self.consumer()
         except Exception as e:
             self._logger.debug(f"Error: {e}")
+
+    def start(self) -> None:
+        self._active = True
+        self._logger.info('Monitor Log started')
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._active = False
+        self._thread.join()
 
     def send(self, data: json):
         if self.queue.full():
