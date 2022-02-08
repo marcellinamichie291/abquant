@@ -1,3 +1,7 @@
+## 0.10.7
+1. readme &demo 修改
+1. dataloader refine.
+
 ## 0.10.6
 1. 增加run strategy with config 样例
 1. 增加run strategy with ui 样例
