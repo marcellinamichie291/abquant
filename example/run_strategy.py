@@ -1,30 +1,28 @@
-from datetime import datetime
-import threading
-from typing import Dict, List
 import argparse
-from logging import getLevelName
+import os
 import time
-from pprint import pprint
-from abquant.gateway.binances.binancegateway import BinanceSGateway
+from typing import Dict, List
 
-from abquant.trader.tool import BarAccumulater, BarGenerator
-from abquant.trader.common import Exchange, OrderType
-from abquant.trader.utility import generate_ab_symbol, round_up
-from abquant.event.event import EventType
-from abquant.strategytrading import StrategyTemplate, LiveStrategyRunner
-from abquant.event import EventDispatcher, Event
+from abquant.event import EventDispatcher
 from abquant.gateway import BinanceUBCGateway, BinanceBBCGateway
+from abquant.gateway.binances.binancegateway import BinanceSGateway
 from abquant.monitor import Monitor
+from abquant.strategytrading import StrategyTemplate, LiveStrategyRunner
+from abquant.trader.common import Exchange, OrderType
 from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickData, TradeData, TransactionData
 from abquant.trader.object import SubscribeMode
+from abquant.trader.tool import BarAccumulater, BarGenerator
+from abquant.trader.utility import generate_ab_symbol, round_up
+from abquantui.encryption import decrypt
+
 
 # 命令行参数的解析代码，交易员可以不用懂。
 def parse():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-k', '--key', type=str, required=True,
-                        help='api key')
-    parser.add_argument('-s', '--secret', type=str, required=True,
-                        help='api secret')
+    parser.add_argument('-k', '--encrypt_key', type=str, required=True,
+                        help='encrypt api key')
+    parser.add_argument('-s', '--encrypt_secret', type=str, required=True,
+                        help='encrypt api secret')
     parser.add_argument('-t', '--strategy', type=str, required=True,
                         help='策略分类名称，找@yaqiang添加')
     parser.add_argument('-l', '--log_path', type=str, required=False,
@@ -36,7 +34,6 @@ def parse():
                         help='proxy port')
     args = parser.parse_args()
     return args
-
 
 
 # 策略的实现，所有细节都需要明确。务必先看完.
@@ -216,16 +213,6 @@ class TheStrategy(StrategyTemplate):
 
 def main():
     args = parse()
-    binance_setting = {
-        "key": args.key,
-        "secret": args.secret,
-        "session_number": 3,
-        # "127.0.0.1" str类型
-        "proxy_host": args.proxy_host if args.proxy_host else "",
-        # 1087 int类型
-        "proxy_port": args.proxy_port if args.proxy_port else 0,
-        "test_net": ["TESTNET", "REAL"][1],
-    }
 
     common_setting = {
         "strategy": args.strategy,
@@ -235,6 +222,25 @@ def main():
     # 初始化 monitor
     monitor = Monitor(common_setting)
     monitor.start()
+
+    # 配置gateway，多gateway的情况需要多个加密key、secret参数及解析代码
+    try:
+        abpwd = os.getenv("ABPWD", "abquanT%go2moon!")
+        key = decrypt(args.encrypt_key, abpwd)
+        secret = decrypt(args.encrypt_secret, abpwd)
+    except:
+        monitor.error(f'Error decrypting key and secret')
+        return
+    binance_setting = {
+        "key": key,
+        "secret": secret,
+        "session_number": 3,
+        # "127.0.0.1" str类型
+        "proxy_host": args.proxy_host if args.proxy_host else "",
+        # 1087 int类型
+        "proxy_port": args.proxy_port if args.proxy_port else 0,
+        "test_net": ["TESTNET", "REAL"][1],
+    }
 
     event_dispatcher = EventDispatcher(interval=1)
     strategy_runner = LiveStrategyRunner(event_dispatcher)
@@ -281,8 +287,6 @@ def main():
     binance_ubc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
     binance_bbc_gateway.set_subscribe_mode(subscribe_mode=subscribe_mode)
 
-
-
     from abquant.gateway.binancec import symbol_contract_map
     # for k, v in symbol_contract_map.items():
     #     print(v)
@@ -292,7 +296,6 @@ def main():
     print("{} instrument symbol strategy0 subscribed: ".format(len(ab_symbols)), ab_symbols)
     # strategy 订阅所有binance合约 的金融产品行情数据。
 
-    from abquant.gateway.binances import symbol_contract_map
     # for k, v in symbol_contract_map.items():
     #     print(v)
     strategy_runner.add_strategy(strategy_class=TheStrategy,
@@ -325,4 +328,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    # test()

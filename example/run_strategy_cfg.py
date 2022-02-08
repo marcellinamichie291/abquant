@@ -14,7 +14,7 @@ from abquant.trader.object import SubscribeMode
 from abquant.trader.tool import BarAccumulater, BarGenerator
 from abquant.trader.utility import generate_ab_symbol, round_up
 from abquantui.config_helpers import parse_yaml
-from abquantui.encryption import encrypt, decrypt
+from abquantui.encryption import decrypt
 
 
 # 策略的实现，所有细节都需要明确。务必先看完.
@@ -247,7 +247,7 @@ def main():
     # event_dispatcher.register(EventType.EVENT_ACCOUNT, lambda event: print(str('ACCOUNT: ') + str(event.data)))
     # event_dispatcher.register(EventType.EVENT_CONTRACT, lambda event:  print(str('CONTRACT: ') + str(event.data)))
     # event_dispatcher.register(EventType.EVENT_POSITION, lambda event: print(str('POSITION: ') + str(event.data)))
-    event_dispatcher.register(EventType.EVENT_ORDER, lambda event: print(str('ORDER: ') + str(event.data)))
+    # event_dispatcher.register(EventType.EVENT_ORDER, lambda event: print(str('ORDER: ') + str(event.data)))
 
     binance_spot_gateway = BinanceSGateway(event_dispatcher)
     binance_spot_gateway.connect(binance_setting)
