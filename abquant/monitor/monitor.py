@@ -30,7 +30,12 @@ class Monitor:
     _logger = None
 
     def __init__(self, setting: dict, disable_logger=False):
-        self._logger = Logger("abquant", disable_logger=disable_logger)
+        self.log_path = setting.get("log_path", None)
+        if self.log_path is None:
+            print("Monitor: No log path config, default to ./logs/")
+        else:
+            print(f"Monitor log path: {self.log_path}")
+        self._logger = Logger("abquant", self.log_path, disable_logger=disable_logger)
         self.setting = setting
         self.strategy = setting.get("strategy", None)
         if self.strategy is None and USE_WS_TRANSMITTER:
@@ -38,9 +43,6 @@ class Monitor:
         self.lark_url = setting.get("lark_url", None)
         if self.lark_url is None:
             self._logger.info("Monitor: No lark url config, cannot send lark")
-        self.log_path = setting.get("log_path", None)
-        if self.log_path is None:
-            self._logger.info("Monitor: No log path config, default to ./logs/")
         self.buffer = []
         self.queue: Queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self._active = False

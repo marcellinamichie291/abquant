@@ -9,11 +9,9 @@ FORMAT = "%(message)s"
 
 
 class Logger:
-    def __init__(self, name="abquant", disable_logger=False):
+    def __init__(self, name="abquant", log_path="./logs/", disable_logger=False):
         self._logger = logging.getLogger(name)
-        if not disable_logger:
-            self._logger.setLevel(LOG_LEVEL)
-            self.config_logger()
+        self.config_logger(log_path, disable_logger)
 
     def get_logger(self):
         return self._logger
@@ -31,7 +29,7 @@ class Logger:
         handler.setFormatter(self.get_formatter())
         return handler
 
-    def config_logger(self, log_path=''):
+    def config_logger(self, log_path='', disable_logger=False):
         logger2 = self._logger
         if logger2 is None:
             logger2 = logging.getLogger('abquant')
@@ -47,10 +45,13 @@ class Logger:
             except Exception as e:
                 print(e)
                 return
-        wret = os.access(log_path, os.W_OK)
-        if not wret:
-            print("log_path cannot write")
+        # wret = os.access(log_path, os.W_OK)
+        # if not wret:
+        #     print("log_path cannot write")
+        #     return
+        if disable_logger:
             return
+        self._logger.setLevel(LOG_LEVEL)
         logger2.addHandler(self.get_handler('file', log_path))
 
     def debug(self, msg, *args, **kwargs):
