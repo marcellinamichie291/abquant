@@ -40,8 +40,8 @@ class DataLoaderKline(DataLoader):
 
     def _load_data(self, ab_symbol: str, start: datetime, end: datetime,
                   interval: Interval = Interval.MINUTE, data_file: str = None) -> Dataset:
-        loader = LoaderKline()
-        loader.config_loader(ab_symbol, start, end, interval=interval, data_file=data_file)
+        loader = LoaderVars()
+        loader.config(ab_symbol, start, end, interval=interval, data_file=data_file)
 
         intvl = '1m' if loader.interval == Interval.MINUTE else '1m'
         stime = loader.start_time.strftime('%Y-%m-%d-%H-%M')
@@ -116,7 +116,7 @@ class DataLoaderKline(DataLoader):
         return dataset
 
 
-class LoaderKline:
+class LoaderVars:
     def __init__(self):
         self.exchange: Exchange = None
         self.symbol = None
@@ -127,8 +127,8 @@ class LoaderKline:
         self.data_file = None
         self.data_location = None
 
-    def config_loader(self, ab_symbol: str, start: datetime, end: datetime,
-                      interval: Interval = Interval.MINUTE, data_file: str = None):
+    def config(self, ab_symbol: str, start: datetime, end: datetime,
+               interval: Interval = Interval.MINUTE, data_file: str = None):
         if data_file is not None and os.path.isfile(data_file):
             self.data_file = data_file
             self.data_location = DataLocation.LOCAL
