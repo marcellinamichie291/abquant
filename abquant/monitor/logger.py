@@ -9,9 +9,9 @@ FORMAT = "%(message)s"
 
 
 class Logger:
-    def __init__(self, name="abquant", log_path="./logs/", disable_logger=False):
+    def __init__(self, name="abquant", log_path="./logs/", strategy=None, disable_logger=False):
         self._logger = logging.getLogger(name)
-        self.config_logger(log_path, disable_logger)
+        self.config_logger(log_path, strategy, disable_logger)
 
     def get_logger(self):
         return self._logger
@@ -19,24 +19,21 @@ class Logger:
     def get_formatter(self):
         return logging.Formatter(FORMAT)
 
-    def get_handler(self, htype, log_path):
+    def get_handler(self, htype, log_file):
         handler = None
         if htype == 'stdout':
             handler = logging.StreamHandler()
         elif htype == 'file':
-            handler = TimedRotatingFileHandler(log_path + "abquant.log", when="D", encoding="UTF-8", backupCount=30)
+            handler = TimedRotatingFileHandler(log_file, when="D", encoding="UTF-8", backupCount=30)
+        else:
+            return handler
         handler.setLevel(LOG_LEVEL)
         handler.setFormatter(self.get_formatter())
         return handler
 
-    def config_logger(self, log_path='', disable_logger=False):
-        logger2 = self._logger
-        if logger2 is None:
-            logger2 = logging.getLogger('abquant')
-        if log_path is None or len(log_path) == 0:
+    def config_logger(self, log_path = None, strategy: str = None, disable_logger = False):
+        if not log_path:
             log_path = os.getcwd() + "/logs/"
-        elif log_path[-1:] != "/":
-            log_path += "/"
         fret = os.access(log_path, os.F_OK)
         if not fret:
             print("log_path not exist, create")
@@ -45,14 +42,20 @@ class Logger:
             except Exception as e:
                 print(e)
                 return
+        # do not check write privilege, just throw exception
         # wret = os.access(log_path, os.W_OK)
         # if not wret:
         #     print("log_path cannot write")
         #     return
+        if strategy is None:
+            filetrunk = 'abquant'
+        else:
+            filetrunk = strategy.replace(' ', '_')
+        self._logger.addHandler(self.get_handler('file', os.path.join(log_path, filetrunk + '.struct')))
         if disable_logger:
             return
         self._logger.setLevel(LOG_LEVEL)
-        logger2.addHandler(self.get_handler('file', log_path))
+        self._logger.addHandler(self.get_handler('file', os.path.join(log_path, 'abquant.log')))
 
     def debug(self, msg, *args, **kwargs):
         self._logger.debug(msg, *args, **kwargs)
