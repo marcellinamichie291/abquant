@@ -11,7 +11,9 @@ FORMAT = "%(message)s"
 class Logger:
     def __init__(self, name="abquant", log_path="./logs/", strategy=None, disable_logger=False):
         self._logger = logging.getLogger(name)
-        self.config_logger(log_path, strategy, disable_logger)
+        self.config_logger(log_path, disable_logger)
+        self._logger_struct = logging.getLogger('monitor_struct_9527')
+        self.config_logger_struct(log_path, strategy)
 
     def get_logger(self):
         return self._logger
@@ -23,7 +25,7 @@ class Logger:
         handler = None
         if htype == 'stdout':
             handler = logging.StreamHandler()
-        elif htype == 'file':
+        elif htype == 'file' or htype == 'struct':
             handler = TimedRotatingFileHandler(log_file, when="D", encoding="UTF-8", backupCount=30)
         else:
             return handler
@@ -31,7 +33,9 @@ class Logger:
         handler.setFormatter(self.get_formatter())
         return handler
 
-    def config_logger(self, log_path = None, strategy: str = None, disable_logger = False):
+    def config_logger(self, log_path = None, disable_logger = False):
+        if not self._logger:
+            return
         if not log_path:
             log_path = os.getcwd() + "/logs/"
         fret = os.access(log_path, os.F_OK)
@@ -47,15 +51,22 @@ class Logger:
         # if not wret:
         #     print("log_path cannot write")
         #     return
-        if strategy is None:
-            filetrunk = 'abquant'
-        else:
-            filetrunk = strategy.replace(' ', '_')
-        self._logger.addHandler(self.get_handler('file', os.path.join(log_path, filetrunk + '.struct')))
         if disable_logger:
             return
         self._logger.setLevel(LOG_LEVEL)
         self._logger.addHandler(self.get_handler('file', os.path.join(log_path, 'abquant.log')))
+
+    def config_logger_struct(self, log_path = None, strategy: str = None):
+        if not self._logger_struct:
+            return
+        if not log_path:
+            log_path = os.getcwd() + "/logs/"
+        if not strategy:
+            filetrunk = 'abquant'
+        else:
+            filetrunk = strategy.replace(' ', '_')
+        self._logger_struct.setLevel(LOG_LEVEL)
+        self._logger_struct.addHandler(self.get_handler('file', os.path.join(log_path, filetrunk + '.struct')))
 
     def debug(self, msg, *args, **kwargs):
         self._logger.debug(msg, *args, **kwargs)
@@ -68,6 +79,9 @@ class Logger:
 
     def info(self, msg, *args, **kwargs):
         self._logger.info(msg, *args, **kwargs)
+
+    def info_struct(self, msg, *args, **kwargs):
+        self._logger_struct.info(msg, *args, **kwargs)
 
     def warn(self, msg, *args, **kwargs):
         self._logger.warning(msg, *args, **kwargs)
