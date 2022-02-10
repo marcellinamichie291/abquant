@@ -1,3 +1,7 @@
+## 0.10.8
+1. 调整encryption内部转换编码
+1. 更新run strategy with config 样例
+
 ## 0.10.7
 1. readme &demo 修改
 1. dataloader refine.
