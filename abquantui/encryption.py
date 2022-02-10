@@ -20,17 +20,16 @@ class EncryptTool:
         elif self.mode == AES.MODE_ECB:
             aes = AES.new(self.password, self.mode)
         encrypt_text = aes.encrypt(text)
-        return base64.encodebytes(encrypt_text).decode().strip()
+        return str(base64.b64encode(encrypt_text), encoding=self.encoding).strip()
 
     def aesdecrypt(self, text):
-        text = base64.decodebytes(text.encode(self.encoding))
+        text = base64.b64decode(text.encode(self.encoding))
         if self.mode == AES.MODE_CBC:
             aes = AES.new(self.password, self.mode, self.iv)
         elif self.mode == AES.MODE_ECB:
             aes = AES.new(self.password, self.mode)
         decrypt_text = aes.decrypt(text)
-        decrypt_text = decrypt_text.decode(self.encoding).strip('\0')
-        return decrypt_text
+        return decrypt_text.decode(self.encoding).strip('\0')
 
 
 def encrypt(text, password='abquanT%go2moon!'):
