@@ -14,7 +14,6 @@ class EncryptTool:
         return s + ((16 - len(s) % 16) * b'\x00') if len(s) % 16 != 0 else s
 
     def aesencrypt(self, text):
-        text = text.replace('\n', '')
         text = self.padding_16(text)
         if self.mode == AES.MODE_CBC:
             aes = AES.new(self.password, self.mode, self.iv)
@@ -30,8 +29,7 @@ class EncryptTool:
         elif self.mode == AES.MODE_ECB:
             aes = AES.new(self.password, self.mode)
         decrypt_text = aes.decrypt(text)
-        decrypt_text = decrypt_text.decode(self.encoding).strip('\0')
-        return decrypt_text
+        return decrypt_text.decode(self.encoding).strip('\0')
 
 
 def encrypt(text, password='abquanT%go2moon!'):
