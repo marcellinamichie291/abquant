@@ -245,7 +245,7 @@ class BybitUBCMarketWebsocketListener(WebsocketListener):
             if type_ == "snapshot":
                 buf = data["order_book"]
                 for d in buf:
-                    depth.price = d["price"]
+                    depth.price = float(d["price"])
                     depth.volume = d["size"]
                     depth.direction = Direction.SHORT if d["side"] == "Sell" else Direction.LONG
                     self.gateway.on_depth(copy(depth))
@@ -677,7 +677,7 @@ class BybitBBCMarketWebsocketListener(WebsocketListener):
             depth.datetime = generate_datetime_2(int(packet["timestamp_e6"]) / 1000000)
             if type_ == "snapshot":
                 for d in data:
-                    depth.price = d["price"]
+                    depth.price = float(d["price"])
                     depth.volume = d["size"]
                     depth.direction = Direction.SHORT if d["side"] == "Sell" else Direction.LONG
                     self.gateway.on_depth(copy(depth))
