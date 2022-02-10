@@ -152,6 +152,7 @@ class LiveStrategyRunner(StrategyRunner, StrategyManager):
 
         self.call_strategy_func(strategy, strategy.on_start)
         self.monitor.send_status(strategy.run_id, "start", strategy.ab_symbols)
+        self.monitor.send_struct(strategy.run_id, "strategy", "start")
         strategy.trading = True
 
     def stop_strategy(self, strategy_name: str):
@@ -166,6 +167,7 @@ class LiveStrategyRunner(StrategyRunner, StrategyManager):
 
         self.call_strategy_func(strategy, strategy.on_stop)
         self.monitor.send_status(strategy.run_id, "stop", strategy.ab_symbols)
+        self.monitor.send_struct(strategy.run_id, "strategy", "stop")
         strategy.trading = False
         strategy.cancel_all()
 
@@ -417,6 +419,7 @@ class LiveStrategyRunner(StrategyRunner, StrategyManager):
             strategy.trading = False
             strategy.inited = False
             self.monitor.send_status(strategy.run_id, "stop", strategy.ab_symbols)
+            self.monitor.send_struct(strategy.run_id, "strategy", "stop")
 
             # et, ev, tb = sys.exc_info()
             msg = f"Exception in strategy: {strategy.strategy_name}. strategy stoped. \n{traceback.format_exc()}"
