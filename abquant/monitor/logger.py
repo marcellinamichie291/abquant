@@ -25,7 +25,7 @@ class Logger:
         handler = None
         if htype == 'stdout':
             handler = logging.StreamHandler()
-        elif htype == 'file' or htype == 'struct':
+        elif htype == 'file':
             handler = TimedRotatingFileHandler(log_file, when="D", encoding="UTF-8", backupCount=30)
         else:
             return handler
@@ -68,7 +68,6 @@ class Logger:
         self._logger_struct.setLevel(LOG_LEVEL)
         self._logger_struct.addHandler(self.get_handler('file', os.path.join(log_path, filetrunk + '.struct')))
         self._logger_struct.propagate = False
-        # self._logger_struct.removeHandler(self.get_handler('stdout'))
 
     def debug(self, msg, *args, **kwargs):
         self._logger.debug(msg, *args, **kwargs)
