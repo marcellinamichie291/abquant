@@ -2,8 +2,7 @@ import os, time
 from typing import Dict, List
 import pathlib
 
-from abquant.event import EventDispatcher
-from abquant.event.event import EventType
+from abquant.event import EventDispatcher, EventType
 from abquant.gateway import BinanceUBCGateway, BinanceBBCGateway
 from abquant.gateway.binances.binancegateway import BinanceSGateway
 from abquant.monitor import Monitor

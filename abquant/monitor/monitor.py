@@ -200,7 +200,6 @@ class Monitor:
         if self._queue is None:
             self._logger.debug("Error: qu: queue is none.")
             return
-        # self._logger.info("Monitor Started")
         cycles = 1
         while True:
             try:
