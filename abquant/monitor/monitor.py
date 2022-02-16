@@ -20,36 +20,35 @@ MAX_BUFFER_SIZE = 10000
 USE_WS_TRANSMITTER = False
 
 
-class Monitor(Thread):
-    queue = None
-    txmt: Transmitter = None
-    setting = None
-    strategy = None
-    buffer = None
-    lark_url = None
-    _logger = None
-
+class Monitor:
+    """
+        abquant buildin monitor, to print log, save log file and struct info
+    """
     def __init__(self, setting: dict, disable_logger=False):
-        Thread.__init__(self)
-        self._logger = Logger("abquant", disable_logger=disable_logger)
         self.setting = setting
+        self.log_path = setting.get("log_path", None)
+        if self.log_path is None:
+            print("Monitor: No log path config, default to ./logs/")
+        else:
+            print(f"Monitor log path: {self.log_path}")
         self.strategy = setting.get("strategy", None)
+        self._logger = Logger("abquant", self.log_path, self.strategy, disable_logger=disable_logger)
         if self.strategy is None and USE_WS_TRANSMITTER:
             self._logger.info("Monitor: No strategy config, cannot upload log")
+        self.txmt = None
         self.lark_url = setting.get("lark_url", None)
         if self.lark_url is None:
             self._logger.info("Monitor: No lark url config, cannot send lark")
-        self.log_path = setting.get("log_path", None)
-        if self.log_path is None:
-            self._logger.info("Monitor: No log path config, default to ./logs/")
-        self.buffer = []
-        self.queue: Queue = Queue(maxsize=MAX_QUEUE_SIZE)
+        self._buffer = []
+        self._queue: Queue = Queue(maxsize=MAX_QUEUE_SIZE)
+        self._active = False
+        self._thread: Thread = Thread(target=self._run, name='abquant', daemon=True)
         self._logger.debug("Monitor: queue length {}".format(MAX_QUEUE_SIZE))
         self._logger.info("Monitor initiated")
 
-    def run(self):
+    def _run(self):
         try:
-            if self.txmt is None and USE_WS_TRANSMITTER:
+            if USE_WS_TRANSMITTER and self.txmt is None:
                 self.txmt = Transmitter(self.strategy)
                 self.txmt.connect_ws()
                 time.sleep(1)
@@ -60,11 +59,20 @@ class Monitor(Thread):
         except Exception as e:
             self._logger.debug(f"Error: {e}")
 
+    def start(self) -> None:
+        self._active = True
+        self._logger.info('Monitor started')
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._active = False
+        self._thread.join()
+
     def send(self, data: json):
-        if self.queue.full():
+        if self._queue.full():
             self._logger.debug("Monitor: queue is full")
             return
-        self.queue.put_nowait(data)
+        self._queue.put_nowait(data)
 
     def default_info(self, run_id: str, event_type: str):
         info = {"event_time": datetime.now().timestamp(),
@@ -151,6 +159,25 @@ class Monitor(Thread):
         else:
             notify_lark.put(LarkMessage(run_id, self.lark_url, TypeEnum.POST, title=title, content=content))
 
+    def send_struct(self, run_id, main_type: str, content: str,
+                    sub_type: str = None, third_type: str = None, gateway_name: str = None):
+        if not main_type or not content:
+            return
+        info = self.default_info(run_id, 'struct')
+        # info.pop('strategy_name')  # with strategy_name for temporary
+        if sub_type and sub_type == 'status':
+            whole_type = main_type + '_' + sub_type
+        elif sub_type:
+            whole_type = main_type + '_' + sub_type + '_' + (third_type if third_type else 'status')
+        else:
+            whole_type = main_type + '_status'
+        payload = { "sub_type": whole_type,
+                    "content": content }
+        if gateway_name:
+            payload['gateway_name'] = gateway_name
+        info['payload'] = payload
+        self.send(info)
+
     def debug(self, msg, *args, **kwargs):
         self._logger.debug(msg, *args, **kwargs)
 
@@ -170,10 +197,9 @@ class Monitor(Thread):
         self._logger.error(msg, *args, **kwargs)
 
     def consumer(self):
-        if self.queue is None:
+        if self._queue is None:
             self._logger.debug("Error: qu: queue is none.")
             return
-        self._logger.info("Monitor Started")
         cycles = 1
         while True:
             try:
@@ -183,7 +209,7 @@ class Monitor(Thread):
                 self._logger.debug(f'Error: buffer: {e}')
 
             try:
-                data = self.queue.get(timeout=1)
+                data = self._queue.get(timeout=1)
                 self._logger.debug(f'Monitor: take element to send: {data}')
                 self._logger.print_log_format(data)
                 try:
@@ -201,7 +227,7 @@ class Monitor(Thread):
                             self.txmt.client.send("test: websocket restart")
                         cycles = 1
                     continue
-                size = self.queue.qsize()
+                size = self._queue.qsize()
                 self._logger.debug(f'Monitor: current queue length {size}')
             except Empty:
                 continue
@@ -210,28 +236,28 @@ class Monitor(Thread):
                 continue
 
     def push_buffer(self, data) -> int:
-        if len(self.buffer) < MAX_BUFFER_SIZE:
-            self.buffer.append(data)
-            return len(self.buffer)
+        if len(self._buffer) < MAX_BUFFER_SIZE:
+            self._buffer.append(data)
+            return len(self._buffer)
         else:
             self._logger.debug("Error: Buffer is full")
             return -1
 
     def send_buffer(self):
-        blen = len(self.buffer)
+        blen = len(self._buffer)
         self._logger.debug(f'qu: buffer size {blen}')
         if self.txmt is None or self.txmt.client is None:
             self._logger.debug("Error: buffer: ws client is none.")
             return
-        if len(self.buffer) > 0:
-            for buf in self.buffer:
+        if len(self._buffer) > 0:
+            for buf in self._buffer:
                 try:
                     self.txmt.send(buf)
                 except Exception as e:
                     self._logger.debug(f'Error: Buffer send: {e}')
                     raise
                 self._logger.debug(f"qu: send buffer: {buf}")
-            self.buffer.clear()
+            self._buffer.clear()
             self._logger.info(f'Resend {blen} elements while disconnection')
             return blen
         return 0
