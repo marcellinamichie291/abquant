@@ -1,3 +1,7 @@
+## 0.10.9
+1. 添加monitor结构化日志
+1. 添加bitmex websocket on raw提醒
+
 ## 0.10.8
 1. 调整encryption内部转换编码
 1. 更新run strategy with config 样例
