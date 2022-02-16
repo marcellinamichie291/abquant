@@ -339,7 +339,7 @@ class LiveStrategyRunner(StrategyRunner, StrategyManager):
         if _type == 'status_websocket_user_connected':
             self.monitor.send_struct(self.MAC, "gateway",  "start", sub_type="websocket", gateway_name=gateway_name)
         elif _type == 'status_websocket_user_disconnected':
-            self.monitor.send_struct(self.MAC, "gateway",  "start", sub_type="websocket", gateway_name=gateway_name)
+            self.monitor.send_struct(self.MAC, "gateway",  "stop", sub_type="websocket", gateway_name=gateway_name)
         elif _type == 'data_restful':
             _time = raw.get('time', None)
             if _time:
