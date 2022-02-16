@@ -159,22 +159,17 @@ class Monitor:
         else:
             notify_lark.put(LarkMessage(run_id, self.lark_url, TypeEnum.POST, title=title, content=content))
 
-    def send_struct(self, run_id, main_type: str, content: str,
-                    sub_type: str = None, third_type: str = None, gateway_name: str = None):
-        if not main_type or not content:
+    def send_struct(self, run_id, full_type: str, content: str, **kwargs):
+        if not full_type or not content:
             return
         info = self.default_info(run_id, 'struct')
         # info.pop('strategy_name')  # with strategy_name for temporary
-        if sub_type and sub_type == 'status':
-            whole_type = main_type + '_' + sub_type
-        elif sub_type:
-            whole_type = main_type + '_' + sub_type + '_' + (third_type if third_type else 'status')
-        else:
-            whole_type = main_type + '_status'
-        payload = { "sub_type": whole_type,
-                    "content": content }
-        if gateway_name:
-            payload['gateway_name'] = gateway_name
+        content_ = { "value": content }
+        if kwargs:
+            for key in kwargs.keys():
+                content_.update({ key: kwargs.get(key) })
+        payload = { "sub_type": full_type,
+                    "content": content_ }
         info['payload'] = payload
         self.send(info)
 
