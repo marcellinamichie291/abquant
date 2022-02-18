@@ -343,7 +343,9 @@ class LiveStrategyRunner(StrategyRunner, StrategyManager):
         elif _type == 'data_restful':
             _time = raw.get('time', None)
             if _time:
-                self.monitor.send_struct(self.MAC, "gateway_restful_interval", str(_time), gateway_name=gateway_name)
+                dtype = raw.get('data_type', None)
+                ftype = ("gateway_restful_interval" + "_" + dtype) if dtype else "gateway_restful_interval"
+                self.monitor.send_struct(self.MAC, ftype, str(_time), gateway_name=gateway_name)
 
     def send_order(self,
                    strategy: StrategyTemplate,
