@@ -6,6 +6,7 @@ from collections import OrderedDict as OrderedDictionary
 from abquant.ordermanager import OrderManager
 from abquant.trader.common import Direction, Interval, Offset, OrderType
 from abquant.trader.exception import MarketException
+from abquant.trader.msg import TradeData
 from abquant.trader.utility import OrderGrouper, extract_ab_symbol, round_to
 from abquant.dataloader import DataLoader
 from . import BacktestParameter, BacktestingMode
