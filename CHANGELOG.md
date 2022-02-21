@@ -1,3 +1,15 @@
+## 1.0.0
+1. 扩展monitor结构化日志类型
+1. protofolio 多策略回测。
+
+## 0.10.9
+1. 添加monitor结构化日志
+1. 添加bitmex websocket on raw提醒
+
+## 0.10.8
+1. 调整encryption内部转换编码
+1. 更新run strategy with config 样例
+
 ## 0.10.7
 1. readme &demo 修改
 1. dataloader refine.

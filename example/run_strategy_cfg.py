@@ -2,8 +2,7 @@ import os, time
 from typing import Dict, List
 import pathlib
 
-from abquant.event import EventDispatcher
-from abquant.event.event import EventType
+from abquant.event import EventDispatcher, EventType
 from abquant.gateway import BinanceUBCGateway, BinanceBBCGateway
 from abquant.gateway.binances.binancegateway import BinanceSGateway
 from abquant.monitor import Monitor
@@ -226,10 +225,10 @@ def main():
         "secret": gw_conf['secret'],
         "session_number": 3,
         # "127.0.0.1" str类型
-        "proxy_host": config['proxy_host'] if 'proxy_host' in config else "",
+        "proxy_host": gw_conf.get('proxy_host', ""),
         # 1087 int类型
-        "proxy_port": config['proxy_port'] if 'proxy_port' in config else 0,
-        "test_net": gw_conf['test_net'] if 'test_net' in gw_conf else 'TESTNET',
+        "proxy_port": gw_conf.get('proxy_port', 0),
+        "test_net": gw_conf.get('test_net', 'TESTNET'),
     }
 
     event_dispatcher = EventDispatcher(interval=1)

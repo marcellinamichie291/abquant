@@ -152,6 +152,7 @@ class LiveStrategyRunner(StrategyRunner, StrategyManager):
 
         self.call_strategy_func(strategy, strategy.on_start)
         self.monitor.send_status(strategy.run_id, "start", strategy.ab_symbols)
+        self.monitor.send_struct(strategy.run_id, "strategy_status", "start")
         strategy.trading = True
 
     def stop_strategy(self, strategy_name: str):
@@ -166,6 +167,7 @@ class LiveStrategyRunner(StrategyRunner, StrategyManager):
 
         self.call_strategy_func(strategy, strategy.on_stop)
         self.monitor.send_status(strategy.run_id, "stop", strategy.ab_symbols)
+        self.monitor.send_struct(strategy.run_id, "strategy_status", "stop")
         strategy.trading = False
         strategy.cancel_all()
 
@@ -222,6 +224,8 @@ class LiveStrategyRunner(StrategyRunner, StrategyManager):
             EventType.EVENT_TIMER, self.process_timer_event)
         self.event_dispatcher.register(
             EventType.EVENT_LOG, self.process_log_event)
+        self.event_dispatcher.register(
+            EventType.EVENT_RAW, self.process_raw_event)
 
     def process_timer_event(self, event: Event):
         """"""
@@ -328,6 +332,20 @@ class LiveStrategyRunner(StrategyRunner, StrategyManager):
             return
         self.monitor.send_log(self.MAC, log, log_type='system')
 
+    def process_raw_event(self, event: Event):
+        raw: Dict = event.data
+        _type = raw.get('type')
+        gateway_name = raw.get('gateway_name', 'default_gateway')
+        if _type == 'status_websocket_user_connected':
+            self.monitor.send_struct(self.MAC, "gateway_websocket_status", "start", gateway_name=gateway_name)
+        elif _type == 'status_websocket_user_disconnected':
+            self.monitor.send_struct(self.MAC, "gateway_websocket_status", "stop", gateway_name=gateway_name)
+        elif _type == 'data_restful':
+            _time = raw.get('time', None)
+            if _time:
+                dtype = raw.get('data_type', None)
+                ftype = ("gateway_restful_interval" + "_" + dtype) if dtype else "gateway_restful_interval"
+                self.monitor.send_struct(self.MAC, ftype, str(_time), gateway_name=gateway_name)
 
     def send_order(self,
                    strategy: StrategyTemplate,
@@ -417,6 +435,7 @@ class LiveStrategyRunner(StrategyRunner, StrategyManager):
             strategy.trading = False
             strategy.inited = False
             self.monitor.send_status(strategy.run_id, "stop", strategy.ab_symbols)
+            self.monitor.send_struct(strategy.run_id, "strategy_status", "stop")
 
             # et, ev, tb = sys.exc_info()
             msg = f"Exception in strategy: {strategy.strategy_name}. strategy stoped. \n{traceback.format_exc()}"

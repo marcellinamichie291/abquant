@@ -104,10 +104,12 @@ class BitmexListener(WebsocketListener):
         """"""
         self.gateway.write_log("Websocket API连接成功")
         self.authenticate()
+        self.gateway.on_raw({'type': 'status_websocket_user_connected', 'gateway_name': self.gateway.gateway_name})
 
     def on_disconnected(self):
         """"""
         self.gateway.write_log("Websocket API连接断开")
+        self.gateway.on_raw({'type': 'status_websocket_user_disconnected', 'gateway_name': self.gateway.gateway_name})
 
     def on_packet(self, packet: dict):
         """"""
