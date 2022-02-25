@@ -147,11 +147,11 @@ class TheStrategy(StrategyTemplate):
             # 开新仓
             u_per_trade = 10
             trade_instrument = self.ab_symbols[0]
-            trade_instrument_min_volumn = 0.001
+            trade_instrument_min_volume = 0.001
             trade_price = bars[trade_instrument].close_price * (1 - 0.01)
             # 不用太担心，abquant会在发送订单前，自动检查 金融产品的 price_tick, 因此，如果你不知道该产品的price_tick，或下单的仓位较大，不用担心，下一行代码 可以不使用round_up.该操作是为高频小仓位的策略，精确控制仓位存在的。
             trade_volume = round_up(
-                u_per_trade / trade_price, target=trade_instrument_min_volumn)
+                u_per_trade / trade_price, target=trade_instrument_min_volume)
             self.buy(self.ab_symbols[0], price=trade_price,
                      volume=trade_volume, order_type=OrderType.LIMIT)
             self.write_log(
@@ -160,7 +160,7 @@ class TheStrategy(StrategyTemplate):
             if len(self.ab_symbols) >= 2:
                 u_per_trade = 10
                 trade_instrument = self.ab_symbols[1]
-                trade_instrument_min_volumn = 0.001
+                trade_instrument_min_volume = 0.001
                 trade_price = bars[trade_instrument].close_price * (1 + 0.01)
                 # 不round， 则最小成交单位交由abquant处理。
                 trade_volume = u_per_trade / trade_price
