@@ -1,3 +1,6 @@
+## 1.0.1
+1. 添加exchange辅助操作类
+
 ## 1.0.0
 1. 扩展monitor结构化日志类型
 1. protofolio 多策略回测。
