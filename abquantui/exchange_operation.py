@@ -244,10 +244,10 @@ if __name__ == '__main__':
     # _positions = _gateway.event_dispatcher.order_manager.positions
     # for _, _order in _positions.items():
     #     _position_list.append(_order)
-    # exo.clear_position_list('test', 'BITMEX', _position_list, 'ETHUSD')
+    # exo.clear_position_by_symbol('test', 'BITMEX', _position_list, 'ETHUSD')
     # # cancel order ----------------------
     # _order_list = []
     # _orders = _gateway.event_dispatcher.order_manager.orders
     # for _, _order in _orders.items():
     #     _order_list.append(_order)
-    # exo.cancel_order_list('test', 'BITMEX', _order_list, 'XBTUSD')
+    # exo.cancel_order_list('test', 'BITMEX', _order_list)
