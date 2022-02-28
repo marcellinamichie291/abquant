@@ -9,58 +9,7 @@ from abquant.trader.object import CancelRequest, OrderRequest, PositionData, Ord
 from abquant.gateway import BitmexGateway, Gateway, BinanceUBCGateway, BinanceBBCGateway, BinanceSGateway, DydxGateway, BybitBBCGateway, BybitUBCGateway
 from abquant.event import EventDispatcher, EventType, Event
 from abquantui.encryption import decrypt
-
-
-class GatewayName(Enum):
-    BITMEX = 'BITMEX'
-    BINANCEUBC = 'BINANCEUBC'
-    BINANCEBBC = 'BINANCEBBC'
-    BINANCES = 'BINANCES'
-    DYDX = 'DYDX'
-    BYBITBBC = 'BYBITBBC'
-    BYBITUBC = 'BYBITUBC'
-
-
-SUPPORTED_GATEWAY = {
-    GatewayName.BITMEX: BitmexGateway,
-    GatewayName.BINANCEUBC: BinanceUBCGateway,
-    GatewayName.BINANCEBBC: BinanceBBCGateway,
-    GatewayName.BINANCES: BinanceSGateway,
-    GatewayName.DYDX: DydxGateway,
-    GatewayName.BYBITUBC: BybitUBCGateway,
-    GatewayName.BYBITBBC: BybitBBCGateway
-}
-
-MINUTE_RATE_LIMITS = {
-    GatewayName.BITMEX: 100,
-    GatewayName.BINANCEUBC: 1000,
-    GatewayName.BINANCEBBC: 1000,
-    GatewayName.BINANCES: 1000,
-    GatewayName.DYDX: 100,
-    GatewayName.BYBITUBC: 100,
-    GatewayName.BYBITBBC: 100
-}
-
-SECOND_RATE_LIMITS = {
-    GatewayName.BITMEX: 10,
-    GatewayName.BINANCEUBC: 200,
-    GatewayName.BINANCEBBC: 200,
-    GatewayName.BINANCES: 200,
-    GatewayName.DYDX: 100,
-    GatewayName.BYBITUBC: 100,
-    GatewayName.BYBITBBC: 100
-}
-
-
-ENV = os.getenv("ENV", "TEST")
-# print(f"******ENV={ENV}******")
-
-PROXY_HOST = os.getenv('PROXY_HOST', 'localhost')
-PROXY_PORT = int(os.getenv('PROXY_PORT', '1087'))
-
-
-def is_prod():
-    return 'PROD' == ENV
+from abquantui.common import *
 
 
 class ExchangeOperation:
