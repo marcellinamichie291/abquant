@@ -72,7 +72,7 @@ class ExchangeOperation:
                 conf.pop('encrypt_key')
                 conf.pop('encrypt_secret')
             except Exception as e:
-                self.error(f'Error occurs when decrypting key and secret for gateway {gateway_name}')
+                self._info(f'Error occurs when decrypting key and secret for gateway {gateway_name}')
                 raise e
         else:
             raise Exception('ExchangeOperation: No encrypt key or secret specified')
@@ -223,24 +223,26 @@ class ExchangeOperation:
 
 
 if __name__ == '__main__':
+    _account_name = 'test'
+    _gateway_name = 'BITMEX'
     _config = {'operation': {
         'accounts': [{
-            'name': 'test',
-            'gateways': 'BITMEX',
-            'encrypt_key': 'dBdHxAr9HJi7Iv1P+XDWU3rDjz1bvo/zghVWCdjk7pI=',
-            'encrypt_secret': 'ufRYzjzIZ/30+6zdK+DI8dccrWOhLFhal1LGrlIgW9XYNhf7muQRvccOx6rS9Emf',
+            'name': _account_name,
+            'gateways': _gateway_name,
+            'encrypt_key': 'gemoHIsrgjdKpBZSkqA/3doxFDYnkI9p2MCltLfUMz8=',
+            'encrypt_secret': 't+PglBLDPOU3Yek9/ZXiu1u/jt+2J8EknKRKdQp89HDruKuf8C+FXqx55r3KbM6v',
             'is_prod': False
         }]
     }}
     exo = ExchangeOperation(_config)
     if False:
         for i in range(0,30):
-            _ab_orderids = exo.buy('test', 'BITMEX', 'XBTUSD', 40000.0+i, 100.0, OrderType.LIMIT)
+            _ab_orderids = exo.buy(_account_name, _gateway_name, 'XBTUSD', 40000.0 + i, 100.0, OrderType.LIMIT)
             print(_ab_orderids)
-            _ab_orderids = exo.short('test', 'BITMEX', 'XBTUSD', 50000.0+i, 100.0, OrderType.LIMIT)
+            _ab_orderids = exo.short(_account_name, _gateway_name, 'XBTUSD', 50000.0 + i, 100.0, OrderType.LIMIT)
             print(_ab_orderids)
     else:
-        _gateway = exo.gateways.get(exo.gateway_key('test', 'BITMEX'))
+        _gateway = exo.gateways.get(exo.gateway_key(_account_name, _gateway_name))
         # clear position -------------------------------------------------
         _position_list = []
         _positions = _gateway.event_dispatcher.order_manager.positions
@@ -248,22 +250,24 @@ if __name__ == '__main__':
             if _pos.volume:
                 _position_list.append(_pos)
         while _position_list:   # 彻底清仓
-            exo.clear_position_list('test', 'BITMEX', _position_list)
+            exo.clear_position_list(_account_name, _gateway_name, _position_list)
             _position_list.clear()
-            print('position 1')
+            print('position remains')
             time.sleep(10)
             _positions = _gateway.event_dispatcher.order_manager.positions
             for _, _pos in _positions.items():
                 if _pos.volume:
                     _position_list.append(_pos)
+        print('position cleared')
         # cancel order ----------------------------------------------------
         _order_list = []
         _orders = _gateway.event_dispatcher.order_manager.orders
         while _orders:  # 彻底撤销
             for _, _pos in _orders.items():
                 _order_list.append(_pos)
-            exo.cancel_order_list('test', 'BITMEX', _order_list)
+            exo.cancel_order_list(_account_name, _gateway_name, _order_list)
             _order_list.clear()
-            print('order 1')
             time.sleep(10)
             _orders = _gateway.event_dispatcher.order_manager.orders
+            print('order remains')
+        print('orders canceled')
