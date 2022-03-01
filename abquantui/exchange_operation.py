@@ -233,21 +233,37 @@ if __name__ == '__main__':
         }]
     }}
     exo = ExchangeOperation(_config)
-    _ab_orderids = exo.buy('test', 'BITMEX', 'XBTUSD', 37000.0, 100.0, OrderType.LIMIT)
-    print(_ab_orderids)
-
-    # time.sleep(5)
-    #
-    # _gateway = exo.gateways.get(exo.gateway_key('test', 'BITMEX'))
-    # # clear position -------------------
-    # _position_list = []
-    # _positions = _gateway.event_dispatcher.order_manager.positions
-    # for _, _order in _positions.items():
-    #     _position_list.append(_order)
-    # exo.clear_position_by_symbol('test', 'BITMEX', _position_list, 'ETHUSD')
-    # # cancel order ----------------------
-    # _order_list = []
-    # _orders = _gateway.event_dispatcher.order_manager.orders
-    # for _, _order in _orders.items():
-    #     _order_list.append(_order)
-    # exo.cancel_order_list('test', 'BITMEX', _order_list)
+    if False:
+        for i in range(0,30):
+            _ab_orderids = exo.buy('test', 'BITMEX', 'XBTUSD', 40000.0+i, 100.0, OrderType.LIMIT)
+            print(_ab_orderids)
+            _ab_orderids = exo.short('test', 'BITMEX', 'XBTUSD', 50000.0+i, 100.0, OrderType.LIMIT)
+            print(_ab_orderids)
+    else:
+        _gateway = exo.gateways.get(exo.gateway_key('test', 'BITMEX'))
+        # clear position -------------------------------------------------
+        _position_list = []
+        _positions = _gateway.event_dispatcher.order_manager.positions
+        for _, _pos in _positions.items():
+            if _pos.volume:
+                _position_list.append(_pos)
+        while _position_list:   # 彻底清仓
+            exo.clear_position_list('test', 'BITMEX', _position_list)
+            _position_list.clear()
+            print('position 1')
+            time.sleep(10)
+            _positions = _gateway.event_dispatcher.order_manager.positions
+            for _, _pos in _positions.items():
+                if _pos.volume:
+                    _position_list.append(_pos)
+        # cancel order ----------------------------------------------------
+        _order_list = []
+        _orders = _gateway.event_dispatcher.order_manager.orders
+        while _orders:  # 彻底撤销
+            for _, _pos in _orders.items():
+                _order_list.append(_pos)
+            exo.cancel_order_list('test', 'BITMEX', _order_list)
+            _order_list.clear()
+            print('order 1')
+            time.sleep(10)
+            _orders = _gateway.event_dispatcher.order_manager.orders

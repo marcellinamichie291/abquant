@@ -26,7 +26,7 @@ SUPPORTED_GATEWAY = {
 }
 
 MINUTE_RATE_LIMITS = {
-    GatewayName.BITMEX: 100,
+    GatewayName.BITMEX: 120,
     GatewayName.BINANCEUBC: 1000,
     GatewayName.BINANCEBBC: 1000,
     GatewayName.BINANCES: 1000,
@@ -36,7 +36,7 @@ MINUTE_RATE_LIMITS = {
 }
 
 SECOND_RATE_LIMITS = {
-    GatewayName.BITMEX: 10,
+    GatewayName.BITMEX: 20,
     GatewayName.BINANCEUBC: 200,
     GatewayName.BINANCEBBC: 200,
     GatewayName.BINANCES: 200,
