@@ -153,7 +153,7 @@ class BitmexListener(WebsocketListener):
         """
         Authenticate websockey connection to subscribe private topic.
         """
-        expires = int(time.time())
+        expires = int(time.time()) + 10
         method = "GET"
         path = "/realtime"
         msg = method + path + str(expires)
