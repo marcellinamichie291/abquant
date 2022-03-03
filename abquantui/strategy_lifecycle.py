@@ -1,43 +1,19 @@
+import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from typing import Dict, List
+from typing import Dict, TYPE_CHECKING
 
-from abquant.event import EventDispatcher, EventType
-from abquant.gateway import BitmexGateway, Gateway, BinanceUBCGateway, BinanceBBCGateway, BinanceSGateway, DydxGateway, BybitBBCGateway, BybitUBCGateway
+from abquant.event import EventDispatcher
+from abquant.gateway import Gateway
 from abquant.monitor import Monitor
 from abquant.strategytrading import LiveStrategyRunner
-import logging
-
-from typing import TYPE_CHECKING
-
+from abquantui.common import SUPPORTED_GATEWAY
 from abquantui.config_helpers import yaml_config_to_str
-from abquantui.encryption import encrypt, decrypt
-
+from abquantui.encryption import decrypt
 
 if TYPE_CHECKING:
     from abquantui.abquant_application import AbquantApplication
-
-
-class GatewayName:
-    BITMEX = 'BITMEX'
-    BINANCEUBC = 'BINANCEUBC'
-    BINANCEBBC = 'BINANCEBBC'
-    BINANCES = 'BINANCES',
-    DYDX = 'DYDX'
-    BYBITBBC = 'BYBITBBC'
-    BYBITUBC = 'BYBITUBC'
-
-
-SUPPORTED_GATEWAY = {
-    GatewayName.BITMEX: BitmexGateway,
-    GatewayName.BINANCEUBC: BinanceUBCGateway,
-    GatewayName.BINANCEBBC: BinanceBBCGateway,
-    GatewayName.BINANCES: BinanceSGateway,
-    GatewayName.DYDX: DydxGateway,
-    GatewayName.BYBITUBC: BybitUBCGateway,
-    GatewayName.BYBITBBC: BybitBBCGateway
-}
 
 
 class StrategyLifecycle(ABC):

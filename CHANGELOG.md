@@ -1,3 +1,7 @@
+## 1.0.3
+1. 调整abquantui结构，抽取公共对象
+1. 修复exchange operation多个gateway问题
+
 ## 1.0.2
 1. update bitmex websocet api.
 1. dummy monitor bug fixed.

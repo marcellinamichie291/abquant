@@ -9,58 +9,7 @@ from abquant.trader.object import CancelRequest, OrderRequest, PositionData, Ord
 from abquant.gateway import BitmexGateway, Gateway, BinanceUBCGateway, BinanceBBCGateway, BinanceSGateway, DydxGateway, BybitBBCGateway, BybitUBCGateway
 from abquant.event import EventDispatcher, EventType, Event
 from abquantui.encryption import decrypt
-
-
-class GatewayName(Enum):
-    BITMEX = 'BITMEX'
-    BINANCEUBC = 'BINANCEUBC'
-    BINANCEBBC = 'BINANCEBBC'
-    BINANCES = 'BINANCES'
-    DYDX = 'DYDX'
-    BYBITBBC = 'BYBITBBC'
-    BYBITUBC = 'BYBITUBC'
-
-
-SUPPORTED_GATEWAY = {
-    GatewayName.BITMEX: BitmexGateway,
-    GatewayName.BINANCEUBC: BinanceUBCGateway,
-    GatewayName.BINANCEBBC: BinanceBBCGateway,
-    GatewayName.BINANCES: BinanceSGateway,
-    GatewayName.DYDX: DydxGateway,
-    GatewayName.BYBITUBC: BybitUBCGateway,
-    GatewayName.BYBITBBC: BybitBBCGateway
-}
-
-MINUTE_RATE_LIMITS = {
-    GatewayName.BITMEX: 100,
-    GatewayName.BINANCEUBC: 1000,
-    GatewayName.BINANCEBBC: 1000,
-    GatewayName.BINANCES: 1000,
-    GatewayName.DYDX: 100,
-    GatewayName.BYBITUBC: 100,
-    GatewayName.BYBITBBC: 100
-}
-
-SECOND_RATE_LIMITS = {
-    GatewayName.BITMEX: 10,
-    GatewayName.BINANCEUBC: 200,
-    GatewayName.BINANCEBBC: 200,
-    GatewayName.BINANCES: 200,
-    GatewayName.DYDX: 100,
-    GatewayName.BYBITUBC: 100,
-    GatewayName.BYBITBBC: 100
-}
-
-
-ENV = os.getenv("ENV", "TEST")
-# print(f"******ENV={ENV}******")
-
-PROXY_HOST = os.getenv('PROXY_HOST', 'localhost')
-PROXY_PORT = int(os.getenv('PROXY_PORT', '1087'))
-
-
-def is_prod():
-    return 'PROD' == ENV
+from abquantui.common import *
 
 
 class ExchangeOperation:
@@ -109,10 +58,13 @@ class ExchangeOperation:
         self._info('gateways started')
 
     def __connect_gateway(self, account_name: str, gateway_name: str, conf: Dict):
-        if len(self.gateways) > 0:
-            return '\n gateways not empty, do nothing, existed -> {}'.format(self.gateways.keys())
-        abpwd = os.getenv("ABPWD", "abquanT%go2moon!")
+        if not account_name or not gateway_name or not conf:
+            raise Exception('connect_gateway: config incorrect')
         gkey = self.gateway_key(account_name, gateway_name)
+        if self.gateways.get(gkey, None) is not None:
+            self._info('connect_gateway: gateway {} not empty, do nothing'.format(gkey))
+            return 'gateway {} not empty, do nothing'.format(gkey)
+        abpwd = os.getenv("ABPWD", "abquanT%go2moon!")
         cls = SUPPORTED_GATEWAY.get(GatewayName(gateway_name))
         if not cls:
             raise Exception('ExchangeOperation: No gateway class found in supported gateways')
@@ -123,7 +75,7 @@ class ExchangeOperation:
                 conf.pop('encrypt_key')
                 conf.pop('encrypt_secret')
             except Exception as e:
-                self.error(f'Error occurs when decrypting key and secret for gateway {gateway_name}')
+                self._info(f'Error occurs when decrypting key and secret for gateway {gateway_name}')
                 raise e
         else:
             raise Exception('ExchangeOperation: No encrypt key or secret specified')
@@ -274,31 +226,51 @@ class ExchangeOperation:
 
 
 if __name__ == '__main__':
+    _account_name = 'test'
+    _gateway_name = 'BITMEX'
     _config = {'operation': {
         'accounts': [{
-            'name': 'test',
-            'gateways': 'BITMEX',
-            'encrypt_key': 'dBdHxAr9HJi7Iv1P+XDWU3rDjz1bvo/zghVWCdjk7pI=',
-            'encrypt_secret': 'ufRYzjzIZ/30+6zdK+DI8dccrWOhLFhal1LGrlIgW9XYNhf7muQRvccOx6rS9Emf',
+            'name': _account_name,
+            'gateways': _gateway_name,
+            'encrypt_key': '0Yjr19PZbxGoJPy1vBDLQpjKacqstRZM3KimOsjxPNM=',
+            'encrypt_secret': '4CpwpVW3gBLAtmRDm9mT+wVLYKmP2D5XnIZxpzzLwRUMKBpnQ3VKE8AA+kEj3h3A',
             'is_prod': False
         }]
     }}
     exo = ExchangeOperation(_config)
-    _ab_orderids = exo.buy('test', 'BITMEX', 'XBTUSD', 37000.0, 100.0, OrderType.LIMIT)
-    print(_ab_orderids)
-
-    # time.sleep(5)
-    #
-    # _gateway = exo.gateways.get(exo.gateway_key('test', 'BITMEX'))
-    # # clear position -------------------
-    # _position_list = []
-    # _positions = _gateway.event_dispatcher.order_manager.positions
-    # for _, _order in _positions.items():
-    #     _position_list.append(_order)
-    # exo.clear_position_list('test', 'BITMEX', _position_list, 'ETHUSD')
-    # # cancel order ----------------------
-    # _order_list = []
-    # _orders = _gateway.event_dispatcher.order_manager.orders
-    # for _, _order in _orders.items():
-    #     _order_list.append(_order)
-    # exo.cancel_order_list('test', 'BITMEX', _order_list, 'XBTUSD')
+    if False:
+        for i in range(0,30):
+            _ab_orderids = exo.buy(_account_name, _gateway_name, 'XBTUSD', 40000.0 + i, 100.0, OrderType.LIMIT)
+            print(_ab_orderids)
+            _ab_orderids = exo.short(_account_name, _gateway_name, 'XBTUSD', 50000.0 + i, 100.0, OrderType.LIMIT)
+            print(_ab_orderids)
+    else:
+        _gateway = exo.gateways.get(exo.gateway_key(_account_name, _gateway_name))
+        # clear position -------------------------------------------------
+        _position_list = []
+        _positions = _gateway.event_dispatcher.order_manager.positions
+        for _, _pos in _positions.items():
+            if _pos.volume:
+                _position_list.append(_pos)
+        while _position_list:   # 彻底清仓
+            print('position remains')
+            exo.clear_position_list(_account_name, _gateway_name, _position_list)
+            _position_list.clear()
+            time.sleep(10)
+            _positions = _gateway.event_dispatcher.order_manager.positions
+            for _, _pos in _positions.items():
+                if _pos.volume:
+                    _position_list.append(_pos)
+        print('position cleared')
+        # cancel order ----------------------------------------------------
+        _order_list = []
+        _orders = _gateway.event_dispatcher.order_manager.orders
+        while _orders:  # 彻底撤销
+            print('order remains')
+            for _, _pos in _orders.items():
+                _order_list.append(_pos)
+            exo.cancel_order_list(_account_name, _gateway_name, _order_list)
+            _order_list.clear()
+            time.sleep(10)
+            _orders = _gateway.event_dispatcher.order_manager.orders
+        print('orders canceled')
