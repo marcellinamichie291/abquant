@@ -1,3 +1,6 @@
+## 1.0.2
+1. update bitmex websocet api.
+
 ## 1.0.1
 1. 添加exchange辅助操作类
 
