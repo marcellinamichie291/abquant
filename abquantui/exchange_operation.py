@@ -58,10 +58,13 @@ class ExchangeOperation:
         self._info('gateways started')
 
     def __connect_gateway(self, account_name: str, gateway_name: str, conf: Dict):
-        if len(self.gateways) > 0:
-            return '\n gateways not empty, do nothing, existed -> {}'.format(self.gateways.keys())
-        abpwd = os.getenv("ABPWD", "abquanT%go2moon!")
+        if not account_name or not gateway_name or not conf:
+            raise Exception('connect_gateway: config incorrect')
         gkey = self.gateway_key(account_name, gateway_name)
+        if self.gateways.get(gkey, None) is not None:
+            self._info('connect_gateway: gateway {} not empty, do nothing'.format(gkey))
+            return 'gateway {} not empty, do nothing'.format(gkey)
+        abpwd = os.getenv("ABPWD", "abquanT%go2moon!")
         cls = SUPPORTED_GATEWAY.get(GatewayName(gateway_name))
         if not cls:
             raise Exception('ExchangeOperation: No gateway class found in supported gateways')
@@ -229,8 +232,8 @@ if __name__ == '__main__':
         'accounts': [{
             'name': _account_name,
             'gateways': _gateway_name,
-            'encrypt_key': 'gemoHIsrgjdKpBZSkqA/3doxFDYnkI9p2MCltLfUMz8=',
-            'encrypt_secret': 't+PglBLDPOU3Yek9/ZXiu1u/jt+2J8EknKRKdQp89HDruKuf8C+FXqx55r3KbM6v',
+            'encrypt_key': '0Yjr19PZbxGoJPy1vBDLQpjKacqstRZM3KimOsjxPNM=',
+            'encrypt_secret': '4CpwpVW3gBLAtmRDm9mT+wVLYKmP2D5XnIZxpzzLwRUMKBpnQ3VKE8AA+kEj3h3A',
             'is_prod': False
         }]
     }}
@@ -250,9 +253,9 @@ if __name__ == '__main__':
             if _pos.volume:
                 _position_list.append(_pos)
         while _position_list:   # 彻底清仓
+            print('position remains')
             exo.clear_position_list(_account_name, _gateway_name, _position_list)
             _position_list.clear()
-            print('position remains')
             time.sleep(10)
             _positions = _gateway.event_dispatcher.order_manager.positions
             for _, _pos in _positions.items():
@@ -263,11 +266,11 @@ if __name__ == '__main__':
         _order_list = []
         _orders = _gateway.event_dispatcher.order_manager.orders
         while _orders:  # 彻底撤销
+            print('order remains')
             for _, _pos in _orders.items():
                 _order_list.append(_pos)
             exo.cancel_order_list(_account_name, _gateway_name, _order_list)
             _order_list.clear()
             time.sleep(10)
             _orders = _gateway.event_dispatcher.order_manager.orders
-            print('order remains')
         print('orders canceled')
