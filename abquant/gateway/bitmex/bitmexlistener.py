@@ -125,7 +125,7 @@ class BitmexListener(WebsocketListener):
             success = packet["success"]
 
             if success:
-                if req["op"] == "authKey":
+                if req["op"] == "authKeyExpires":
                     self.gateway.write_log("Websocket API验证授权成功")
                     self.subscribe_topic()
 
@@ -153,7 +153,7 @@ class BitmexListener(WebsocketListener):
         """
         Authenticate websockey connection to subscribe private topic.
         """
-        expires = int(time.time())
+        expires = int(time.time()) + 10
         method = "GET"
         path = "/realtime"
         msg = method + path + str(expires)
@@ -161,7 +161,7 @@ class BitmexListener(WebsocketListener):
             self.secret, msg.encode(), digestmod=hashlib.sha256
         ).hexdigest()
 
-        req = {"op": "authKey", "args": [self.key, expires, signature]}
+        req = {"op": "authKeyExpires", "args": [self.key, expires, signature]}
         self.send_packet(req)
 
     def subscribe_topic(self):
