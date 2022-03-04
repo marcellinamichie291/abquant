@@ -80,6 +80,7 @@ class NotifyLark:
         try:
             to_send = _build_for_lark(msg)
             self._logger.info('send_to_lark: %s %s', msg.owner, to_send)
+            print('send to lark')
             requests.post(msg.url, json=_build_for_lark(msg))
         except Exception as e:
             self._logger.error(exc_info=e)
