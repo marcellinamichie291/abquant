@@ -1,3 +1,14 @@
+## 1.0.3
+1. 调整abquantui结构，抽取公共对象
+1. 修复exchange operation多个gateway问题
+
+## 1.0.2
+1. update bitmex websocet api.
+1. dummy monitor bug fixed.
+
+## 1.0.1
+1. 添加exchange辅助操作类
+
 ## 1.0.0
 1. 扩展monitor结构化日志类型
 1. protofolio 多策略回测。

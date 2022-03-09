@@ -28,3 +28,6 @@ class DummyMonitor:
 
     def send_notify_lark(self, run_id, msg: str):
         pass
+
+    def send_struct(self, run_id, full_type: str, content: str, **kwargs):
+        pass
