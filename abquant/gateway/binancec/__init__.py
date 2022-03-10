@@ -50,6 +50,22 @@ DIRECTION_AB2BINANCEC: Dict[Direction, str] = {
 }
 DIRECTION_BINANCEC2AB: Dict[str, Direction] = {v: k for k, v in DIRECTION_AB2BINANCEC.items()}
 
+POSITION_AB2BINANCE: Dict[Direction, str] = {
+    Direction.LONG: "LONG",
+    Direction.SHORT: "SHORT"
+}
+
+POSITION_BINANCE2AB: Dict[str, Direction] = {
+    "BOTH": Direction.NET,
+    "LONG": Direction.LONG,
+    "SHORT": Direction.SHORT
+}
+
+POSITION_CLOSE_AB2BINANCE: Dict[Direction, str] = {
+    Direction.LONG: "SHORT",
+    Direction.SHORT: "LONG"
+}
+
 INTERVAL_AB2BINANCEC: Dict[Interval, str] = {
     Interval.MINUTE: "1m",
     Interval.HOUR: "1h",
