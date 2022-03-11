@@ -98,6 +98,17 @@ class ExchangeOperation:
         else:
             return account_name + '.' + gateway_name
 
+    @staticmethod
+    def extract_key(gateway_key):
+        if not gateway_key:
+            return None, None
+        items = gateway_key.split('.')
+        if len(items) < 2:
+            return None, None
+        gateway_name = items[-1]
+        account_name = gateway_key[: -1 - 1 * len(gateway_name)]
+        return account_name, gateway_name
+
     def clear_position_list(self, account_name: str, gateway_name: str, position_list: List[PositionData]):
         """
             清仓，position列表全部清仓
