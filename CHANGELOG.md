@@ -1,3 +1,6 @@
+## 1.0.4
+1. 增加exchange operation解析key函数
+
 ## 1.0.3
 1. 调整abquantui结构，抽取公共对象
 1. 修复exchange operation多个gateway问题
