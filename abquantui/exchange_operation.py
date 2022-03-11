@@ -98,6 +98,17 @@ class ExchangeOperation:
         else:
             return account_name + '.' + gateway_name
 
+    @staticmethod
+    def extract_key(gateway_key):
+        if not gateway_key:
+            return None, None
+        items = gateway_key.split('.')
+        if len(items) < 2:
+            return None, None
+        gateway_name = items[-1]
+        account_name = gateway_key[: -1 - 1 * len(gateway_name)]
+        return account_name, gateway_name
+
     def clear_position_list(self, account_name: str, gateway_name: str, position_list: List[PositionData]):
         """
             清仓，position列表全部清仓
@@ -145,6 +156,10 @@ class ExchangeOperation:
         """
         if not account_name or not gateway_name or not order_list:
             raise Exception('ExchangeOperation: cancel_order_list: parameter incorrect')
+        gateway = self.gateways.get(self.gateway_key(account_name, gateway_name))
+        if not gateway:
+            raise Exception(
+                f"Warning: cancel_order_list: no gateway [{account_name}.{gateway_name}] found for order, do nothing")
         second_limit = self._gateway_second_limits[gateway_name]
         minute_limit = self._gateway_minute_limits[gateway_name]
         second_num = 0
@@ -155,11 +170,6 @@ class ExchangeOperation:
             if gateway_name != order.gateway_name:
                 self._info(
                     f'cancel_order_list: gateway name conflict, {gateway_name} - {order.gateway_name}')
-            gateway = self.gateways.get(self.gateway_key(account_name, gateway_name))
-            if not gateway:
-                raise Exception(
-                  f"Warning: cancel_order_list: no gateway [{account_name}.{gateway_name}] found for order, do nothing")
-                continue
             # 交易所流量控制
             second_num += 1
             minute_num += 1
