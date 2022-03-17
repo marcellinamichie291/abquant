@@ -1,15 +1,13 @@
-import os
+import logging
 import time
 from typing import Dict, List
-from enum import Enum
-import logging
 
-from abquant.trader.common import OrderType, Direction, Offset, Exchange
-from abquant.trader.object import CancelRequest, OrderRequest, PositionData, OrderData
-from abquant.gateway import BitmexGateway, Gateway, BinanceUBCGateway, BinanceBBCGateway, BinanceSGateway, DydxGateway, BybitBBCGateway, BybitUBCGateway
-from abquant.event import EventDispatcher, EventType, Event
-from abquantui.encryption import decrypt
+from abquant.event import EventDispatcher
+from abquant.gateway import Gateway
+from abquant.trader.common import OrderType, Direction, Offset
+from abquant.trader.object import OrderRequest, PositionData, OrderData
 from abquantui.common import *
+from abquantui.encryption import decrypt
 
 
 class ExchangeOperation:
