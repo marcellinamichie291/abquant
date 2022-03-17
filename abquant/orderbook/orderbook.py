@@ -21,8 +21,9 @@ class OrderBook(ABC):
     @abstractmethod
     def insert_order(self, order: OrderData) -> str:
         self.pre_matching()
-        if order.status != Status.SUBMITTING or order.type != OrderType.LIMIT:
-            raise ValueError("order status must be submitting.")
+        assert(order.status == Status.SUBMITTING)
+        if order.type != OrderType.LIMIT:
+            raise ValueError("order type other than limit are not going to support.")
         self.active_limit_orders[order.ab_orderid] = order
         return order.ab_orderid
 
