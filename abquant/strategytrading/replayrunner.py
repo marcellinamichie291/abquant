@@ -400,6 +400,7 @@ class ReplayRunner(StrategyRunner):
             symbol=symbol,
             exchange=exchange,
             orderid=str(self.limit_order_count),
+            type=order_type,
             direction=direction,
             offset=offset,
             price=price,

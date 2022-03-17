@@ -1,15 +1,13 @@
-import os
+import logging
 import time
 from typing import Dict, List
-from enum import Enum
-import logging
 
-from abquant.trader.common import OrderType, Direction, Offset, Exchange
-from abquant.trader.object import CancelRequest, OrderRequest, PositionData, OrderData
-from abquant.gateway import BitmexGateway, Gateway, BinanceUBCGateway, BinanceBBCGateway, BinanceSGateway, DydxGateway, BybitBBCGateway, BybitUBCGateway
-from abquant.event import EventDispatcher, EventType, Event
-from abquantui.encryption import decrypt
+from abquant.event import EventDispatcher
+from abquant.gateway import Gateway
+from abquant.trader.common import OrderType, Direction, Offset
+from abquant.trader.object import OrderRequest, PositionData, OrderData
 from abquantui.common import *
+from abquantui.encryption import decrypt
 
 
 class ExchangeOperation:
@@ -156,6 +154,10 @@ class ExchangeOperation:
         """
         if not account_name or not gateway_name or not order_list:
             raise Exception('ExchangeOperation: cancel_order_list: parameter incorrect')
+        gateway = self.gateways.get(self.gateway_key(account_name, gateway_name))
+        if not gateway:
+            raise Exception(
+                f"Warning: cancel_order_list: no gateway [{account_name}.{gateway_name}] found for order, do nothing")
         second_limit = self._gateway_second_limits[gateway_name]
         minute_limit = self._gateway_minute_limits[gateway_name]
         second_num = 0
@@ -166,11 +168,6 @@ class ExchangeOperation:
             if gateway_name != order.gateway_name:
                 self._info(
                     f'cancel_order_list: gateway name conflict, {gateway_name} - {order.gateway_name}')
-            gateway = self.gateways.get(self.gateway_key(account_name, gateway_name))
-            if not gateway:
-                raise Exception(
-                  f"Warning: cancel_order_list: no gateway [{account_name}.{gateway_name}] found for order, do nothing")
-                continue
             # 交易所流量控制
             second_num += 1
             minute_num += 1
