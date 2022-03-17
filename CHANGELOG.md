@@ -1,3 +1,6 @@
+## 1.0.4
+1. 回测订单类型报错缺失问题修复。
+
 ## 1.0.3
 1. 调整abquantui结构，抽取公共对象
 1. 修复exchange operation多个gateway问题
