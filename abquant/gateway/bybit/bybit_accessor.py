@@ -168,6 +168,7 @@ class BybitUBCAccessor(RestfulAccessor):
         """委托下单失败服务器报错回报"""
         order: OrderData = request.extra
         order.status = Status.REJECTED
+        order.reference = request.response.text
         self.gateway.on_order(order)
 
         data: dict = request.response.json()
