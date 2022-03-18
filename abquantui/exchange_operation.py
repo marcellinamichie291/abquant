@@ -1,6 +1,7 @@
 import logging
 import time
 from typing import Dict, List
+from datetime import datetime
 
 from abquant.event import EventDispatcher, EventType
 from abquant.gateway import Gateway
@@ -93,6 +94,15 @@ class ExchangeOperation:
         self.orders.update({order.ab_orderid: order})
         if order.status == Status.CANCELLED:
             self.orders.pop(order.ab_orderid)
+        for order_ in list(self.orders.values()):
+            current = datetime.today()
+            if order_.datetime and (current - order_.datetime).total_seconds() > 600 \
+                    and (order_.status == Status.REJECTED or order_.status == Status.ALLTRADED):
+                self.orders.pop(order_.ab_orderid)
+            elif not order.datetime and order.status != Status.REJECTED and order_.status == Status.REJECTED:
+                self.orders.pop(order_.ab_orderid)
+            elif not order.datetime and order.status != Status.ALLTRADED and order_.status == Status.ALLTRADED:
+                self.orders.pop(order_.ab_orderid)
 
     def _info(self, msg):
         self._logger.info(msg)
