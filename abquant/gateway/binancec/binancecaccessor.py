@@ -551,11 +551,7 @@ class BinanceCAccessor(RestfulAccessor):
         self.update_rate_limit(request)
         order = request.extra
         order.status = Status.REJECTED
-        try:
-            jres = json.loads(request.response.text)
-            order.reference = jres.get('msg')
-        except:
-            pass
+        order.reference = request.response.text
         self.gateway.on_order(order)
 
         msg = f"委托失败，状态码：{status_code}，信息：{request.response.text}, 当前servertime: {self.server_datetime}"

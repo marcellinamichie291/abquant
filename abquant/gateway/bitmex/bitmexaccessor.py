@@ -270,6 +270,7 @@ class BitmexAccessor(RestfulAccessor):
 
         order = request.extra
         order.status = Status.REJECTED
+        order.reference = request.response.text
         self.gateway.on_order(order)
 
         if request.response.text:
