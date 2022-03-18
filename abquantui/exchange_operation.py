@@ -1,10 +1,11 @@
 import logging
 import time
 from typing import Dict, List
+from datetime import datetime
 
-from abquant.event import EventDispatcher
+from abquant.event import EventDispatcher, EventType
 from abquant.gateway import Gateway
-from abquant.trader.common import OrderType, Direction, Offset
+from abquant.trader.common import OrderType, Direction, Offset, Status
 from abquant.trader.object import OrderRequest, PositionData, OrderData
 from abquantui.common import *
 from abquantui.encryption import decrypt
@@ -19,6 +20,7 @@ class ExchangeOperation:
         self._logger = logging.getLogger('ExchangeOperation')
         self._logger.setLevel(logging.INFO)
         self._event_dispatcher = None   # 单dispatcher的前提：账户间gateway不同
+        self.orders: Dict = {}
         self.gateways: Dict[str: Gateway] = {}
         self._gateway_second_limits: Dict[str: int] = {}
         self._gateway_minute_limits: Dict[str: int] = {}
@@ -28,6 +30,7 @@ class ExchangeOperation:
         if self.gateways:
             return
         self._event_dispatcher = EventDispatcher(interval=1)
+        self._event_dispatcher.register(EventType.EVENT_ORDER, self._on_order)
         opconf = self._config.get('operation')
         accounts = opconf.get('accounts')
         for account in accounts:
@@ -83,6 +86,23 @@ class ExchangeOperation:
         self.gateways[gkey] = gw
         time.sleep(10)
         self._info(f'connect gateway end {gateway_name} for account {account_name}')
+
+    def _on_order(self, event):
+        order: OrderData = event.data
+        if not order.ab_orderid:
+            return
+        self.orders.update({order.ab_orderid: order})
+        if order.status == Status.CANCELLED:
+            self.orders.pop(order.ab_orderid)
+        for order_ in list(self.orders.values()):
+            current = datetime.today()
+            if order_.datetime and (current - order_.datetime).total_seconds() > 600 \
+                    and (order_.status == Status.REJECTED or order_.status == Status.ALLTRADED):
+                self.orders.pop(order_.ab_orderid)
+            elif not order.datetime and order.status != Status.REJECTED and order_.status == Status.REJECTED:
+                self.orders.pop(order_.ab_orderid)
+            elif not order.datetime and order.status != Status.ALLTRADED and order_.status == Status.ALLTRADED:
+                self.orders.pop(order_.ab_orderid)
 
     def _info(self, msg):
         self._logger.info(msg)

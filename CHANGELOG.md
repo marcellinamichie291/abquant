@@ -1,3 +1,7 @@
+## 1.0.5
+1. 增加交易所拒单的详细信息
+1. 增加exchange operation订单回调处理
+
 ## 1.0.4
 1. 回测订单类型报错缺失问题修复。
 1. 增加exchange operation解析key函数

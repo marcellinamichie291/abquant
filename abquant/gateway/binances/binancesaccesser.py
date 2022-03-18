@@ -4,6 +4,7 @@ import urllib
 import time
 import hmac
 import hashlib
+import json
 from datetime import datetime
 import uuid
 import decimal
@@ -383,6 +384,7 @@ class BinanceAccessor(RestfulAccessor):
 
         order = request.extra
         order.status = Status.REJECTED
+        order.reference = request.response.text
         self.gateway.on_order(order)
 
         msg = f"委托失败，状态码：{status_code}，信息：{request.response.text}"
