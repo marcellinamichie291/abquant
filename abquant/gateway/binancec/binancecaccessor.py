@@ -1,5 +1,6 @@
 from logging import DEBUG, ERROR, WARNING
 import sys
+import json
 import threading
 from typing import Iterable, List, Optional
 from threading import Lock
@@ -550,6 +551,11 @@ class BinanceCAccessor(RestfulAccessor):
         self.update_rate_limit(request)
         order = request.extra
         order.status = Status.REJECTED
+        try:
+            jres = json.loads(request.response.text)
+            order.reference = jres.get('msg')
+        except:
+            pass
         self.gateway.on_order(order)
 
         msg = f"委托失败，状态码：{status_code}，信息：{request.response.text}, 当前servertime: {self.server_datetime}"
