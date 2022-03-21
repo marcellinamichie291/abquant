@@ -107,6 +107,11 @@ class ExchangeOperation:
             elif not order.datetime and order.status != Status.ALLTRADED and order_.status == Status.ALLTRADED:
                 self.orders.pop(order_.ab_orderid)
 
+    def get_order(self, client_order_id) -> OrderData:
+        if not client_order_id:
+            return None
+        return self.orders.get(client_order_id, None)
+
     def _info(self, msg):
         self._logger.info(msg)
 
@@ -210,7 +215,7 @@ class ExchangeOperation:
 
     def send_order(self, account_name, gateway_name, symbol: str,
                          price: float, volume: float,
-                         direction: Direction, offset: Offset, order_type: OrderType) -> List[str]:
+                         direction: Direction, offset: Offset, order_type: OrderType):
         """
             发送订单
         """
@@ -230,7 +235,7 @@ class ExchangeOperation:
 
     def send_order_with_result(self, account_name, gateway_name, symbol: str,
                          price: float, volume: float,
-                         direction: Direction, offset: Offset, order_type: OrderType) -> List[str]:
+                         direction: Direction, offset: Offset, order_type: OrderType):
         """
             发送订单，并返回交易所结果；等待结果超时，认为发送成功
             timeout：3s
@@ -261,7 +266,7 @@ class ExchangeOperation:
 
     async def send_order_with_result_async(self, account_name, gateway_name, symbol: str,
                          price: float, volume: float,
-                         direction: Direction, offset: Offset, order_type: OrderType) -> List[str]:
+                         direction: Direction, offset: Offset, order_type: OrderType):
         """
             发送订单，并返回交易所结果；等待结果超时，认为发送成功
             timeout：3s
@@ -308,14 +313,64 @@ class ExchangeOperation:
         return self.send_order(account_name, gateway_name, symbol, price, volume,
                                                            Direction.SHORT,  Offset.OPEN, order_type)
 
-    def cancel_order(self, account_name, order: OrderData):
+    def cancel_order(self, account_name, gateway_name, order: OrderData):
         """
             取消订单
         """
-        gateway_name = order.gateway_name
+        # gateway_name = order.gateway_name
         gateway = self.gateways.get(self.gateway_key(account_name, gateway_name))
         req = order.create_cancel_request()
         gateway.cancel_order(req)
+
+    def cancel_order_with_result_by_client_order_id(self, account_name, gateway_name, client_order_id):
+        order = self.get_order(client_order_id)
+        return self.cancel_order_with_result(account_name, gateway_name, order)
+
+    def cancel_order_with_result(self, account_name, gateway_name, order: OrderData):
+        """
+            取消订单
+        """
+        if not order:
+            return OperationResult(ResultCode.ERROR, None, 'order not found')
+        client_order_id = order.ab_orderid
+        order: OrderData = self.orders.get(client_order_id, None)
+        self.cancel_order(account_name, gateway_name, order)
+        if not order:
+            self._info(f'order not exist, only cancel yet no exchange result')
+            return OperationResult(ResultCode.CANCELLED, client_order_id, 'order cancelled')
+        for t in range(0, 60):
+            time.sleep(0.05)
+            order: OrderData = self.orders.get(client_order_id, None)
+            if order :
+                continue
+            else:
+                return OperationResult(ResultCode.CANCELLED, client_order_id, '')
+        return OperationResult(ResultCode.TIMEOUT, client_order_id, '')
+
+    async def cancel_order_with_result_by_client_order_id_async(self, account_name, gateway_name, client_order_id):
+        order = self.get_order(client_order_id)
+        return await self.cancel_order_with_result_async(account_name, gateway_name, order)
+
+    async def cancel_order_with_result_async(self, account_name, gateway_name, order: OrderData):
+        """
+            取消订单
+        """
+        if not order:
+            return OperationResult(ResultCode.ERROR, None, 'order not found')
+        client_order_id = order.ab_orderid
+        order: OrderData = self.orders.get(client_order_id, None)
+        if not order:
+            self._info(f'order not exist, only cancel yet no exchange result')
+            return OperationResult(ResultCode.ERROR, client_order_id, 'order not exist')
+        self.cancel_order(account_name, gateway_name, order)
+        for t in range(0, 60):
+            await asyncio.sleep(0.05)
+            order: OrderData = self.orders.get(client_order_id, None)
+            if order :
+                continue
+            else:
+                return OperationResult(ResultCode.CANCELLED, client_order_id, 'order cancelled')
+        return OperationResult(ResultCode.TIMEOUT, client_order_id, 'cancel order timeout')
 
 
 class ResultCode(Enum):
@@ -323,6 +378,7 @@ class ResultCode(Enum):
     CANCELLED = 'CANCELLED'
     REJECTED = 'REJECTED'
     TIMEOUT = 'TIMEOUT'
+    ERROR = 'ERROR'
 
 
 @dataclass
