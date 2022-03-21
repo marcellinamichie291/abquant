@@ -248,7 +248,7 @@ class ExchangeOperation:
                 try:
                     jres = json.loads(order.reference)
                     extra = jres.get('msg')
-                    logging.info(f'order REJECTED: {extra}')
+                    self._info(f'order REJECTED: {extra}')
                     return OperationResult(ResultCode.REJECTED, order_ids, extra)
                 except:
                     self._info(f'error when seeking order.reference: {order.reference}')
@@ -279,7 +279,7 @@ class ExchangeOperation:
                 try:
                     jres = json.loads(order.reference)
                     extra = jres.get('msg')
-                    logging.info(f'order REJECTED: {extra}')
+                    self._info(f'order REJECTED: {extra}')
                     return OperationResult(ResultCode.REJECTED, order_ids, extra)
                 except:
                     self._info(f'error when seeking order.reference: {order.reference}')
