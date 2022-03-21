@@ -1,3 +1,6 @@
+## 1.0.6
+1. 增加exchange operation发送订单并检查交易所返回的接口
+
 ## 1.0.5
 1. 增加交易所拒单的详细信息
 1. 增加exchange operation订单回调处理
