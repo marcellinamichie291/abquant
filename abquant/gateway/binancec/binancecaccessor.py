@@ -482,7 +482,7 @@ class BinanceCAccessor(RestfulAccessor):
                     volume = abs(volume)
                 position.volume = volume
 
-                self.gateway.on_position(position)
+            self.gateway.on_position(position)
 
         self.gateway.write_log("持仓信息查询成功")
 
