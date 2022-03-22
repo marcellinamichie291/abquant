@@ -1,15 +1,17 @@
-import os
-import time
-from typing import Dict, List
-from enum import Enum
 import logging
+import time
+import json
+from typing import Dict, List
+from datetime import datetime
+from dataclasses import dataclass
+import asyncio
 
-from abquant.trader.common import OrderType, Direction, Offset, Exchange
-from abquant.trader.object import CancelRequest, OrderRequest, PositionData, OrderData
-from abquant.gateway import BitmexGateway, Gateway, BinanceUBCGateway, BinanceBBCGateway, BinanceSGateway, DydxGateway, BybitBBCGateway, BybitUBCGateway
-from abquant.event import EventDispatcher, EventType, Event
-from abquantui.encryption import decrypt
+from abquant.event import EventDispatcher, EventType
+from abquant.gateway import Gateway
+from abquant.trader.common import OrderType, Direction, Offset, Status
+from abquant.trader.object import OrderRequest, PositionData, OrderData
 from abquantui.common import *
+from abquantui.encryption import decrypt
 
 
 class ExchangeOperation:
@@ -21,6 +23,7 @@ class ExchangeOperation:
         self._logger = logging.getLogger('ExchangeOperation')
         self._logger.setLevel(logging.INFO)
         self._event_dispatcher = None   # 单dispatcher的前提：账户间gateway不同
+        self.orders: Dict = {}
         self.gateways: Dict[str: Gateway] = {}
         self._gateway_second_limits: Dict[str: int] = {}
         self._gateway_minute_limits: Dict[str: int] = {}
@@ -30,6 +33,7 @@ class ExchangeOperation:
         if self.gateways:
             return
         self._event_dispatcher = EventDispatcher(interval=1)
+        self._event_dispatcher.register(EventType.EVENT_ORDER, self._on_order)
         opconf = self._config.get('operation')
         accounts = opconf.get('accounts')
         for account in accounts:
@@ -86,6 +90,23 @@ class ExchangeOperation:
         time.sleep(10)
         self._info(f'connect gateway end {gateway_name} for account {account_name}')
 
+    def _on_order(self, event):
+        order: OrderData = event.data
+        if not order.ab_orderid:
+            return
+        self.orders.update({order.ab_orderid: order})
+        if order.status == Status.CANCELLED:
+            self.orders.pop(order.ab_orderid)
+        for order_ in list(self.orders.values()):
+            current = datetime.today()
+            if order_.datetime and (current - order_.datetime).total_seconds() > 600 \
+                    and (order_.status == Status.REJECTED or order_.status == Status.ALLTRADED):
+                self.orders.pop(order_.ab_orderid)
+            elif not order.datetime and order.status != Status.REJECTED and order_.status == Status.REJECTED:
+                self.orders.pop(order_.ab_orderid)
+            elif not order.datetime and order.status != Status.ALLTRADED and order_.status == Status.ALLTRADED:
+                self.orders.pop(order_.ab_orderid)
+
     def _info(self, msg):
         self._logger.info(msg)
 
@@ -97,6 +118,17 @@ class ExchangeOperation:
             return gateway_name
         else:
             return account_name + '.' + gateway_name
+
+    @staticmethod
+    def extract_key(gateway_key):
+        if not gateway_key:
+            return None, None
+        items = gateway_key.split('.')
+        if len(items) < 2:
+            return None, None
+        gateway_name = items[-1]
+        account_name = gateway_key[: -1 - 1 * len(gateway_name)]
+        return account_name, gateway_name
 
     def clear_position_list(self, account_name: str, gateway_name: str, position_list: List[PositionData]):
         """
@@ -145,6 +177,10 @@ class ExchangeOperation:
         """
         if not account_name or not gateway_name or not order_list:
             raise Exception('ExchangeOperation: cancel_order_list: parameter incorrect')
+        gateway = self.gateways.get(self.gateway_key(account_name, gateway_name))
+        if not gateway:
+            raise Exception(
+                f"Warning: cancel_order_list: no gateway [{account_name}.{gateway_name}] found for order, do nothing")
         second_limit = self._gateway_second_limits[gateway_name]
         minute_limit = self._gateway_minute_limits[gateway_name]
         second_num = 0
@@ -155,11 +191,6 @@ class ExchangeOperation:
             if gateway_name != order.gateway_name:
                 self._info(
                     f'cancel_order_list: gateway name conflict, {gateway_name} - {order.gateway_name}')
-            gateway = self.gateways.get(self.gateway_key(account_name, gateway_name))
-            if not gateway:
-                raise Exception(
-                  f"Warning: cancel_order_list: no gateway [{account_name}.{gateway_name}] found for order, do nothing")
-                continue
             # 交易所流量控制
             second_num += 1
             minute_num += 1
@@ -197,6 +228,68 @@ class ExchangeOperation:
         ab_orderids = gateway.send_order(req)
         return ab_orderids
 
+    def send_order_with_result(self, account_name, gateway_name, symbol: str,
+                         price: float, volume: float,
+                         direction: Direction, offset: Offset, order_type: OrderType) -> List[str]:
+        """
+            发送订单，并返回交易所结果；等待结果超时，认为发送成功
+            timeout：3s
+        """
+        order_ids = self.send_order(account_name, gateway_name, symbol, price, volume, direction, offset, order_type)
+        for t in range(0, 60):
+            time.sleep(0.05)
+            order: OrderData = self.orders.get(order_ids, None)
+            if not order or order.status == Status.SUBMITTING:
+                continue
+            elif order.status == Status.CANCELLED:
+                self._info(f'order CANCELLED: {order.reference}')
+                return OperationResult(ResultCode.CANCELLED, order_ids, 'order canceled')
+            elif order.status == Status.REJECTED:
+                try:
+                    jres = json.loads(order.reference)
+                    extra = jres.get('msg')
+                    self._info(f'order REJECTED: {extra}')
+                    return OperationResult(ResultCode.REJECTED, order_ids, extra)
+                except:
+                    self._info(f'error when seeking order.reference: {order.reference}')
+                    continue
+            else:
+                self._info(order.status)
+                return OperationResult(ResultCode.SUCCESS, order_ids, 'send order success')
+        self._info(f'order not return from gateway in 3s, make it success')
+        return OperationResult(ResultCode.SUCCESS, order_ids, f'order not return from gateway in 3s, make it success')
+
+    async def send_order_with_result_async(self, account_name, gateway_name, symbol: str,
+                         price: float, volume: float,
+                         direction: Direction, offset: Offset, order_type: OrderType) -> List[str]:
+        """
+            发送订单，并返回交易所结果；等待结果超时，认为发送成功
+            timeout：3s
+        """
+        order_ids = self.send_order(account_name, gateway_name, symbol, price, volume, direction, offset, order_type)
+        for t in range(0, 60):
+            await asyncio.sleep(0.05)
+            order: OrderData = self.orders.get(order_ids, None)
+            if not order or order.status == Status.SUBMITTING:
+                continue
+            elif order.status == Status.CANCELLED:
+                self._info(f'order CANCELLED: {order.reference}')
+                return OperationResult(ResultCode.CANCELLED, order_ids, 'order canceled')
+            elif order.status == Status.REJECTED:
+                try:
+                    jres = json.loads(order.reference)
+                    extra = jres.get('msg')
+                    self._info(f'order REJECTED: {extra}')
+                    return OperationResult(ResultCode.REJECTED, order_ids, extra)
+                except:
+                    self._info(f'error when seeking order.reference: {order.reference}')
+                    continue
+            else:
+                self._info(order.status)
+                return OperationResult(ResultCode.SUCCESS, order_ids, 'send order success')
+        self._info(f'order not return from gateway in 3s, make it success')
+        return OperationResult(ResultCode.SUCCESS, order_ids, f'order not return from gateway in 3s, make it success')
+
     def buy(self, account_name, gateway_name, symbol: str, price: float, volume: float,
                                               order_type: OrderType = OrderType.MARKET) -> List[str]:
         """
@@ -223,6 +316,23 @@ class ExchangeOperation:
         gateway = self.gateways.get(self.gateway_key(account_name, gateway_name))
         req = order.create_cancel_request()
         gateway.cancel_order(req)
+
+
+class ResultCode(Enum):
+    SUCCESS = 'SUCCESS'
+    CANCELLED = 'CANCELLED'
+    REJECTED = 'REJECTED'
+    TIMEOUT = 'TIMEOUT'
+
+
+@dataclass
+class OperationResult:
+    """
+        交易所操作结果
+    """
+    code: ResultCode
+    resid: str
+    message: str
 
 
 if __name__ == '__main__':
