@@ -20,6 +20,7 @@ class BinanceCGateway(Gateway):
         "proxy_host": "",
         "proxy_port": 0,
         "test_net": ["TESTNET", "REAL"],
+        "position_mode":["One-way", "Hedge"][0],
     }
     exchanges = [Exchange.BINANCE]
 
@@ -53,8 +54,11 @@ class BinanceCGateway(Gateway):
             "proxy_host", self.default_setting["proxy_host"])
         proxy_port = setting.get(
             "proxy_port", self.default_setting["proxy_port"])
+        
+        position_mode = setting.get("position_mode", self.default_setting["position_mode"])
 
-        self.rest_accessor.connect(self.ustd_based(), key, secret, session_number, server,
+
+        self.rest_accessor.connect(self.ustd_based(), key, secret, position_mode, session_number, server,
                                    proxy_host, proxy_port)
         self.market_listener.connect(
             self.ustd_based(), proxy_host, proxy_port, server)

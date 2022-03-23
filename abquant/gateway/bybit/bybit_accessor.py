@@ -482,6 +482,19 @@ class BybitUBCAccessor(RestfulAccessor):
                 start_time: int = int((bar.datetime + TIMEDELTA_MAP[req.interval]).timestamp())
 
         return history
+    
+    def query_lcp(self, symbol):
+        path_usdt: str = "/v2/private/account/lcp"
+        params: dict = {
+            "symbol": symbol
+        }
+
+        self.add_request(
+            "GET",
+            path_usdt,
+            print,
+            params=params
+        )
 
 
 class BybitBBCAccessor(RestfulAccessor):
@@ -963,3 +976,18 @@ class BybitBBCAccessor(RestfulAccessor):
                 start_time: int = int((bar.datetime + TIMEDELTA_MAP[req.interval]).timestamp())
 
         return history
+
+    
+    def query_lcp(self, symbol):
+        path: str = "/v2/private/account/lcp"
+        params: dict = {
+            "symbol": symbol
+        }
+
+        self.add_request(
+            "GET",
+            path,
+            print,
+            params=params
+        )
+

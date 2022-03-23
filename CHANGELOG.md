@@ -1,4 +1,8 @@
 ## 1.0.6
+1. binance 双向持仓。
+1. bybit 增加lcp查询
+
+## 1.0.6
 1. 增加exchange operation发送订单并检查交易所返回的接口
 
 ## 1.0.5

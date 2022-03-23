@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 from copy import copy, deepcopy
 
-from . import DIRECTION_BINANCEC2AB, D_TESTNET_WEBSOCKET_DATA_HOST, D_WEBSOCKET_DATA_HOST, F_TESTNET_WEBSOCKET_DATA_HOST, F_WEBSOCKET_DATA_HOST, ORDERTYPE_BINANCEC2AB, STATUS_BINANCEC2AB, symbol_contract_map
+from . import DIRECTION_BINANCEC2AB, D_TESTNET_WEBSOCKET_DATA_HOST, D_WEBSOCKET_DATA_HOST, F_TESTNET_WEBSOCKET_DATA_HOST, F_WEBSOCKET_DATA_HOST, ORDERTYPE_BINANCEC2AB, POSITION_BINANCE2AB, STATUS_BINANCEC2AB, symbol_contract_map
 from ..basegateway import Gateway
 from ..listener import WebsocketListener
 from abquant.trader.exception import MarketException
@@ -263,23 +263,25 @@ class BinanceCTradeWebsocketListener(WebsocketListener):
                 self.gateway.on_account(account)
         
         for pos_data in packet["a"]["P"]:
-            if pos_data["ps"] == "BOTH":
-                volume = pos_data["pa"]
-                if '.' in volume:
-                    volume = float(volume)
-                else:
-                    volume = int(volume)
-
-                position = PositionData(
-                    symbol=pos_data["s"],
-                    exchange=Exchange.BINANCE,
-                    direction=Direction.NET,
-                    volume=volume,
-                    price=float(pos_data["ep"]),
-                    pnl=float(pos_data["cr"]),
-                    gateway_name=self.gateway_name,
-                )
-                self.gateway.on_position(position)
+            volume = pos_data["pa"]
+            if '.' in volume:
+                volume = float(volume)
+            else:
+                volume = int(volume)
+                
+            if pos_data["ps"] == "SHORT":
+                volume = abs(volume)
+            
+            position = PositionData(
+                symbol=pos_data["s"],
+                exchange=Exchange.BINANCE,
+                direction=POSITION_BINANCE2AB[pos_data["ps"]],
+                volume=volume,
+                price=float(pos_data["ep"]),
+                pnl=float(pos_data["cr"]),
+                gateway_name=self.gateway_name,
+            )
+            self.gateway.on_position(position)
 
     def on_order(self, packet: dict) -> None:
         """"""
