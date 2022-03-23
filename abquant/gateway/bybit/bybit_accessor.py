@@ -225,15 +225,7 @@ class BybitUBCAccessor(RestfulAccessor):
 
     def on_cancel_order(self, data: dict, request: Request) -> None:
         """委托撤单回报"""
-        if data["ret_code"]:
-            error_code: int = data["ret_code"]
-            error_msg: str = data["ret_msg"]
-            if error_code == 20001:
-                order: OrderData = request.extra
-                order.status = Status.REJECTED
-                self.gateway.on_order(order)
-            msg = f"撤单失败，错误代码：{error_code}，信息：{error_msg}"
-            self.gateway.write_log(msg)
+        if self.check_error("委托撤单", data):
             return
 
     def on_failed(self, status_code: int, request: Request) -> None:

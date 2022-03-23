@@ -440,10 +440,10 @@ class DydxAccessor(RestfulAccessor):
 
     def on_cancel_failed(self, status_code: str, request: Request) -> None:
         """撤单回报函数报错回报"""
-        # if request.extra:
-        order: OrderData = request.extra
-        order.status = Status.REJECTED
-        self.gateway.on_order(order)
+        if request.extra:
+            order: OrderData = request.extra
+            order.status = Status.REJECTED
+            self.gateway.on_order(order)
 
         msg: str = f"撤单失败，状态码：{status_code}，信息：{request.response.text}"
         self.gateway.write_log(msg)
