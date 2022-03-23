@@ -14,7 +14,7 @@ from requests.exceptions import SSLError
 import uuid
 from requests.models import MissingSchema
 
-from . import DIRECTION_AB2BINANCEC, DIRECTION_BINANCEC2AB, D_REST_HOST, D_TESTNET_RESTT_HOST, D_TESTNET_WEBSOCKET_TRADE_HOST, D_WEBSOCKET_TRADE_HOST, F_REST_HOST, F_TESTNET_RESTT_HOST, F_TESTNET_WEBSOCKET_TRADE_HOST, F_WEBSOCKET_TRADE_HOST, INTERVAL_AB2BINANCEC, ORDERTYPE_AB2BINANCEC, ORDERTYPE_BINANCEC2AB, STATUS_BINANCEC2AB, TIMEDELTA_MAP, Security, symbol_contract_map
+from . import DIRECTION_AB2BINANCEC, DIRECTION_BINANCEC2AB, D_REST_HOST, D_TESTNET_RESTT_HOST, D_TESTNET_WEBSOCKET_TRADE_HOST, D_WEBSOCKET_TRADE_HOST, F_REST_HOST, F_TESTNET_RESTT_HOST, F_TESTNET_WEBSOCKET_TRADE_HOST, F_WEBSOCKET_TRADE_HOST, INTERVAL_AB2BINANCEC, ORDERTYPE_AB2BINANCEC, ORDERTYPE_BINANCEC2AB, POSITION_BINANCE2AB, POSITION_CLOSE_AB2BINANCE, STATUS_BINANCEC2AB, TIMEDELTA_MAP, POSITION_AB2BINANCE , Security, symbol_contract_map
 from .binanceclistener import BinanceCTradeWebsocketListener
 from ..accessor import Request, RestfulAccessor
 from ..basegateway import Gateway
@@ -36,7 +36,8 @@ class BinanceCAccessor(RestfulAccessor):
 
         self.key: str = ""
         self.secret: str = ""
-
+        self.position_mode: str = ""
+        
         self.user_stream_key: str = ""
         self.keep_alive_count: int = 0
         self.recv_window: int = 5000
@@ -108,6 +109,7 @@ class BinanceCAccessor(RestfulAccessor):
         usdt_base: bool,
         key: str,
         secret: str,
+        position_mode: str,
         session_number: int,
         server: str,
         proxy_host: str,
@@ -119,6 +121,8 @@ class BinanceCAccessor(RestfulAccessor):
         self.usdt_base = usdt_base
         self.key = key
         self.secret = secret.encode()
+        self.position_mode = position_mode
+
         self.proxy_port = proxy_port
         self.proxy_host = proxy_host
         self.server = server
@@ -207,9 +211,9 @@ class BinanceCAccessor(RestfulAccessor):
         data = {"security": Security.SIGNED}
 
         if self.usdt_base:
-            path = "/fapi/v1/positionRisk"
+            path = "/fapi/v2/positionRisk"
         else:
-            path = "/dapi/v1/positionRisk"
+            path = "/dapi/v2/positionRisk"
 
         self.add_request(
             method="GET",
@@ -297,8 +301,17 @@ class BinanceCAccessor(RestfulAccessor):
         if req.type == OrderType.MARKET:
             params.pop('timeInForce')
             params.pop('price')
+            
         if req.offset == Offset.CLOSE:
-            params["reduceOnly"] = True
+            if self.position_mode == "Hedge":
+                params["positionSide"] = POSITION_CLOSE_AB2BINANCE[req.direction]
+            else:
+                params["reduceOnly"] = True
+            
+        else:
+            if self.position_mode == "Hedge":
+                params["positionSide"] = POSITION_AB2BINANCE[req.direction]
+            
 
         # STOP_MARKET
         if req.type == OrderType.STOP_MARKET:
@@ -452,7 +465,7 @@ class BinanceCAccessor(RestfulAccessor):
             position = PositionData(
                 symbol=d["symbol"],
                 exchange=Exchange.BINANCE,
-                direction=Direction.NET,
+                direction=POSITION_BINANCE2AB[d["positionSide"]],
                 volume=float(d["positionAmt"]),
                 price=float(d["entryPrice"]),
                 pnl=float(d["unRealizedProfit"]),
@@ -462,11 +475,15 @@ class BinanceCAccessor(RestfulAccessor):
             if position.volume:
                 volume = d["positionAmt"]
                 if '.' in volume:
-                    position.volume = float(d["positionAmt"])
+                    volume = float(volume)
                 else:
-                    position.volume = int(d["positionAmt"])
+                    volume = int(volume)
+                    
+                if d["positionSide"] == "SHORT":
+                    volume = abs(volume)
+                position.volume = volume
 
-                self.gateway.on_position(position)
+            self.gateway.on_position(position)
 
         self.gateway.write_log("持仓信息查询成功")
 
