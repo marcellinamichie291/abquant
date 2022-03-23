@@ -94,18 +94,17 @@ class ExchangeOperation:
         order: OrderData = event.data
         if not order.ab_orderid:
             return
+        orig_order = self.orders.get(order.ab_orderid, None)
         self.orders.update({order.ab_orderid: order})
-        if order.status == Status.CANCELLED:
-            self.orders.pop(order.ab_orderid)
+        if orig_order and not order.datetime and orig_order.datetime:
+            order.datetime = orig_order.datetime
         for order_ in list(self.orders.values()):
-            current = datetime.today()
+            current = datetime.utcnow()
             if order_.datetime and (current - order_.datetime).total_seconds() > 600 \
-                    and (order_.status == Status.REJECTED or order_.status == Status.ALLTRADED):
+                    and (order_.status == Status.REJECTED or order_.status == Status.ALLTRADED or order_.status == Status.CANCELLED):
                 self.orders.pop(order_.ab_orderid)
-            elif not order.datetime and order.status != Status.REJECTED and order_.status == Status.REJECTED:
-                self.orders.pop(order_.ab_orderid)
-            elif not order.datetime and order.status != Status.ALLTRADED and order_.status == Status.ALLTRADED:
-                self.orders.pop(order_.ab_orderid)
+            elif not order_.datetime :
+                order_.datetime = datetime.utcnow()
 
     def get_order(self, client_order_id) -> OrderData:
         if not client_order_id:
@@ -248,7 +247,7 @@ class ExchangeOperation:
                 continue
             elif order.status == Status.CANCELLED:
                 self._info(f'order CANCELLED: {order.reference}')
-                return OperationResult(ResultCode.CANCELLED, order_ids, 'order canceled')
+                return OperationResult(ResultCode.CANCELLED, order_ids, 'order cancelled')
             elif order.status == Status.REJECTED:
                 try:
                     jres = json.loads(order.reference)
@@ -279,7 +278,7 @@ class ExchangeOperation:
                 continue
             elif order.status == Status.CANCELLED:
                 self._info(f'order CANCELLED: {order.reference}')
-                return OperationResult(ResultCode.CANCELLED, order_ids, 'order canceled')
+                return OperationResult(ResultCode.CANCELLED, order_ids, 'order cancelled')
             elif order.status == Status.REJECTED:
                 try:
                     jres = json.loads(order.reference)
@@ -331,21 +330,17 @@ class ExchangeOperation:
             取消订单
         """
         if not order:
-            return OperationResult(ResultCode.ERROR, None, 'order not found')
+            return OperationResult(ResultCode.ERROR, None, 'order not exist')
         client_order_id = order.ab_orderid
-        order: OrderData = self.orders.get(client_order_id, None)
         self.cancel_order(account_name, gateway_name, order)
-        if not order:
-            self._info(f'order not exist, only cancel yet no exchange result')
-            return OperationResult(ResultCode.CANCELLED, client_order_id, 'order cancelled')
         for t in range(0, 60):
             time.sleep(0.05)
             order: OrderData = self.orders.get(client_order_id, None)
-            if order :
+            if order and order.status != Status.CANCELLED:
                 continue
             else:
-                return OperationResult(ResultCode.CANCELLED, client_order_id, '')
-        return OperationResult(ResultCode.TIMEOUT, client_order_id, '')
+                return OperationResult(ResultCode.CANCELLED, client_order_id, 'order cancelled')
+        return OperationResult(ResultCode.TIMEOUT, client_order_id, 'cancel order timeout')
 
     async def cancel_order_with_result_by_client_order_id_async(self, account_name, gateway_name, client_order_id):
         order = self.get_order(client_order_id)
@@ -356,17 +351,13 @@ class ExchangeOperation:
             取消订单
         """
         if not order:
-            return OperationResult(ResultCode.ERROR, None, 'order not found')
+            return OperationResult(ResultCode.ERROR, None, 'order not exist')
         client_order_id = order.ab_orderid
-        order: OrderData = self.orders.get(client_order_id, None)
-        if not order:
-            self._info(f'order not exist, only cancel yet no exchange result')
-            return OperationResult(ResultCode.ERROR, client_order_id, 'order not exist')
         self.cancel_order(account_name, gateway_name, order)
         for t in range(0, 60):
             await asyncio.sleep(0.05)
             order: OrderData = self.orders.get(client_order_id, None)
-            if order :
+            if order and order.status != Status.CANCELLED:
                 continue
             else:
                 return OperationResult(ResultCode.CANCELLED, client_order_id, 'order cancelled')
