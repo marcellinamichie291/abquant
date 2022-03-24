@@ -1,3 +1,7 @@
+## 1.0.7
+1. 更新回测加载s3凭证
+1. 增加exchange operation撤销订单接口
+
 ## 1.0.6
 1. 增加exchange operation发送订单并检查交易所返回的接口
 
