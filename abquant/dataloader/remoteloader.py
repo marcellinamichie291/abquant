@@ -40,7 +40,7 @@ class RemoteLoader:
         self._bucket = self._s3.Bucket(S3_BUCKET_NAME)
         certificated = False
         try:
-            for obj in self._bucket.objects.filter(Prefix=f'/{self.exchange.value.lower()}/'):
+            for obj in self._bucket.objects.filter(Prefix=f'{self.exchange.value.lower()}/'):
                 certificated = True
                 break
         except Exception as e:
