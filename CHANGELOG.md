@@ -1,3 +1,7 @@
+## 1.0.7
+1. 更新回测加载s3凭证
+1. 增加exchange operation撤销订单接口
+
 ## 1.0.6
 1. binance 双向持仓。
 1. bybit 增加lcp查询
