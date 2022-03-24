@@ -213,7 +213,7 @@ class BinanceCAccessor(RestfulAccessor):
         if self.usdt_base:
             path = "/fapi/v2/positionRisk"
         else:
-            path = "/dapi/v2/positionRisk"
+            path = "/dapi/v1/positionRisk"
 
         self.add_request(
             method="GET",
