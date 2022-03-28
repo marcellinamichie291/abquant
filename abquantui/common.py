@@ -1,11 +1,10 @@
 import os
-from enum import Enum
 
 from abquant.gateway import BinanceUBCGateway, BinanceBBCGateway, BinanceSGateway
 from abquant.gateway import BitmexGateway, DydxGateway, BybitBBCGateway, BybitUBCGateway
 
 
-class GatewayName(Enum):
+class GatewayName:
     BITMEX = 'BITMEX'
     BINANCEUBC = 'BINANCEUBC'
     BINANCEBBC = 'BINANCEBBC'

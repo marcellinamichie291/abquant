@@ -68,7 +68,7 @@ class ExchangeOperation:
             self._info('connect_gateway: gateway {} not empty, do nothing'.format(gkey))
             return 'gateway {} not empty, do nothing'.format(gkey)
         abpwd = os.getenv("ABPWD", "abquanT%go2moon!")
-        cls = SUPPORTED_GATEWAY.get(GatewayName(gateway_name))
+        cls = SUPPORTED_GATEWAY.get(gateway_name)
         if not cls:
             raise Exception('ExchangeOperation: No gateway class found in supported gateways')
         if 'encrypt_key' in conf and 'encrypt_secret' in conf:
