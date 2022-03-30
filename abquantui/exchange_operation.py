@@ -251,7 +251,12 @@ class ExchangeOperation:
             elif order.status == Status.REJECTED:
                 try:
                     jres = json.loads(order.reference)
-                    extra = jres.get('msg')
+                    if 'msg' in jres:
+                        extra = jres.get('msg')
+                    elif 'error' in jres:
+                        extra = jres.get('error').get('message')
+                    else:
+                        extra = None
                     self._info(f'order REJECTED: {extra}')
                     return OperationResult(ResultCode.REJECTED, order_ids, extra)
                 except:
