@@ -121,6 +121,3 @@ class BybitGateway(Gateway):
             self.trade_listener.stop()
             self.market_listener.stop()
             
-    def query_lcp(self, symbol):
-        """查询流动性贡献分"""
-        self.rest_accessor.query_lcp(symbol)
