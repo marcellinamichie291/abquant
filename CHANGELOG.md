@@ -1,3 +1,7 @@
+## 1.0.9
+1. 更改exchange operation的GatewayName类型
+1. 修正exchange operation在bitmex拒单原因
+
 ## 1.0.8
 1. 更新回测加载s3凭证
 1. 增加exchange operation撤销订单接口

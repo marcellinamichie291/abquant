@@ -87,7 +87,7 @@ class StrategyLifecycle(ABC):
             logging.info('add_init_strategy is called')
             return '\n gateways inited -> {}'.format(self.gateways.keys())
         else:
-            return '\n no gateway inited'
+            raise Exception('no gateway inited')
 
     def start(self):
         if len(self.gateways) < 1:

@@ -1,10 +1,10 @@
 import logging
 import time
 import json
+from enum import Enum
 from typing import Dict, List
 from datetime import datetime
 from dataclasses import dataclass
-import asyncio
 
 from abquant.event import EventDispatcher, EventType
 from abquant.gateway import Gateway
@@ -57,8 +57,8 @@ class ExchangeOperation:
                     "test_net": ["TESTNET", "REAL"][1 if isprod else 0]
                 }
                 self.__connect_gateway(account_name, gateway_name, gateway_setting)
-                self._gateway_second_limits.update({gateway_name: SECOND_RATE_LIMITS.get(GatewayName(gateway_name))})
-                self._gateway_minute_limits.update({gateway_name: MINUTE_RATE_LIMITS.get(GatewayName(gateway_name))})
+                self._gateway_second_limits.update({gateway_name: SECOND_RATE_LIMITS.get(gateway_name)})
+                self._gateway_minute_limits.update({gateway_name: MINUTE_RATE_LIMITS.get(gateway_name)})
         self._info('gateways started')
 
     def __connect_gateway(self, account_name: str, gateway_name: str, conf: Dict):
@@ -69,7 +69,7 @@ class ExchangeOperation:
             self._info('connect_gateway: gateway {} not empty, do nothing'.format(gkey))
             return 'gateway {} not empty, do nothing'.format(gkey)
         abpwd = os.getenv("ABPWD", "abquanT%go2moon!")
-        cls = SUPPORTED_GATEWAY.get(GatewayName(gateway_name))
+        cls = SUPPORTED_GATEWAY.get(gateway_name)
         if not cls:
             raise Exception('ExchangeOperation: No gateway class found in supported gateways')
         if 'encrypt_key' in conf and 'encrypt_secret' in conf:
@@ -251,38 +251,12 @@ class ExchangeOperation:
             elif order.status == Status.REJECTED:
                 try:
                     jres = json.loads(order.reference)
-                    extra = jres.get('msg')
-                    self._info(f'order REJECTED: {extra}')
-                    return OperationResult(ResultCode.REJECTED, order_ids, extra)
-                except:
-                    self._info(f'error when seeking order.reference: {order.reference}')
-                    continue
-            else:
-                self._info(order.status)
-                return OperationResult(ResultCode.SUCCESS, order_ids, 'send order success')
-        self._info(f'order not return from gateway in 3s, make it success')
-        return OperationResult(ResultCode.SUCCESS, order_ids, f'order not return from gateway in 3s, make it success')
-
-    async def send_order_with_result_async(self, account_name, gateway_name, symbol: str,
-                         price: float, volume: float,
-                         direction: Direction, offset: Offset, order_type: OrderType):
-        """
-            发送订单，并返回交易所结果；等待结果超时，认为发送成功
-            timeout：3s
-        """
-        order_ids = self.send_order(account_name, gateway_name, symbol, price, volume, direction, offset, order_type)
-        for t in range(0, 60):
-            await asyncio.sleep(0.05)
-            order: OrderData = self.orders.get(order_ids, None)
-            if not order or order.status == Status.SUBMITTING:
-                continue
-            elif order.status == Status.CANCELLED:
-                self._info(f'order CANCELLED: {order.reference}')
-                return OperationResult(ResultCode.CANCELLED, order_ids, 'order cancelled')
-            elif order.status == Status.REJECTED:
-                try:
-                    jres = json.loads(order.reference)
-                    extra = jres.get('msg')
+                    if 'msg' in jres:
+                        extra = jres.get('msg')
+                    elif 'error' in jres:
+                        extra = jres.get('error').get('message')
+                    else:
+                        extra = None
                     self._info(f'order REJECTED: {extra}')
                     return OperationResult(ResultCode.REJECTED, order_ids, extra)
                 except:
@@ -335,27 +309,6 @@ class ExchangeOperation:
         self.cancel_order(account_name, gateway_name, order)
         for t in range(0, 60):
             time.sleep(0.05)
-            order: OrderData = self.orders.get(client_order_id, None)
-            if order and order.status != Status.CANCELLED:
-                continue
-            else:
-                return OperationResult(ResultCode.CANCELLED, client_order_id, 'order cancelled')
-        return OperationResult(ResultCode.TIMEOUT, client_order_id, 'cancel order timeout')
-
-    async def cancel_order_with_result_by_client_order_id_async(self, account_name, gateway_name, client_order_id):
-        order = self.get_order(client_order_id)
-        return await self.cancel_order_with_result_async(account_name, gateway_name, order)
-
-    async def cancel_order_with_result_async(self, account_name, gateway_name, order: OrderData):
-        """
-            取消订单
-        """
-        if not order:
-            return OperationResult(ResultCode.ERROR, None, 'order not exist')
-        client_order_id = order.ab_orderid
-        self.cancel_order(account_name, gateway_name, order)
-        for t in range(0, 60):
-            await asyncio.sleep(0.05)
             order: OrderData = self.orders.get(client_order_id, None)
             if order and order.status != Status.CANCELLED:
                 continue
