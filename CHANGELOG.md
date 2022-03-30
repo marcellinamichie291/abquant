@@ -1,6 +1,8 @@
 ## 1.0.9
 1. 更改exchange operation的GatewayName类型
 1. 修正exchange operation在bitmex拒单原因
+1. 修复币安币本位仓位rest api地址bug
+1. 删除bybit流动性贡献分查询
 
 ## 1.0.8
 1. 更新回测加载s3凭证
