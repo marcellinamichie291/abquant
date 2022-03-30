@@ -1,6 +1,7 @@
 import logging
 import time
 import json
+from enum import Enum
 from typing import Dict, List
 from datetime import datetime
 from dataclasses import dataclass
@@ -56,8 +57,8 @@ class ExchangeOperation:
                     "test_net": ["TESTNET", "REAL"][1 if isprod else 0]
                 }
                 self.__connect_gateway(account_name, gateway_name, gateway_setting)
-                self._gateway_second_limits.update({gateway_name: SECOND_RATE_LIMITS.get(GatewayName(gateway_name))})
-                self._gateway_minute_limits.update({gateway_name: MINUTE_RATE_LIMITS.get(GatewayName(gateway_name))})
+                self._gateway_second_limits.update({gateway_name: SECOND_RATE_LIMITS.get(gateway_name)})
+                self._gateway_minute_limits.update({gateway_name: MINUTE_RATE_LIMITS.get(gateway_name)})
         self._info('gateways started')
 
     def __connect_gateway(self, account_name: str, gateway_name: str, conf: Dict):
