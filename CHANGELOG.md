@@ -1,3 +1,6 @@
+## 1.0.10
+1. 新增binancec cancel_all_orders(self, ab_symbol)用。
+
 ## 1.0.9
 1. 更改exchange operation的GatewayName类型
 1. 修正exchange operation在bitmex拒单原因
