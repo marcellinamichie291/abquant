@@ -86,6 +86,9 @@ class BinanceCGateway(Gateway):
     def cancel_orders(self, reqs: Iterable[CancelRequest]) -> None:
         return super().cancel_orders(reqs)
 
+    def cancel_all_orders(self, ab_symbol) -> None:
+        self.rest_accessor.cancel_all_orders(ab_symbol)
+    
     def query_account(self) -> Iterable[AccountData]:
         """"""
         raise NotImplementedError(

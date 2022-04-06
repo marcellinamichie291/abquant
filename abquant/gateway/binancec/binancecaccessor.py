@@ -213,7 +213,7 @@ class BinanceCAccessor(RestfulAccessor):
         if self.usdt_base:
             path = "/fapi/v2/positionRisk"
         else:
-            path = "/dapi/v2/positionRisk"
+            path = "/dapi/v1/positionRisk"
 
         self.add_request(
             method="GET",
@@ -365,7 +365,34 @@ class BinanceCAccessor(RestfulAccessor):
             data=data,
             extra=req
         )
+        
+    def cancel_all_orders(self, ab_symbol) :
+        """"""
+        if not self.check_rate_limit(request=1, order=1, if_send=False):
+            self.gateway.write_log("撤单操作过于频繁: cancel_all_orders", level=WARNING)
+            return
+        data = {
+            "security": Security.SIGNED
+        }
 
+        params = {
+            "symbol": ab_symbol.split(".")[0]
+        }
+
+        if self.usdt_base:
+            path = "/fapi/v1/allOpenOrders"
+        else:
+            path = "/dapi/v1/allOpenOrders"
+
+        self.add_request(
+            method="DELETE",
+            path=path,
+            callback=self.on_cancel_order,
+            params=params,
+            data=data,
+            extra=ab_symbol
+        )
+        
     def start_user_stream(self) -> Request:
         """"""
         data = {
