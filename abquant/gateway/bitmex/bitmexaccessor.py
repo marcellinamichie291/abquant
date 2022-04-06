@@ -131,13 +131,19 @@ class BitmexAccessor(RestfulAccessor):
 
         inst = []   # Order special instructions
 
+        contract = symbol_contract_map.get(req.symbol)
+        if contract:
+            price_tick = contract.pricetick
+            price = round_to(req.price, price_tick)
+        else:
+            self.gateway.write_log(f"找不到{req.symbol}对应的contract，请检查连接", level=WARNING)
+            return ""
+
         # Only add price for limit order.
         if req.type == OrderType.LIMIT or req.type == OrderType.POSTONLYLIMIT:
-            contract = symbol_contract_map.get(req.symbol)
-            if contract:
-                price_tick = contract.pricetick
-            
-                data["price"] = round_to(req.price, price_tick)
+            data["price"] = price
+        elif req.type == OrderType.STOP_MARKET:
+            data["stopPrice"] = price
 
         # stop ? TODO
         if req.offset == Offset.CLOSE:
