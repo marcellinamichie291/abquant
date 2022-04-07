@@ -27,7 +27,7 @@ class ExchangeOperation:
         self.gateways: Dict[str: Gateway] = {}
         self._gateway_second_limits: Dict[str: int] = {}
         self._gateway_minute_limits: Dict[str: int] = {}
-        self.key_is_valid = False
+        self.key_is_valid = False   # dict if multiple account
         self.__start()
 
     def __start(self):
@@ -67,6 +67,8 @@ class ExchangeOperation:
                 self.__connect_gateway(account_name, gateway_name, gateway_setting)
                 self._gateway_second_limits.update({gateway_name: SECOND_RATE_LIMITS.get(gateway_name)})
                 self._gateway_minute_limits.update({gateway_name: MINUTE_RATE_LIMITS.get(gateway_name)})
+            if not self.key_is_valid:
+                raise Exception('ExchangeOperation: gateway not connected, check network or api key')
         self._info('gateways started')
 
     def __connect_gateway(self, account_name: str, gateway_name: str, conf: Dict):
@@ -96,8 +98,6 @@ class ExchangeOperation:
         gw.connect(conf)
         self.gateways[gkey] = gw
         time.sleep(10)
-        if not self.key_is_valid:
-            raise Exception('ExchangeOperation: gateway not connected, check network or api key')
         self._info(f'connect gateway end {gateway_name} for account {account_name}')
 
     def _on_order(self, event):
