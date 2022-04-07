@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from abquant.event import EventDispatcher, EventType
 from abquant.gateway import Gateway
 from abquant.trader.common import OrderType, Direction, Offset, Status
-from abquant.trader.object import OrderRequest, PositionData, OrderData
+from abquant.trader.object import OrderRequest, PositionData, OrderData, AccountData
 from abquantui.common import *
 from abquantui.encryption import decrypt
 
@@ -27,6 +27,7 @@ class ExchangeOperation:
         self.gateways: Dict[str: Gateway] = {}
         self._gateway_second_limits: Dict[str: int] = {}
         self._gateway_minute_limits: Dict[str: int] = {}
+        self.key_is_valid = False   # dict if multiple account
         self.__start()
 
     def __start(self):
@@ -34,6 +35,7 @@ class ExchangeOperation:
             return
         self._event_dispatcher = EventDispatcher(interval=1)
         self._event_dispatcher.register(EventType.EVENT_ORDER, self._on_order)
+        self._event_dispatcher.register(EventType.EVENT_ACCOUNT, self._on_account)
         opconf = self._config.get('operation')
         accounts = opconf.get('accounts')
         for account in accounts:
@@ -48,17 +50,25 @@ class ExchangeOperation:
             if not encrypt_key or not encrypt_secret:
                 raise Exception('ExchangeOperation: No encrypt key or secret specified')
             isprod = account.get('is_prod')
+            proxy_host = account.get('proxy_host')
+            proxy_port = account.get('proxy_port')
             for gateway_name in gateways.split(','):
+                gateway_name = gateway_name.strip()
                 gateway_setting = {
                     'encrypt_key': encrypt_key,
                     'encrypt_secret': encrypt_secret,
-                    'proxy_host': None if is_prod() else PROXY_HOST,
-                    'proxy_port': 0 if is_prod() else PROXY_PORT,
+                    'proxy_host': None,
+                    'proxy_port': 0,
                     "test_net": ["TESTNET", "REAL"][1 if isprod else 0]
                 }
+                if proxy_host and proxy_port:
+                    gateway_setting.update({'proxy_host': proxy_host})
+                    gateway_setting.update({'proxy_port': proxy_port})
                 self.__connect_gateway(account_name, gateway_name, gateway_setting)
                 self._gateway_second_limits.update({gateway_name: SECOND_RATE_LIMITS.get(gateway_name)})
                 self._gateway_minute_limits.update({gateway_name: MINUTE_RATE_LIMITS.get(gateway_name)})
+            if not self.key_is_valid:
+                raise Exception('ExchangeOperation: gateway not connected, check network or api key')
         self._info('gateways started')
 
     def __connect_gateway(self, account_name: str, gateway_name: str, conf: Dict):
@@ -105,6 +115,11 @@ class ExchangeOperation:
                 self.orders.pop(order_.ab_orderid)
             elif not order_.datetime :
                 order_.datetime = datetime.utcnow()
+
+    def _on_account(self, event):
+        account: AccountData = event.data
+        if account and (account.balance or account.frozen):
+            self.key_is_valid = True
 
     def get_order(self, client_order_id) -> OrderData:
         if not client_order_id:
@@ -344,6 +359,8 @@ if __name__ == '__main__':
             'gateways': _gateway_name,
             'encrypt_key': '0Yjr19PZbxGoJPy1vBDLQpjKacqstRZM3KimOsjxPNM=',
             'encrypt_secret': '4CpwpVW3gBLAtmRDm9mT+wVLYKmP2D5XnIZxpzzLwRUMKBpnQ3VKE8AA+kEj3h3A',
+            'proxy_host': 'localhost',
+            'proxy_port': 1087,
             'is_prod': False
         }]
     }}
