@@ -32,7 +32,7 @@ DIRECTION_BITMEX2AB = {v: k for k, v in DIRECTION_AB2BITMEX.items()}
 ORDERTYPE_AB2BITMEX = {
     OrderType.LIMIT: "Limit",
     OrderType.MARKET: "Market",
-    # stop order?: "Stop"
+    OrderType.STOP_MARKET: "Stop",
 }
 ORDERTYPE_BITMEX2AB = {v: k for k, v in ORDERTYPE_AB2BITMEX.items()}
 ORDERTYPE_AB2BITMEX[OrderType.POSTONLYLIMIT] = "Limit"

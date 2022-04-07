@@ -44,14 +44,3 @@ SECOND_RATE_LIMITS = {
     GatewayName.BYBITBBC: 100
 }
 
-
-ENV = os.getenv("ENV", "TEST")
-# print(f"******ENV={ENV}******")
-
-PROXY_HOST = os.getenv('PROXY_HOST', 'localhost')
-PROXY_PORT = int(os.getenv('PROXY_PORT', '1087'))
-
-
-def is_prod():
-    return 'PROD' == ENV
-
