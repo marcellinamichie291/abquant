@@ -359,6 +359,8 @@ if __name__ == '__main__':
             'gateways': _gateway_name,
             'encrypt_key': '0Yjr19PZbxGoJPy1vBDLQpjKacqstRZM3KimOsjxPNM=',
             'encrypt_secret': '4CpwpVW3gBLAtmRDm9mT+wVLYKmP2D5XnIZxpzzLwRUMKBpnQ3VKE8AA+kEj3h3A',
+            'proxy_host': 'localhost',
+            'proxy_port': 1087,
             'is_prod': False
         }]
     }}
