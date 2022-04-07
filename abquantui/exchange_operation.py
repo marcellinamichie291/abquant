@@ -48,14 +48,19 @@ class ExchangeOperation:
             if not encrypt_key or not encrypt_secret:
                 raise Exception('ExchangeOperation: No encrypt key or secret specified')
             isprod = account.get('is_prod')
+            proxy_host = account.get('proxy_host')
+            proxy_port = account.get('proxy_port')
             for gateway_name in gateways.split(','):
                 gateway_setting = {
                     'encrypt_key': encrypt_key,
                     'encrypt_secret': encrypt_secret,
-                    'proxy_host': None if is_prod() else PROXY_HOST,
-                    'proxy_port': 0 if is_prod() else PROXY_PORT,
+                    'proxy_host': None,
+                    'proxy_port': 0,
                     "test_net": ["TESTNET", "REAL"][1 if isprod else 0]
                 }
+                if proxy_host and proxy_port:
+                    gateway_setting.update({'proxy_host': proxy_host})
+                    gateway_setting.update({'proxy_port': proxy_port})
                 self.__connect_gateway(account_name, gateway_name, gateway_setting)
                 self._gateway_second_limits.update({gateway_name: SECOND_RATE_LIMITS.get(gateway_name)})
                 self._gateway_minute_limits.update({gateway_name: MINUTE_RATE_LIMITS.get(gateway_name)})
