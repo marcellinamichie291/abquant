@@ -1,3 +1,8 @@
+## 1.0.11
+1. 新增bitmex订单类型STOP_MARKET
+1. 修正exchange operation本地proxy问题
+1. 增加exchange operation验证key有效性
+
 ## 1.0.10
 1. 新增binancec cancel_all_orders(self, ab_symbol)用。
 
