@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from abquant.event import EventDispatcher, EventType
 from abquant.gateway import Gateway
 from abquant.trader.common import OrderType, Direction, Offset, Status
-from abquant.trader.object import OrderRequest, PositionData, OrderData
+from abquant.trader.object import OrderRequest, PositionData, OrderData, AccountData
 from abquantui.common import *
 from abquantui.encryption import decrypt
 
@@ -27,6 +27,7 @@ class ExchangeOperation:
         self.gateways: Dict[str: Gateway] = {}
         self._gateway_second_limits: Dict[str: int] = {}
         self._gateway_minute_limits: Dict[str: int] = {}
+        self.key_is_valid = False
         self.__start()
 
     def __start(self):
@@ -34,6 +35,7 @@ class ExchangeOperation:
             return
         self._event_dispatcher = EventDispatcher(interval=1)
         self._event_dispatcher.register(EventType.EVENT_ORDER, self._on_order)
+        self._event_dispatcher.register(EventType.EVENT_ACCOUNT, self._on_account)
         opconf = self._config.get('operation')
         accounts = opconf.get('accounts')
         for account in accounts:
@@ -51,6 +53,7 @@ class ExchangeOperation:
             proxy_host = account.get('proxy_host')
             proxy_port = account.get('proxy_port')
             for gateway_name in gateways.split(','):
+                gateway_name = gateway_name.strip()
                 gateway_setting = {
                     'encrypt_key': encrypt_key,
                     'encrypt_secret': encrypt_secret,
@@ -93,6 +96,8 @@ class ExchangeOperation:
         gw.connect(conf)
         self.gateways[gkey] = gw
         time.sleep(10)
+        if not self.key_is_valid:
+            raise Exception('ExchangeOperation: gateway not connected, check network or api key')
         self._info(f'connect gateway end {gateway_name} for account {account_name}')
 
     def _on_order(self, event):
@@ -110,6 +115,11 @@ class ExchangeOperation:
                 self.orders.pop(order_.ab_orderid)
             elif not order_.datetime :
                 order_.datetime = datetime.utcnow()
+
+    def _on_account(self, event):
+        account: AccountData = event.data
+        if account and (account.balance or account.frozen):
+            self.key_is_valid = True
 
     def get_order(self, client_order_id) -> OrderData:
         if not client_order_id:
