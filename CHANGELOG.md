@@ -1,3 +1,6 @@
+## 1.0.12
+1. notify_lark增加消息类型,卡片消息-markdown
+
 ## 1.0.11
 1. 新增bitmex订单类型STOP_MARKET
 1. 修正exchange operation本地proxy问题
