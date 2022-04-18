@@ -42,7 +42,7 @@ class StrategyLifecycle(ABC):
 
     @property
     def event_dispatcher(self):
-        return self.event_dispatcher
+        return self._event_dispatcher
 
     @property
     def config(self):
