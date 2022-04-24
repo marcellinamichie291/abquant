@@ -42,7 +42,8 @@ class AbquantApplication(*commands):
         self._config: Dict = parse_yaml(config_file)
         self.strategy_name = self._config.get('strategy_name')
         self.config_path = config_file
-        self.log_file = os.path.join(self._config.get('log_path') if 'log_path' in self._config else 'logs', self.strategy_name + '.log')
+        self.log_file = os.path.join(self._config.get('log_path') if 'log_path' in self._config else 'logs',
+                                     self.strategy_name + '.log')
         self.strategy_lifecycle: StrategyLifecycle = None
         self.ev_loop: asyncio.BaseEventLoop = asyncio.get_event_loop()
         self._parser: ArgumentParser = load_parser(self)
@@ -70,12 +71,25 @@ class AbquantApplication(*commands):
     def _notify(self, msg: str):
         self.app.log(msg)
 
+    async def cls_display_delay(self, lines, delay=0.5):
+        self.app.output_field.buffer.save_to_undo_stack()
+        self.app.log("".join(lines), save_log=False)
+        await asyncio.sleep(delay)
+        self.app.output_field.buffer.undo()
+
+    def stop_live_update(self):
+        if self.app.live_updates is True:
+            self.app.live_updates = False
+
     def _handle_command(self, raw_command: str):
 
         if not raw_command or raw_command.strip() == '' or self.placeholder_mode:
             return
+        if self.app.live_updates:
+            self.logger().info("No command is processed, Press escape to stop live updates first!")
+            return
         try:
-            args = self._parser.parse_args(args = raw_command.split())
+            args = self._parser.parse_args(args=raw_command.split())
             kwargs = vars(args)
             f = args.func
             del kwargs["func"]
@@ -87,7 +101,7 @@ class AbquantApplication(*commands):
     async def run(self):
         self.strategy_lifecycle = self.strategy_lifecycle_class(self._config)
         await self.app.run()
-        
+
 
 if __name__ == '__main__':
     parser = load_parser(None)
