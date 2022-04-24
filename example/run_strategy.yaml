@@ -14,8 +14,8 @@ gateway:
   # Dydx   :  DYDX
   #
   BINANCEUBC:
-    encrypt_key: LgxHIMb/ulF+p7Ye5lkOOfwbwrewH2sVg7obbKsbK/sxd3eKIoLAQq//T4sz6azLMSgaFXknU6guT6uuHTf6Zw==
-    encrypt_secret: CaodofIYsiwq3sv+QOU+R8Y96y1wIrlQJMfHWOldzXtxrmH1ombOcU0nnZQ5lVUieG8cJxXDpeX6eznw8oLAVQ==
+    encrypt_key: YOUR_ENCRYPTED_KEY_USING_ENCRYPT_TOOL_PY
+    encrypt_secret: YOUR_ENCRYPTED_SECRET_USING_ENCRYPT_TOOL_PY
     # specify test net, REAL or TESTNET
     test_net: REAL
     # uncomment proxy_host and proxy_port to specify proxy, usually for local running
