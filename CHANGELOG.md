@@ -1,3 +1,6 @@
+## 1.1.1
+1. abquantui status live
+
 ## 1.1.0
 1. 新增 FTX 交易所支持
 
