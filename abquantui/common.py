@@ -1,7 +1,7 @@
 import os
 
 from abquant.gateway import BinanceUBCGateway, BinanceBBCGateway, BinanceSGateway
-from abquant.gateway import BitmexGateway, DydxGateway, BybitBBCGateway, BybitUBCGateway
+from abquant.gateway import BitmexGateway, DydxGateway, BybitBBCGateway, BybitUBCGateway, FtxGateway
 
 
 class GatewayName:
@@ -12,6 +12,7 @@ class GatewayName:
     DYDX = 'DYDX'
     BYBITBBC = 'BYBITBBC'
     BYBITUBC = 'BYBITUBC'
+    FTX = 'FTX'
 
 
 SUPPORTED_GATEWAY = {
@@ -21,7 +22,8 @@ SUPPORTED_GATEWAY = {
     GatewayName.BINANCES: BinanceSGateway,
     GatewayName.DYDX: DydxGateway,
     GatewayName.BYBITUBC: BybitUBCGateway,
-    GatewayName.BYBITBBC: BybitBBCGateway
+    GatewayName.BYBITBBC: BybitBBCGateway,
+    GatewayName.FTX: FtxGateway
 }
 
 MINUTE_RATE_LIMITS = {
@@ -31,7 +33,8 @@ MINUTE_RATE_LIMITS = {
     GatewayName.BINANCES: 1000,
     GatewayName.DYDX: 100,
     GatewayName.BYBITUBC: 100,
-    GatewayName.BYBITBBC: 100
+    GatewayName.BYBITBBC: 100,
+    GatewayName.FTX: 2100,
 }
 
 SECOND_RATE_LIMITS = {
@@ -41,6 +44,7 @@ SECOND_RATE_LIMITS = {
     GatewayName.BINANCES: 200,
     GatewayName.DYDX: 100,
     GatewayName.BYBITUBC: 100,
-    GatewayName.BYBITBBC: 100
+    GatewayName.BYBITBBC: 100,
+    GatewayName.BYBITBBC: 35,
 }
 
