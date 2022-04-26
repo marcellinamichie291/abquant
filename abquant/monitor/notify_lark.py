@@ -8,6 +8,7 @@ import logging, requests, json
 class TypeEnum(Enum):
     TEXT = 'text'
     POST = 'post'
+    CARD_MARKDOWN = 'interactive'
 
 
 class LarkMessage:
@@ -15,15 +16,23 @@ class LarkMessage:
     if text message, pass text
 
     if post message, pass title and content
+
+    if CARD_MARKDOWN message, pass title and title_color and markdown_content
+        title_color: red, yellow, green, blue
     """
 
-    def __init__(self, owner: str, url, type: TypeEnum, text: str = None, title: str = None, content: List = None):
+    def __init__(self, owner: str, url, type: TypeEnum,
+                 text: str = None,
+                 title: str = None, content: List = None,
+                 title_color: str = None, markdown_content: str = None):
         self.owner = owner
         self.url: str = url
         self.type: TypeEnum = type
         self.text: str = text
         self.title: str = title
         self.content: List = content
+        self.title_color: str = title_color
+        self.markdown_content: str = markdown_content
 
     def __str__(self):
         return str(vars(self))
@@ -52,10 +61,39 @@ def _build_for_lark(msg: LarkMessage):
                 }
             }
         }
+    elif msg.type == TypeEnum.CARD_MARKDOWN:
+        res = {
+            "msg_type": msg.type.value,
+            "card": {
+                "header": build_card_msg_header(msg.title, msg.title_color),
+                "elements": [
+                    {
+                        "tag": "markdown",
+                        "content": msg.markdown_content
+                    },
+                    {
+                        "tag": "hr"
+                    },
+                    {
+                        "tag": "note",
+                        "elements": [
+                            {
+                                "tag": "plain_text",
+                                "content": msg.title
+                            }
+                        ]
+                    },
+                ]
+            }
+        }
     if res:
         return res
     else:
         return None
+
+
+def build_card_msg_header(title, color):
+    return {'title': {'tag': 'plain_text', 'content': title}, 'template': color}
 
 
 class NotifyLark:

@@ -81,6 +81,7 @@ class Exchange(Enum):
     GATEIO = "GATEIO"
     BITSTAMP = "BITSTAMP"
     DYDX = "DYDX"
+    FTX = "FTX"
 
 
 

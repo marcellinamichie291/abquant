@@ -54,6 +54,7 @@ def load_parser(app):
     stop_parser.set_defaults(func=app.stop)
 
     status_parser = subparsers.add_parser("status")
+    status_parser.add_argument('--live', default=False, action="store_true")
     status_parser.set_defaults(func=app.status)
 
     shutdown_parser = subparsers.add_parser("shutdown")

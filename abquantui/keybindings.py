@@ -11,4 +11,10 @@ def load_key_bindings(hb) -> KeyBindings:
         hb.app.log("\n[Double CTRL + C] keyboard exit")
         Thread(target=kill_program, args=(3,)).start()
         hb.app.exit()
+
+    @bindings.add("escape")
+    def stop_live_update(event):
+        hb.app.live_updates = False
+
+
     return bindings
