@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Dict, List
 from datetime import datetime
 from dataclasses import dataclass
+from copy import copy
 
 from abquant.event import EventDispatcher, EventType
 from abquant.gateway import Gateway
@@ -52,7 +53,7 @@ class ExchangeOperation:
             isprod = account.get('is_prod')
             for gateway_name in gateways.split(','):
                 gateway_name = gateway_name.strip()
-                gateway_setting = account
+                gateway_setting = dict(copy(account))
                 gateway_setting.pop('name')
                 gateway_setting.pop('gateways')
                 gateway_setting.update({"test_net": ["TESTNET", "REAL"][1 if isprod else 0]})
