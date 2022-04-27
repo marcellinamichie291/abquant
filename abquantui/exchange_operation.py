@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Dict, List
 from datetime import datetime
 from dataclasses import dataclass
+from copy import copy
 
 from abquant.event import EventDispatcher, EventType
 from abquant.gateway import Gateway
@@ -50,20 +51,12 @@ class ExchangeOperation:
             if not encrypt_key or not encrypt_secret:
                 raise Exception('ExchangeOperation: No encrypt key or secret specified')
             isprod = account.get('is_prod')
-            proxy_host = account.get('proxy_host')
-            proxy_port = account.get('proxy_port')
             for gateway_name in gateways.split(','):
                 gateway_name = gateway_name.strip()
-                gateway_setting = {
-                    'encrypt_key': encrypt_key,
-                    'encrypt_secret': encrypt_secret,
-                    'proxy_host': None,
-                    'proxy_port': 0,
-                    "test_net": ["TESTNET", "REAL"][1 if isprod else 0]
-                }
-                if proxy_host and proxy_port:
-                    gateway_setting.update({'proxy_host': proxy_host})
-                    gateway_setting.update({'proxy_port': proxy_port})
+                gateway_setting = dict(copy(account))
+                gateway_setting.pop('name')
+                gateway_setting.pop('gateways')
+                gateway_setting.update({"test_net": ["TESTNET", "REAL"][1 if isprod else 0]})
                 self.__connect_gateway(account_name, gateway_name, gateway_setting)
                 self._gateway_second_limits.update({gateway_name: SECOND_RATE_LIMITS.get(gateway_name)})
                 self._gateway_minute_limits.update({gateway_name: MINUTE_RATE_LIMITS.get(gateway_name)})
@@ -183,7 +176,7 @@ class ExchangeOperation:
         gateway = self.gateways.get(self.gateway_key(account_name, gateway_name))
         if not gateway:
             raise Exception(f"Warning: no gateway [{account_name}.{gateway_name}] found for position, do nothing")
-        direction = Direction.LONG if position.volume < 0 else Direction.SHORT
+        direction = Direction.LONG if position.direction == Direction.SHORT else Direction.SHORT
         ab_orderid = self.send_order(account_name, gateway_name, position.symbol,
                                                                  position.price, abs(position.volume),
                                                                  direction, Offset.CLOSE, OrderType.MARKET)
@@ -352,24 +345,25 @@ class OperationResult:
 
 if __name__ == '__main__':
     _account_name = 'test'
-    _gateway_name = 'BITMEX'
+    _gateway_name = 'BINANCEUBC'
     _config = {'operation': {
         'accounts': [{
             'name': _account_name,
             'gateways': _gateway_name,
-            'encrypt_key': '0Yjr19PZbxGoJPy1vBDLQpjKacqstRZM3KimOsjxPNM=',
-            'encrypt_secret': '4CpwpVW3gBLAtmRDm9mT+wVLYKmP2D5XnIZxpzzLwRUMKBpnQ3VKE8AA+kEj3h3A',
+            'encrypt_key': 'by40coj7CQfIre2Pq0wNDHyAx0ms1MPJ3jrRtf+PxF1qDOWhqunt6TCL2+PMGOcKBcShAdG18NDnMnqnteBl9Q==',
+            'encrypt_secret': '+NnsuCW0OlDUmcfHktf8E/Z7xyq4jcwRrR6Uw6Eh/MSHRXkCuDlCuaOYRXPHngv3iudAwJUzgmKbntd94dXezQ==',
             'proxy_host': 'localhost',
             'proxy_port': 1087,
-            'is_prod': False
+            "position_mode": ["One-way", "Hedge"][1],
+            'is_prod': True
         }]
     }}
     exo = ExchangeOperation(_config)
-    if False:
-        for i in range(0,30):
-            _ab_orderids = exo.buy(_account_name, _gateway_name, 'XBTUSD', 40000.0 + i, 100.0, OrderType.LIMIT)
+    if True:
+        for i in range(0,2):
+            _ab_orderids = exo.send_order_with_result(_account_name, _gateway_name, 'BTCUSDT', 40000.0 + i, 0.001, Direction.LONG, Offset.OPEN, OrderType.LIMIT)
             print(_ab_orderids)
-            _ab_orderids = exo.short(_account_name, _gateway_name, 'XBTUSD', 50000.0 + i, 100.0, OrderType.LIMIT)
+            _ab_orderids = exo.short(_account_name, _gateway_name, 'BTCUSDT', 50000.0 + i, 0.001, OrderType.LIMIT)
             print(_ab_orderids)
     else:
         _gateway = exo.gateways.get(exo.gateway_key(_account_name, _gateway_name))

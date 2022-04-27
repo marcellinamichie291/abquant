@@ -1,3 +1,6 @@
+## 1.1.2
+1. exchange operation支持双向持仓
+
 ## 1.1.1
 1. abquantui status live
 
