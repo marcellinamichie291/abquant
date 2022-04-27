@@ -1,3 +1,6 @@
+## 1.1.3
+1. exchange operation双向持仓debug
+
 ## 1.1.2
 1. exchange operation支持双向持仓
 

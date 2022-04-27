@@ -176,7 +176,10 @@ class ExchangeOperation:
         gateway = self.gateways.get(self.gateway_key(account_name, gateway_name))
         if not gateway:
             raise Exception(f"Warning: no gateway [{account_name}.{gateway_name}] found for position, do nothing")
-        direction = Direction.LONG if position.direction == Direction.SHORT else Direction.SHORT
+        if position.direction == Direction.NET:
+            direction = Direction.LONG if position.volume < 0 else Direction.SHORT
+        else:
+            direction = Direction.LONG if position.direction == Direction.SHORT else Direction.SHORT
         ab_orderid = self.send_order(account_name, gateway_name, position.symbol,
                                                                  position.price, abs(position.volume),
                                                                  direction, Offset.CLOSE, OrderType.MARKET)
