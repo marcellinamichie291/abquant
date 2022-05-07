@@ -79,11 +79,11 @@ class StrategyLifecycle(ABC):
                 gw = cls(self._event_dispatcher)
                 gw.connect(conf)
                 self.gateways[name] = gw
-                time.sleep(15)
+                time.sleep(5)
                 logging.info('connect gateway end: %s', name)
         if len(self.gateways) > 0:
             self.add_init_strategy()
-            time.sleep(10)
+            time.sleep(5)
             logging.info('add_init_strategy is called')
             return '\n gateways inited -> {}'.format(self.gateways.keys())
         else:

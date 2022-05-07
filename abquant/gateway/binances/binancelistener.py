@@ -318,7 +318,7 @@ class BinanceSTradeWebsocketListener(WebsocketListener):
         order = OrderData(
             symbol=ord_data["s"].lower(),
             exchange=Exchange.BINANCE,
-            orderid=str(ord_data["c"]),
+            orderid=str(ord_data["C"]),
             type=order_type,
             direction=DIRECTION_BINANCE2AB[ord_data["S"]],
             price=float(ord_data["p"]),
