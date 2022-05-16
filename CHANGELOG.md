@@ -1,3 +1,6 @@
+## 1.1.4
+1. abquantUI隐藏真实apikey
+
 ## 1.1.3
 1. exchange operation双向持仓debug
 

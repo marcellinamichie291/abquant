@@ -119,6 +119,10 @@ class StrategyLifecycle(ABC):
         called by ui command config,and must return a str
         """
         config = copy(self._config)
-        config.pop('key')
-        config.pop('secret')
+        config_gw = config.get('gateway', None)
+        for gw in list(self.gateways.keys()):
+            if not config_gw or not config_gw.get(gw, None):
+                continue
+            config_gw.get(gw).pop('key')
+            config_gw.get(gw).pop('secret')
         return yaml_config_to_str(config)
