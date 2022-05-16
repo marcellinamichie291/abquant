@@ -1,5 +1,7 @@
 ## 1.1.4
 1. abquantUI隐藏真实apikey
+1. abquant_ui增加FTX
+1. FTX websocket时间戳bug
 
 ## 1.1.3
 1. exchange operation双向持仓debug
