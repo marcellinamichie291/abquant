@@ -129,6 +129,7 @@ class FtxWebsocketListener(WebsocketListener):
                 tick.best_ask_volume = data['askSize']
                 tick.best_bid_price = data['bid']
                 tick.best_bid_volume = data['bidSize']
+                tick.datetime = generate_datetime(data["time"])
                 tick.localtime = datetime.now()
 
                 self.gateway.on_tick(copy(tick))
@@ -147,7 +148,7 @@ class FtxWebsocketListener(WebsocketListener):
                     
                     tick.trade_price = 0
                     tick.trade_volume = 0
-                    tick.datetime = generate_datetime(packet["data"]["time"]),
+                    tick.datetime = generate_datetime(packet["data"]["time"])
                     tick.localtime = datetime.now()
                     self.gateway.on_tick(copy(tick))
                     
@@ -264,7 +265,7 @@ class FtxWebsocketListener(WebsocketListener):
                 tick.trade_price = 0
                 tick.trade_volume = 0
                 
-                tick.datetime = generate_datetime(packet["data"]["time"]),
+                tick.datetime = generate_datetime(packet["data"]["time"])
                 tick.localtime = datetime.now()
                 self.gateway.on_tick(copy(tick))
 
