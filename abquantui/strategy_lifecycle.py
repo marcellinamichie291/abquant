@@ -3,6 +3,7 @@ import os
 import time
 from abc import ABC, abstractmethod
 from typing import Dict, TYPE_CHECKING
+from copy import copy
 
 from abquant.event import EventDispatcher
 from abquant.gateway import Gateway
@@ -79,13 +80,13 @@ class StrategyLifecycle(ABC):
                 gw = cls(self._event_dispatcher)
                 gw.connect(conf)
                 self.gateways[name] = gw
-                time.sleep(15)
+                time.sleep(5)
                 logging.info('connect gateway end: %s', name)
         if len(self.gateways) > 0:
             self.add_init_strategy()
-            time.sleep(10)
+            time.sleep(5)
             logging.info('add_init_strategy is called')
-            return '\n gateways inited -> {}'.format(self.gateways.keys())
+            return '\n gateways inited -> {}'.format(list(self.gateways.keys()))
         else:
             raise Exception('no gateway inited')
 
@@ -117,4 +118,11 @@ class StrategyLifecycle(ABC):
         """
         called by ui command config,and must return a str
         """
-        return yaml_config_to_str(self._config)
+        config = copy(self._config)
+        config_gw = config.get('gateway', None)
+        for gw in list(self.gateways.keys()):
+            if not config_gw or not config_gw.get(gw, None):
+                continue
+            config_gw.get(gw).pop('key')
+            config_gw.get(gw).pop('secret')
+        return yaml_config_to_str(config)
