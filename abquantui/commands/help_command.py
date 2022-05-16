@@ -17,7 +17,8 @@ Useful Commands:
     - config update key value  update config with key and value
 - start     start the strategy
 - stop      stop the strategy
-- status    
+- status
+    - status --live print live status per seconds
 - shutdown  Caution! equals kill -9 , double click ctrl+c  
 - help      get help info
 '''

@@ -42,7 +42,7 @@ class StrategyLifecycle(ABC):
 
     @property
     def event_dispatcher(self):
-        return self.event_dispatcher
+        return self._event_dispatcher
 
     @property
     def config(self):
@@ -102,6 +102,12 @@ class StrategyLifecycle(ABC):
 
     def status(self):
         return str(self._strategy_runner.strategies.keys())
+
+    def status_live(self) -> str:
+        """
+        called by command status --live
+        """
+        return 'status_live called ' + str(time.time())
 
     @abstractmethod
     def add_init_strategy(self):

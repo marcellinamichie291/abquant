@@ -12,8 +12,8 @@ from strategy.doublemeanaverage import DoubleMAStrategy
 if __name__ == '__main__':
     dl_setting = {
 
-        "aws_access_key_id": "",
-        "aws_secret_access_key": "",
+        "aws_access_key_id": "AKIA5U5U7HQ2PGYMOU46",
+        "aws_secret_access_key": "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",
     }
 
     start = datetime(2021, 7, 1)
