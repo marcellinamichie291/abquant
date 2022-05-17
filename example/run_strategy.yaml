@@ -1,4 +1,3 @@
-
 strategy_name: stg_test
 # uncomment log_path to specify log dir for log files, default: ./logs
 # log_path: ./logs
@@ -22,3 +21,7 @@ gateway:
     # uncomment proxy_host and proxy_port to specify proxy, usually for local running
     # proxy_host: localhost
     # proxy_port: 1087
+
+params:
+  pp: 11
+  qq: xyz

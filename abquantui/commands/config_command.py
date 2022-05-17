@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING, Dict
+import json
 
 from abquantui.config_helpers import parse_config, yaml
 
@@ -32,9 +33,15 @@ class ConfigCommand:
     def config_update(self: "AbquantApplication", key, value):
         if key is not None and key in self._config.get('params', {}):
             if value:
+                orig_type = type(self._config['params'][key])
+                value = orig_type(value)
                 self._config['params'][key] = value
                 with open(self.config_path, 'w') as f:
-                    yaml.dump(self._config, f)
+                    cpath = str(self.config_path)
+                    if cpath.split('.')[-1] == 'yml' or cpath.split('.')[-1] == 'yaml':
+                        yaml.dump(self._config, f)
+                    elif cpath.split('.')[-1] == 'json':
+                        json.dump(self._config, f, sort_keys = False, indent = 2, separators=(',', ': '))
 
                 self._notify('config update success -> params.{} = {}'.format(key, value))
             else:
