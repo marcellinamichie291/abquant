@@ -23,5 +23,5 @@ gateway:
     # proxy_port: 1087
 
 params:
-  pp: 11
-  qq: xyz
+  maker_symbol: DOGEUSDT.BINANCE
+  volume: 100

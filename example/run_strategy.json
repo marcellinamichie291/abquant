@@ -1,17 +1,15 @@
 {
-  "strategy_name": "stg_test1",
+  "strategy_name": "stg_test",
   "gateway": {
     "BINANCEUBC": {
-      "encrypt_key": "by40coj7CQfIre2Pq0wNDHyAx0ms1MPJ3jrRtf+PxF1qDOWhqunt6TCL2+PMGOcKBcShAdG18NDnMnqnteBl9Q==",
-      "encrypt_secret": "+NnsuCW0OlDUmcfHktf8E/Z7xyq4jcwRrR6Uw6Eh/MSHRXkCuDlCuaOYRXPHngv3iudAwJUzgmKbntd94dXezQ==",
-      "proxy_host": "localhost",
-      "proxy_port": 1087,
+      "encrypt_key": "YOUR_ENCRYPTED_KEY_USING_ENCRYPT_TOOL_PY",
+      "encrypt_secret": "YOUR_ENCRYPTED_SECRET_USING_ENCRYPT_TOOL_PY",
       "position_mode": "Hedge",
       "test_net": "REAL"
     }
   },
   "params": {
-    "pp": 11,
-    "qq": "xyz"
+    "maker_symbol": "DOGEUSDT.BINANCE",
+    "volume": 100
   }
 }
