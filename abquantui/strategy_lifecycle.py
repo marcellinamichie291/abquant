@@ -68,8 +68,8 @@ class StrategyLifecycle(ABC):
                     try:
                         conf['key'] = decrypt(conf['encrypt_key'], abpwd)
                         conf['secret'] = decrypt(conf['encrypt_secret'], abpwd)
-                        conf.pop('encrypt_key')
-                        conf.pop('encrypt_secret')
+                        # conf.pop('encrypt_key')
+                        # conf.pop('encrypt_secret')
                     except Exception as e:
                         logging.error(f'Error occurs when decrypting key and secret for gateway {name}')
                         continue
