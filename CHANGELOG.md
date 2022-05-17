@@ -1,3 +1,6 @@
+## 1.1.5
+1. 修正abquantUI不显示encrypt_key问题
+
 ## 1.1.4
 1. abquantUI隐藏真实apikey
 1. abquant_ui增加FTX
