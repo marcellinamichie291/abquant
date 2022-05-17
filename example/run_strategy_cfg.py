@@ -12,7 +12,7 @@ from abquant.trader.msg import BarData, DepthData, EntrustData, OrderData, TickD
 from abquant.trader.object import SubscribeMode
 from abquant.trader.tool import BarAccumulater, BarGenerator
 from abquant.trader.utility import generate_ab_symbol, round_up
-from abquantui.config_helpers import parse_yaml
+from abquantui.config_helpers import parse_config
 from abquantui.encryption import decrypt
 
 
@@ -193,8 +193,8 @@ class TheStrategy(StrategyTemplate):
 
 def main():
     parent_path = pathlib.Path(__file__).parent
-    config_path = parent_path.joinpath('run_strategy.yaml')
-    config = parse_yaml(config_path)
+    config_path = parent_path.joinpath('run_strategy.json')
+    config = parse_config(config_path)
 
     # 初始化monitor
     common_setting = {

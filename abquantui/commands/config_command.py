@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Dict
 
-from abquantui.config_helpers import parse_yaml, yaml
+from abquantui.config_helpers import parse_config, yaml
 
 if TYPE_CHECKING:
     from abquantui.abquant_application import AbquantApplication
@@ -16,12 +16,15 @@ class ConfigCommand:
 
         elif 'reload' == subcommand:
             self.config_reload()
+
+        elif 'yaml' == subcommand:
+            self._notify(self.strategy_lifecycle.command_config(True))
         # self._notify(f'{subcommand} {key} {value}')
         # self._notify('\nconfig_path: {}'.format(self.config_path))
         # self._notify('\n' + self.strategy_lifecycle.config())
 
     def config_reload(self: "AbquantApplication"):
-        self._config: Dict = parse_yaml(self.config_path)
+        self._config: Dict = parse_config(self.config_path)
         self.strategy_lifecycle.config = self._config
         self._notify('config reload success')
         self._notify(self.strategy_lifecycle.command_config())
