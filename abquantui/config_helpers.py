@@ -10,7 +10,7 @@ import logging, logging.config
 yaml = YAML()
 
 
-def parse_config(config_path: PosixPath):
+def parse_config(config_path: str):
     config_path = str(config_path)
     with open(config_path, encoding='utf-8') as f:
         fstr = f.read().strip()
@@ -23,6 +23,9 @@ def parse_config(config_path: PosixPath):
         else:
             logging.info('Config parse fail')
             return None
+
+def parse_yaml(config_path: str):
+    return parse_config(config_path)
 
 
 def json_config_to_str(config: Dict, sort_keys = False, indent = 2, separators=(',', ': ')):

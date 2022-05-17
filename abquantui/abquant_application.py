@@ -40,7 +40,6 @@ class AbquantApplication(*commands):
         self._config = None
         self.strategy_lifecycle_class = strategy_lifecycle_class
         self._config: Dict = parse_config(config_file)
-        logging.info(self._config)
         self.strategy_name = self._config.get('strategy_name')
         self.config_path = config_file
         self.log_file = os.path.join(self._config.get('log_path') if 'log_path' in self._config else 'logs',
