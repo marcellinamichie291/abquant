@@ -2,7 +2,7 @@ import os
 from io import StringIO
 from pathlib import Path, PosixPath
 from typing import Dict
-import json
+import json5
 from ruamel.yaml import YAML
 import logging, logging.config
 
@@ -19,14 +19,14 @@ def parse_config(config_path: PosixPath):
         if (config_path.split('.')[-1] == 'yml' or config_path.split('.')[-1] == 'yaml') and fstr[0] not in ('{', '['):
             return yaml.load(fstr)
         elif config_path.split('.')[-1] == 'json' and fstr[0] == '{':
-            return json.loads(fstr)
+            return json5.loads(fstr)
         else:
             logging.info('Config parse fail')
             return None
 
 
 def json_config_to_str(config: Dict, sort_keys = False, indent = 2, separators=(',', ': ')):
-    return json.dumps(config, sort_keys=sort_keys, indent=indent, separators=separators)
+    return json5.dumps(config, sort_keys=sort_keys, indent=indent, separators=separators)
 
 
 def yaml_config_to_str(config: Dict):
