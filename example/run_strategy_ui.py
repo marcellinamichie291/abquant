@@ -223,7 +223,7 @@ class MyLifecycle(StrategyLifecycle):
 
 def main():
     parent_path = pathlib.Path(__file__).parent
-    config_path = parent_path.joinpath('run_strategy.yaml')
+    config_path = parent_path.joinpath('run_strategy.json')
     ab_ui_starter(config_path, MyLifecycle)
 
 if __name__ == '__main__':

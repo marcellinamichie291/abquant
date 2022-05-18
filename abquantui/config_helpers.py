@@ -1,18 +1,36 @@
 import os
 from io import StringIO
-from pathlib import Path
+from pathlib import Path, PosixPath
 from typing import Dict
-
+import json5
 from ruamel.yaml import YAML
 import logging, logging.config
+
 
 yaml = YAML()
 
 
-def parse_yaml(config_path: str):
+def parse_config(config_path: str):
+    config_path = str(config_path)
     with open(config_path, encoding='utf-8') as f:
-        str = f.read()
-        return yaml.load(str)
+        fstr = f.read().strip()
+        if not config_path or not fstr:
+            return None
+        if (config_path.split('.')[-1] == 'yml' or config_path.split('.')[-1] == 'yaml') and fstr[0] not in ('{', '['):
+            return yaml.load(fstr)
+        elif config_path.split('.')[-1] == 'json' and fstr[0] == '{':
+            return json5.loads(fstr)
+        else:
+            logging.info('Config parse fail')
+            return None
+
+def parse_yaml(config_path: str):
+    return parse_config(config_path)
+
+
+def json_config_to_str(config: Dict, sort_keys = False, indent = 2, separators=(',', ': ')):
+    return json5.dumps(config, sort_keys=sort_keys, indent=indent, separators=separators)
+
 
 def yaml_config_to_str(config: Dict):
     stream = StringIO()
