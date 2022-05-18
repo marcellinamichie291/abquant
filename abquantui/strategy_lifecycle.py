@@ -10,7 +10,7 @@ from abquant.gateway import Gateway
 from abquant.monitor import Monitor
 from abquant.strategytrading import LiveStrategyRunner
 from abquantui.common import SUPPORTED_GATEWAY
-from abquantui.config_helpers import yaml_config_to_str
+from abquantui.config_helpers import json_config_to_str, yaml_config_to_str
 from abquantui.encryption import decrypt
 
 if TYPE_CHECKING:
@@ -114,7 +114,7 @@ class StrategyLifecycle(ABC):
     def add_init_strategy(self):
         pass
 
-    def command_config(self) -> str:
+    def command_config(self, is_yaml = False) -> str:
         """
         called by ui command config,and must return a str
         """
@@ -125,4 +125,7 @@ class StrategyLifecycle(ABC):
                 continue
             config_gw.get(gw).pop('key')
             config_gw.get(gw).pop('secret')
-        return yaml_config_to_str(config)
+        if not is_yaml:
+            return json_config_to_str(config)
+        else:
+            return yaml_config_to_str(config)

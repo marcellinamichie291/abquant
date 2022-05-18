@@ -39,7 +39,7 @@ def load_parser(app):
     subparsers = parser.add_subparsers()
 
     config_parser = subparsers.add_parser("config", help="None", )
-    config_parser.add_argument('subcommand', nargs="?", choices=['reload', 'update'])
+    config_parser.add_argument('subcommand', nargs="?", choices=['reload', 'update', 'yaml'])
     config_parser.add_argument('key', nargs="?", help='config key to be updated')
     config_parser.add_argument('value', nargs="?", help='config value to be udpated')
     config_parser.set_defaults(func=app.config)

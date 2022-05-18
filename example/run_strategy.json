@@ -1,0 +1,15 @@
+{
+  "strategy_name": "stg_test",
+  "gateway": {
+    "BINANCEUBC": {
+      "encrypt_key": "YOUR_ENCRYPTED_KEY_USING_ENCRYPT_TOOL_PY",
+      "encrypt_secret": "YOUR_ENCRYPTED_SECRET_USING_ENCRYPT_TOOL_PY",
+      "position_mode": "Hedge",
+      "test_net": "REAL"
+    }
+  },
+  "params": {
+    "maker_symbol": "DOGEUSDT.BINANCE",
+    "volume": 100
+  }
+}

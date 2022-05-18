@@ -7,14 +7,14 @@ from abquantui.strategy_lifecycle import StrategyLifecycle
 from typing import List, Coroutine
 
 from abquantui.abquant_application import AbquantApplication
-from abquantui.config_helpers import setup_logging, parse_yaml
+from abquantui.config_helpers import setup_logging, parse_config
 from hummingbot.client.ui.stdout_redirection import patch_stdout
 from hummingbot.client.ui.style import dialog_style
 from prompt_toolkit.shortcuts import message_dialog
 
 
 def setup_log_with_config(config_path: str):
-    config = parse_yaml(config_path)
+    config = parse_config(config_path)
     strategy_name = config.get('strategy_name')
     log_file = os.path.join(config.get('log_path') if 'log_path' in config else 'logs', strategy_name + '.log')
     if not os.access(os.path.dirname(log_file), os.F_OK):

@@ -14,3 +14,4 @@ prompt_toolkit==3.0.20
 psutil==5.7.2
 pyperclip==1.7.0
 ruamel-yaml==0.16.10
+json5
