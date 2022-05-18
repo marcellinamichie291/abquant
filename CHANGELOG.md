@@ -1,3 +1,7 @@
+## 1.1.6
+1. 配置文件兼容json
+1. 修正abquantUI配置更新的格式问题
+
 ## 1.1.5
 1. 修正abquantUI不显示encrypt_key问题
 

@@ -11,7 +11,7 @@ from prompt_toolkit.completion.word_completer import WordCompleter
 from abquantui.abquant_cli import AbquantCLI
 from abquantui.commands import __all__ as commands
 from abquantui.commands.command_parser import load_parser
-from abquantui.config_helpers import parse_yaml
+from abquantui.config_helpers import parse_config
 from abquantui.exceptions import ArgumentParserError
 from abquantui.keybindings import load_key_bindings
 from abquantui.strategy_lifecycle import StrategyLifecycle
@@ -39,7 +39,7 @@ class AbquantApplication(*commands):
                  strategy_lifecycle_class: StrategyLifecycle):
         self._config = None
         self.strategy_lifecycle_class = strategy_lifecycle_class
-        self._config: Dict = parse_yaml(config_file)
+        self._config: Dict = parse_config(config_file)
         self.strategy_name = self._config.get('strategy_name')
         self.config_path = config_file
         self.log_file = os.path.join(self._config.get('log_path') if 'log_path' in self._config else 'logs',
