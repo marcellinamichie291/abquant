@@ -34,7 +34,14 @@ class ConfigCommand:
         if key is not None and key in self._config.get('params', {}):
             if value:
                 orig_type = type(self._config['params'][key])
-                value = orig_type(value)
+                try:
+                    value = orig_type(value)
+                except Exception as e:
+                    if orig_type == int and value.strip('- ').replace('.', '').isdecimal():
+                        value = float(value)
+                    else:
+                        self._notify(str(e))
+                        return
                 self._config['params'][key] = value
                 with open(self.config_path, 'w') as f:
                     cpath = str(self.config_path)
