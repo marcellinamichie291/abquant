@@ -21,7 +21,9 @@ STATUS_BINANCE2AB = {
 
 ORDERTYPE_AB2BINANCE = {
     OrderType.LIMIT: "LIMIT",
-    OrderType.MARKET: "MARKET"
+    OrderType.MARKET: "MARKET",
+    OrderType.POSTONLYLIMIT: "LIMIT_MAKER",
+
 }
 ORDERTYPE_BINANCE2AB = {v: k for k, v in ORDERTYPE_AB2BINANCE.items()}
 

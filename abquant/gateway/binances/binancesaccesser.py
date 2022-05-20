@@ -210,6 +210,8 @@ class BinanceAccessor(RestfulAccessor):
         if req.type == OrderType.MARKET:
             params.pop('timeInForce')
             params.pop('price')
+        if req.type == OrderType.POSTONLYLIMIT:
+            params.pop('timeInForce')
         # if req.offset == Offset.CLOSE:
         #     params["reduceOnly"] = True
 
