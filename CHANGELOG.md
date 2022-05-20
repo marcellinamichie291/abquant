@@ -1,3 +1,7 @@
+## 1.1.8
+1. 修正abquantUI配置更新的格式问题
+1. 修正abquantUI配置重新加载错误
+
 ## 1.1.7
 1. Binance 现货撤单订单号回报bug
 1. Binance 现货支持POST ONLY
