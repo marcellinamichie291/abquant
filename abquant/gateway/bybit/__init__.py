@@ -18,6 +18,7 @@ from abquant.trader.object import ContractData
 REST_HOST = "https://api.bybit.com"
 
 # 实盘Websocket API地址
+SPOT_WEBSOCKET_HOST = "wss://stream.bybit.com/spot/quote/ws/v2"
 INVERSE_WEBSOCKET_HOST = "wss://stream.bybit.com/realtime"
 PUBLIC_WEBSOCKET_HOST = "wss://stream.bybit.com/realtime_public"
 PRIVATE_WEBSOCKET_HOST = "wss://stream.bybit.com/realtime_private"
@@ -26,6 +27,7 @@ PRIVATE_WEBSOCKET_HOST = "wss://stream.bybit.com/realtime_private"
 TESTNET_REST_HOST = "https://api-testnet.bybit.com"
 
 # 模拟盘Websocket API地址
+TESTNET_SPOT_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/spot/quote/ws/v2"
 TESTNET_INVERSE_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime"
 TESTNET_PUBLIC_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime_public"
 TESTNET_PRIVATE_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime_private"
@@ -93,6 +95,9 @@ future_symbol_contract_map: Dict[str, ContractData] = {}
 
 # USDT永续合约类型列表
 ubc_symbol_contract_map: Dict[str, ContractData] = {}
+
+# USDT永续合约类型列表
+symbol_contract_map: Dict[str, ContractData] = {}
 
 # 本地委托号缓存集合
 local_orderids: Set[str] = set()
