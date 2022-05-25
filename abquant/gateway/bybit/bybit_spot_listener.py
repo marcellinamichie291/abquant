@@ -199,5 +199,5 @@ class BybitSpotMarketWebsocketListener(WebsocketListener):
             tick.localtime = datetime.now()
             self.gateway.on_tick(copy(tick))
         
-        else:
+        else: 
             raise MarketException("Unrecognized channel from {}: packet content, \n{}".format(self.gateway_name, packet))
