@@ -5,6 +5,7 @@ from copy import copy
 from abquant.trader.common import Direction, Exchange, Offset
 from abquant.trader.msg import DepthData, OrderData, TickData, TradeData, TransactionData
 from abquant.trader.object import AccountData, PositionData, SubscribeRequest
+from abquant.trader.exception import MarketException
 from ..basegateway import Gateway
 from ..listener import WebsocketListener
 
@@ -104,91 +105,99 @@ class BybitSpotMarketWebsocketListener(WebsocketListener):
         if "topic" not in packet:
             return
         channel: str = packet["topic"]
+        params: dict = packet["params"]
+        data: dict = packet["data"]
+        symbol: str = params["symbol"]
+        if not data:
+            return
 
-        if "bookTicker" in channel:
+        if "bookTicker" == channel:
             # best_tick
-            type_: str = packet["type"]
-            data: dict = packet["data"]
-            symbol: str = channel.replace("instrument_info.100ms.", "")
             tick: TickData = self.ticks[symbol]
-            if type_ == "snapshot":
-                if not data["last_price"]:  # 过滤最新价为0的数据
-                    return
 
-                tick.trade_price = float(data["last_price"])
-                tick.trade_volume = int(data["volume_24h_e8"]) / 100000000
-                tick.datetime = generate_datetime(data["updated_at"])
-
-            else:
-                update: dict = data["update"][0]
-
-                if "last_price" not in update:  # 过滤最新价为0的数据
-                    return
-
-                tick.trade_price = float(update["last_price"])
-                if update["volume_24h_e8"]:
-                    tick.trade_volume = int(update["volume_24h_e8"]) / 100000000
-                tick.datetime = generate_datetime(update["updated_at"])
-
+            tick.trade_price = 0
+            tick.trade_volume = 0
+            tick.best_bid_price = float(data["bidPrice"])
+            tick.best_bid_volume = float(data["bidQty"])
+            tick.best_ask_price = float(data["askPrice"])
+            tick.best_ask_volume = float(data["askQty"])
+            tick.datetime = generate_datetime_2(int(data["time"]) / 1000)
             tick.localtime = datetime.now()
             self.gateway.on_tick(copy(tick))
 
-        if "trade" in channel:
+        elif "trade" == channel:
             # transaction
-            symbol: str = channel.replace("trade.", "")
-            l = packet["data"]
-            for data in l:
-                transaction: TradeData = self.transactions[symbol]
-                tick: TickData = self.ticks[symbol]
-                dt = generate_datetime_2(int(data["trade_time_ms"]) / 1000)
-                dt_now = datetime.now()
-                p = float(data["price"])
-                v = data["size"]
-                
-                tick.trade_price = p
-                tick.trade_volume = v
-                tick.datetime = dt
-                tick.localtime = dt_now
-                
-                transaction.datetime = dt
-                transaction.volume = v
-                transaction.price = p
-                transaction.direction = Direction.SHORT if data["side"] == "Sell" else Direction.LONG
-                
-                self.gateway.on_tick(copy(tick))
-                self.gateway.on_transaction(copy(transaction))
+            transaction: TradeData = self.transactions[symbol]
+            tick: TickData = self.ticks[symbol]
 
-        if "depth" in channel:
+            dt = generate_datetime_2(int(data["trade_time_ms"]) / 1000)
+            dt_now = datetime.now()
+            p = float(data["p"])
+            v = float(data["q"])
+
+            tick.trade_price = p
+            tick.trade_volume = v
+            tick.datetime = dt
+            tick.localtime = dt_now
+
+            transaction.tradeid = data["v"]
+            transaction.datetime = dt
+            transaction.volume = v
+            transaction.price = p
+            transaction.direction = Direction.LONG if bool(data["m"]) == True else Direction.SHORT
+
+            self.gateway.on_tick(copy(tick))
+            self.gateway.on_transaction(copy(transaction))
+
+        elif "depth" == channel:
             # depth
-            symbol: str = channel.replace("orderBook_200.100ms.", "")
-            type_: str = packet["type"]
-            data: dict = packet["data"]
             depth: DepthData = self.depths[symbol]
+
             depth.localtime = datetime.now()
-            if not data:
-                return
+            depth.datetime = generate_datetime_2(int(packet["t"]) / 1000)
+            depth.symbol = symbol
 
-            depth.datetime = generate_datetime_2(int(packet["timestamp_e6"]) / 1000000)
-            if type_ == "snapshot":
-                buf = data["order_book"]
-                for d in buf:
-                    depth.price = float(d["price"])
-                    depth.volume = d["size"]
-                    depth.direction = Direction.SHORT if d["side"] == "Sell" else Direction.LONG
-                    self.gateway.on_depth(copy(depth))
-            else:
-                for key, buf in data.items():
-                    if key == "delete":
-                        for d in buf:
-                            depth.price = float(d["price"])
-                            depth.volume = 0
-                            depth.direction = Direction.SHORT if d["side"] == "Sell" else Direction.LONG
-                            self.gateway.on_depth(copy(depth))
+            for p, v in data['a']:
+                depth.volume = float(v)
+                depth.price = float(p)
+                depth.direction = Direction.SHORT
+                self.gateway.on_depth(copy(depth))
 
-                    if key == "update" or key == "insert":
-                        for d in buf:
-                            depth.price = float(d["price"])
-                            depth.volume = d["size"]
-                            depth.direction = Direction.SHORT if d["side"] == "Sell" else Direction.LONG
-                            self.gateway.on_depth(copy(depth))
+            for p, v in data['b']:
+                depth.volume = float(v)
+                depth.price = float(p)
+                depth.direction = Direction.LONG
+                self.gateway.on_depth(copy(depth))
 
+            # tick_5
+            tick: TickData = self.ticks[symbol]
+            newest = generate_datetime_2(int(data['t']) / 1000)
+
+            # clear transaction inforamtion
+            tick.trade_price = 0
+            tick.trade_volume = 0
+
+            bids = data["b"]
+            for n in range(min(5, len(bids))):
+                price, volume = bids[n]
+                tick.__setattr__("bid_price_" + str(n + 1), float(price))
+                tick.__setattr__("bid_volume_" + str(n + 1), float(volume))
+
+            asks = data["a"]
+            for n in range(min(5, len(asks))):
+                price, volume = asks[n]
+                tick.__setattr__("ask_price_" + str(n + 1), float(price))
+                tick.__setattr__("ask_volume_" + str(n + 1), float(volume))
+
+            # tick time checkout to update best ask/bid
+            if newest is not None and tick.datetime < newest and self.gateway.subscribe_mode.best_tick:
+                tick.datetime = newest
+                tick.best_ask_price = tick.ask_price_1
+                tick.best_ask_volume = tick.ask_volume_1
+                tick.best_bid_price = tick.bid_price_1
+                tick.best_bid_volume = tick.bid_volume_1
+            tick.localtime = datetime.now()
+            self.gateway.on_tick(copy(tick))
+        
+        else:
+            raise MarketException("Unrecognized channel from {}: packet content, \n{}".format(self.gateway_name, packet))
