@@ -25,8 +25,8 @@ class BybitSpotGateway(Gateway):
         """"""
         super().__init__(event_dispatcher, "BYBITS")
         
-        self.rest_accessor = None
-        self.market_listener = None
+        self.rest_accessor: BybitSpotAccessor = None
+        self.market_listener: BybitSpotMarketWebsocketListener = None
         
     def connect(self, setting: dict) -> None:
         """"""
@@ -83,7 +83,7 @@ class BybitSpotGateway(Gateway):
 
     def query_account(self) -> None:
         """查询资金"""
-        self.rest_accessor.query
+        self.rest_accessor.query_account()
 
     def query_position(self):
         pass

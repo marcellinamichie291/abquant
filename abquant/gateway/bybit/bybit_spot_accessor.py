@@ -121,7 +121,7 @@ class BybitSpotAccessor(RestfulAccessor):
         order_type, time_in_force = ORDER_TYPE_AB2BYBIT2[req.type]
         # 生成委托请求
         data: dict = {
-            "symbol": req.symbol,
+            "symbol": req.symbol.upper(),
             "side": DIRECTION_AB2BYBIT[req.direction],
             "type": order_type,
             "price": req.price,
@@ -191,7 +191,7 @@ class BybitSpotAccessor(RestfulAccessor):
             self.gateway.write_log(f"撤单失败，找不到该合约代码{req.symbol}")
             return
 
-        data: dict = {"symbol": req.symbol}
+        data: dict = {"symbol": req.symbol.upper()}
 
         # 检查是否为本地委托号
         if req.orderid in local_orderids:
@@ -228,7 +228,7 @@ class BybitSpotAccessor(RestfulAccessor):
         for d in data["result"]:
             # 提取信息生成合约对象
             contract: ContractData = ContractData(
-                symbol=d["name"],
+                symbol=d["name"].lower(),
                 exchange=Exchange.BYBIT,
                 name=d["name"],
                 pricetick=float(d["minPricePrecision"]),
@@ -356,14 +356,14 @@ class BybitSpotAccessor(RestfulAccessor):
         history: list = []
         count: int = 200
         start_time: int = int(req.start.timestamp())
-        end_time: int = time.time()
+        end_time: int = int(time.time())
 
         path: str = "/spot/quote/v1/kline"
 
         while True:
             # 创建查询参数
             params: dict = {
-                "symbol": req.symbol,
+                "symbol": req.symbol.upper(),
                 "interval": INTERVAL_AB2BYBIT2[req.interval],
                 "startTime": start_time,
                 "endTime": end_time,

@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Any, Callable, Dict
 from copy import copy
+from logging import WARNING
 
 from abquant.trader.common import Direction, Exchange, Offset
 from abquant.trader.msg import DepthData, OrderData, TickData, TradeData, TransactionData
@@ -15,6 +16,7 @@ from . import (
     ORDER_TYPE_BYBIT2AB,
     STATUS_BYBIT2AB,
     TESTNET_SPOT_WEBSOCKET_HOST,
+    symbol_contract_map,
     local_orderids,
     )
 
@@ -62,11 +64,14 @@ class BybitSpotMarketWebsocketListener(WebsocketListener):
 
     def subscribe(self, req: SubscribeRequest) -> None:
         """订阅行情"""
-        
-        # 缓存订阅记录
-        self.subscribed[req.symbol] = req
+        if req.symbol not in symbol_contract_map:
+            self.gateway.write_log(f"找不到该合约代码{req.symbol}", level=WARNING)
+            return
 
-        symbol = req.symbol
+        symbol = req.symbol.lower()     # 本地小写索引
+
+        # 缓存订阅记录
+        self.subscribed[symbol] = req
 
         tick, depth, transaction, _ = self.make_data(symbol, Exchange.BYBIT, datetime.now(), self.gateway_name)
         self.ticks[symbol] = tick
@@ -74,6 +79,7 @@ class BybitSpotMarketWebsocketListener(WebsocketListener):
         self.depths[symbol] = depth
 
         # 发送订阅请求
+        symbol = symbol.upper()         # 交易所大写参数
         subscribe_mode = self.gateway.subscribe_mode
         params = {
             "symbol": symbol,
@@ -106,8 +112,8 @@ class BybitSpotMarketWebsocketListener(WebsocketListener):
             return
         channel: str = packet["topic"]
         params: dict = packet["params"]
-        data: dict = packet["data"]
-        symbol: str = params["symbol"]
+        data: dict = packet.get("data",None)
+        symbol: str = params["symbol"].lower()
         if not data:
             return
 
@@ -130,7 +136,7 @@ class BybitSpotMarketWebsocketListener(WebsocketListener):
             transaction: TradeData = self.transactions[symbol]
             tick: TickData = self.ticks[symbol]
 
-            dt = generate_datetime_2(int(data["trade_time_ms"]) / 1000)
+            dt = generate_datetime_2(int(data["t"]) / 1000)
             dt_now = datetime.now()
             p = float(data["p"])
             v = float(data["q"])
@@ -154,7 +160,7 @@ class BybitSpotMarketWebsocketListener(WebsocketListener):
             depth: DepthData = self.depths[symbol]
 
             depth.localtime = datetime.now()
-            depth.datetime = generate_datetime_2(int(packet["t"]) / 1000)
+            depth.datetime = generate_datetime_2(int(data["t"]) / 1000)
             depth.symbol = symbol
 
             for p, v in data['a']:
