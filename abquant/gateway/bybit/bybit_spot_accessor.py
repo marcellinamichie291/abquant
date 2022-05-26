@@ -46,7 +46,7 @@ class BybitSpotAccessor(RestfulAccessor):
         self.gateway: Gateway = gateway
 
         self.key: str = ""
-        self.secret: str = ""
+        self.secret: bytes = b""
 
         self.connect_time: int = 0
 
@@ -67,8 +67,8 @@ class BybitSpotAccessor(RestfulAccessor):
                 api_params = request.data = {}
 
         api_params["api_key"] = self.key
-        api_params["recv_window"] = 30 * 1000
-        api_params["timestamp"] = generate_timestamp(-5)
+        api_params["recvWindow"] = 5 * 1000
+        api_params["timestamp"] = generate_timestamp(-2)
 
         data2sign = "&".join([f"{k}={v}" for k, v in sorted(api_params.items())])
         signature: str = sign(self.secret, data2sign.encode())
@@ -99,6 +99,12 @@ class BybitSpotAccessor(RestfulAccessor):
         self.query_contract()
         self.gateway.write_log("REST API启动成功")
 
+    def _new_order_id(self):
+        """"""
+        with self.order_count_lock:
+            self.order_count += 1
+            return self.order_count
+
     def send_order(self, req: OrderRequest) -> str:
         """委托下单"""
         # 检查委托类型是否正确
@@ -107,7 +113,7 @@ class BybitSpotAccessor(RestfulAccessor):
             return
 
         # 检查合约代码是否正确并根据合约类型判断下单接口
-        if req.symbol in symbol_contract_map.keys():
+        if req.symbol.lower() in symbol_contract_map.keys():
             path: str = "/spot/v1/order"
         else:
             self.gateway.write_log(f"委托失败，找不到该合约代码{req.symbol}")
@@ -155,8 +161,8 @@ class BybitSpotAccessor(RestfulAccessor):
         self.gateway.on_order(order)
 
         data: dict = request.response.json()
-        error_msg: str = data["ret_msg"]
-        error_code: int = data["ret_code"]
+        error_msg: str = data["ret"]
+        error_code: int = data["code"]
         msg = f"委托失败，错误代码:{error_code},  错误信息：{error_msg}"
         self.gateway.write_log(data)
 
@@ -180,6 +186,7 @@ class BybitSpotAccessor(RestfulAccessor):
         if self.check_error("委托下单", data):
             order: OrderData = request.extra
             order.status = Status.REJECTED
+            order.reference = request.response.text
             self.gateway.on_order(order)
 
     def cancel_order(self, req: CancelRequest) -> None:
@@ -214,8 +221,8 @@ class BybitSpotAccessor(RestfulAccessor):
     def on_failed(self, status_code: int, request: Request) -> None:
         """处理请求失败回报"""
         data: dict = request.response.json()
-        error_msg: str = data["ret_msg"]
-        error_code: int = data["ret_code"]
+        error_msg: str = data.get("ret", "")
+        error_code: int = data.get("code", None)
 
         msg = f"请求失败，状态码：{request.status}，错误代码：{error_code}, 信息：{error_msg}"
         self.gateway.write_log(msg)
@@ -245,8 +252,9 @@ class BybitSpotAccessor(RestfulAccessor):
             self.gateway.on_contract(contract)
 
         self.gateway.write_log("合约信息查询成功")
-        # self.query_account()
-        # self.query_order()
+        if self.key:
+            self.query_account()
+            self.query_order()
 
     def on_query_account(self, data: dict, request: Request) -> None:
         """资金查询回报"""
