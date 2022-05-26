@@ -67,6 +67,7 @@ class GateWebsocketListener(WebsocketListener):
         #     return
         self.subscribed[req.ab_symbol] = req
         symbol = req.symbol
+        name = req.name
         tick, depth, transaction, _ = self.make_data(symbol, Exchange.GATEIO, datetime.now(), self.gateway_name)
         self.ticks[symbol] = tick
         self.transactions[symbol] = transaction
@@ -77,7 +78,7 @@ class GateWebsocketListener(WebsocketListener):
                 "time": int(time.time()),
                 "channel": "spot.book_ticker",
                 "event": "subscribe",  # "unsubscribe" for unsubscription
-                "payload": [symbol]
+                "payload": [name]
             }
             self.send_packet(subscribe_ticker)
 
@@ -86,7 +87,7 @@ class GateWebsocketListener(WebsocketListener):
                 "time": int(time.time()),
                 "channel": "spot.order_book",
                 "event": "subscribe",  # "unsubscribe" for unsubscription
-                "payload": [symbol, "5", "100ms"]
+                "payload": [name, "5", "100ms"]
             }
             self.send_packet(subscribe_orderbook)
 
@@ -95,7 +96,7 @@ class GateWebsocketListener(WebsocketListener):
                 "time": int(time.time()),
                 "channel": "spot.trades",
                 "event": "subscribe",  # "unsubscribe" for unsubscription
-                "payload": [symbol]
+                "payload": [name]
             }
             self.send_packet(subscribe_trade)
 
@@ -107,7 +108,7 @@ class GateWebsocketListener(WebsocketListener):
             if channel == "spot.book_ticker":
 
                 data = packet["result"]
-                symbol = data['s']
+                symbol = data['s'].lower().replace('_','')
                 tick = self.ticks[symbol]
 
                 tick.trade_price = 0
@@ -124,7 +125,7 @@ class GateWebsocketListener(WebsocketListener):
 
             elif channel == "spot.order_book":
                 data = packet["result"]
-                symbol = data['s']
+                symbol = data['s'].lower().replace('_','')
                 self.orderbook[symbol] = OrderBook()
                 orderbook = self.orderbook[symbol].init(data["bids"], data["asks"])
                 if self.gateway.subscribe_mode.tick_5:
@@ -156,7 +157,7 @@ class GateWebsocketListener(WebsocketListener):
 
             elif channel == "spot.trades":
                 trade_data = packet["result"]
-                symbol = trade_data['currency_pair']
+                symbol = trade_data['currency_pair'].lower().replace('_','')
 
                 transaction: TradeData = self.transactions[symbol]
                 tick: TickData = self.ticks[symbol]

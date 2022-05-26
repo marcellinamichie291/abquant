@@ -203,8 +203,9 @@ class GateAccessor(RestfulAccessor):
         """合约信息查询回报"""
         data = list(filter(lambda x: x['trade_status'] == 'tradable', data))
         for d in data:
+            symbol = d["id"].lower().replace('_','')
             contract: ContractData = ContractData(
-                symbol=d["id"],
+                symbol=symbol,
                 exchange=Exchange.GATEIO,
                 name=d["id"],
                 pricetick=d["precision"],
