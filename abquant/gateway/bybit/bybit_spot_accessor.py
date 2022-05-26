@@ -28,7 +28,7 @@ from . import (
 
 def build_raw_data(data, gateway_name: str, data_type):
     return {
-        'type': 'data_restfull',
+        'type': 'data_restful',
         'gateway_name': gateway_name,
         'data_type': data_type,
         'payload': data

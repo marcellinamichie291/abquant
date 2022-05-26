@@ -1,12 +1,7 @@
-#! /usr/bin/env/Python
-# -*- coding:utf-8 -*-
-"""
-@author: baijy
-@time: 2022/5/11 9:29 AM
-@desc:
-"""
+
 from copy import copy
 from typing import Dict, Iterable, List
+
 from abquant.trader.msg import BarData, OrderData
 from abquant.trader.object import CancelRequest, HistoryRequest, OrderRequest, SubscribeRequest
 from .gate_accessor import GateAccessor

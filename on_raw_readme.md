@@ -24,5 +24,5 @@
 
 
 - **time** -> float:<br>
-当*raw_data*的*type*为*data_restfull*时才包含此字段<br>
+当*raw_data*的*type*为*data_restful*时才包含此字段<br>
 用于记录request请求的耗时
