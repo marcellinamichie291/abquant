@@ -1,11 +1,3 @@
-#! /usr/bin/env/Python
-# -*- coding:utf-8 -*-
-"""
-@author: baijy
-@time: 2022/5/11 9:27 AM
-@desc:
-"""
-
 from datetime import datetime
 from enum import Enum
 from typing import Dict, Set
