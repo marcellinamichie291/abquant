@@ -139,6 +139,7 @@ class SubscribeRequest:
 
     symbol: str
     exchange: Exchange
+    name: str = None
 
     def __post_init__(self):
         """"""

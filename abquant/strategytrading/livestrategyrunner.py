@@ -118,7 +118,7 @@ class LiveStrategyRunner(StrategyRunner, StrategyManager):
             contract: ContractData = self.order_manager.get_contract(ab_symbol)
             if contract:
                 req = SubscribeRequest(
-                    symbol=contract.symbol, exchange=contract.exchange)
+                    symbol=contract.symbol, exchange=contract.exchange, name=contract.name)
                 self.order_manager.get_gateway(
                     contract.gateway_name).subscribe(req)
                 gateway_names.add(contract.gateway_name)

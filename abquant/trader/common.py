@@ -82,6 +82,7 @@ class Exchange(Enum):
     BITSTAMP = "BITSTAMP"
     DYDX = "DYDX"
     FTX = "FTX"
+    RAYDIUNM = "RAYDIUNM"
 
 
 
