@@ -18,6 +18,7 @@ from abquant.trader.object import ContractData
 REST_HOST = "https://api.bybit.com"
 
 # 实盘Websocket API地址
+SPOT_WEBSOCKET_HOST = "wss://stream.bybit.com/spot/quote/ws/v2"
 INVERSE_WEBSOCKET_HOST = "wss://stream.bybit.com/realtime"
 PUBLIC_WEBSOCKET_HOST = "wss://stream.bybit.com/realtime_public"
 PRIVATE_WEBSOCKET_HOST = "wss://stream.bybit.com/realtime_private"
@@ -26,6 +27,7 @@ PRIVATE_WEBSOCKET_HOST = "wss://stream.bybit.com/realtime_private"
 TESTNET_REST_HOST = "https://api-testnet.bybit.com"
 
 # 模拟盘Websocket API地址
+TESTNET_SPOT_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/spot/quote/ws/v2"
 TESTNET_INVERSE_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime"
 TESTNET_PUBLIC_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime_public"
 TESTNET_PRIVATE_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime_private"
@@ -57,6 +59,13 @@ STATUS_BYBIT2AB: Dict[str, Status] = {
     "Cancelled": Status.CANCELLED,
     "Rejected": Status.REJECTED,
 }
+STATUS_BYBIT2AB2: Dict[str, Status] = {
+    "NEW": Status.NOTTRADED,
+    "PARTIALLY_FILLED": Status.PARTTRADED,
+    "FILLED": Status.ALLTRADED,
+    "CANCELED": Status.CANCELLED,
+    "REJECTED": Status.REJECTED,
+}
 
 # 委托类型映射
 ORDER_TYPE_AB2BYBIT: Dict[OrderType, Tuple[str, str]] = {
@@ -66,6 +75,14 @@ ORDER_TYPE_AB2BYBIT: Dict[OrderType, Tuple[str, str]] = {
 
 }
 ORDER_TYPE_BYBIT2AB: Dict[str, OrderType] = {v[0]: k for k, v in ORDER_TYPE_AB2BYBIT.items()}
+
+ORDER_TYPE_AB2BYBIT2: Dict[OrderType, Tuple[str, str]] = {
+    OrderType.LIMIT: ("LIMIT", "GTC"),
+    OrderType.MARKET: ("MARKET","GTC"),
+
+}
+ORDER_TYPE_BYBIT2AB2: Dict[str, OrderType] = {v[0]: k for k, v in ORDER_TYPE_AB2BYBIT2.items()}
+
 
 # 买卖方向映射
 DIRECTION_AB2BYBIT: Dict[Direction, str] = {Direction.LONG: "Buy", Direction.SHORT: "Sell"}
@@ -77,6 +94,12 @@ INTERVAL_AB2BYBIT: Dict[Interval, str] = {
     Interval.HOUR: "60",
     Interval.DAILY: "D",
     Interval.WEEKLY: "W",
+}
+INTERVAL_AB2BYBIT2: Dict[Interval, str] = {
+    Interval.MINUTE: "1m",
+    Interval.HOUR: "1h",
+    Interval.DAILY: "1d",
+    Interval.WEEKLY: "1w",
 }
 TIMEDELTA_MAP: Dict[Interval, timedelta] = {
     Interval.MINUTE: timedelta(minutes=1),
@@ -93,6 +116,9 @@ future_symbol_contract_map: Dict[str, ContractData] = {}
 
 # USDT永续合约类型列表
 ubc_symbol_contract_map: Dict[str, ContractData] = {}
+
+# 现货类型列表
+symbol_contract_map: Dict[str, ContractData] = {}
 
 # 本地委托号缓存集合
 local_orderids: Set[str] = set()

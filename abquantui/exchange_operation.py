@@ -264,6 +264,8 @@ class ExchangeOperation:
                     jres = json.loads(order.reference)
                     if 'msg' in jres:
                         extra = jres.get('msg')
+                    elif 'ret_msg' in jres:
+                        extra = jres.get('ret_msg')
                     elif 'error' in jres:
                         extra = jres.get('error').get('message')
                     else:
