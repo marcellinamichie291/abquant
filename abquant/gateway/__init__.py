@@ -13,3 +13,6 @@ from .bybit.bybit_bbc_gateway import BybitBBCGateway
 from .ftx.ftx_gateway import FtxGateway
 
 from .gate.gate_gateway import GateGateway
+
+from .raydium.raydium_gateway import RaydiumGateway
+
