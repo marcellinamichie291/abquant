@@ -1,3 +1,7 @@
+## 1.2.0
+1. 新增Bybit交易所现货gateway
+1. 新增Gateio交易所现货行情gateway
+
 ## 1.1.8
 1. 修正abquantUI配置更新的格式问题
 1. 修正abquantUI配置重新加载错误
