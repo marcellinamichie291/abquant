@@ -4,7 +4,7 @@ from enum import Enum
 from copy import copy, deepcopy
 from logging import INFO
 import traceback
-from pandas import DataFrame
+from pandas import DataFrame, Series
 import numpy as np
 from typing import DefaultDict, Dict, Iterable, List, Set, Tuple, Union
 from datetime import date, datetime, timedelta
@@ -564,7 +564,9 @@ class ReplayRunner(StrategyRunner):
                     min_periods=1, window=len(df), center=False).max()
             )
             df["drawdown"] = df["balance"] - df["highlevel"]
+            
             df["ddpercent"] = df["drawdown"] / df["highlevel"] * 100
+            df["principal_ddpercent"] = df["drawdown"] / df["balance"][0] * 100
 
             # Calculate statistics value
             start_date = df.index[0]
@@ -576,7 +578,10 @@ class ReplayRunner(StrategyRunner):
 
             end_balance = df["balance"].iloc[-1]
             max_drawdown = df["drawdown"].min()
+            highlevel_idx = Series(np.append(np.where(df["drawdown"] == 0)[0], len(df)))
+            longest_drawdown_duration = (highlevel_idx - highlevel_idx.shift(1)).fillna(0).max()
             max_ddpercent = df["ddpercent"].min()
+            principal_max_ddpercent = df["principal_ddpercent"].min()
             max_drawdown_end = df["drawdown"].idxmin()
 
             if isinstance(max_drawdown_end, date):
@@ -632,7 +637,9 @@ class ReplayRunner(StrategyRunner):
             self.output(f"年化收益:\t{annual_return:,.2f}%")
             self.output(f"最大回撤: \t{max_drawdown:,.2f}")
             self.output(f"百分比最大回撤: {max_ddpercent:,.2f}%")
-            self.output(f"最长回撤天数: \t{max_drawdown_duration}")
+            self.output(f"相对本金百分比最大回撤: {principal_max_ddpercent:,.2f}%")
+            self.output(f"最大回撤天数: \t{max_drawdown_duration}")
+            self.output(f"最长回撤天数: \t{longest_drawdown_duration:,.2f}")
 
             self.output(f"总盈亏:\t{total_net_pnl:,.2f}")
             self.output(f"总手续费:\t{total_commission:,.2f}")
@@ -662,6 +669,7 @@ class ReplayRunner(StrategyRunner):
             "max_drawdown": max_drawdown,
             "max_ddpercent": max_ddpercent,
             "max_drawdown_duration": max_drawdown_duration,
+            "longest_drawdown_duration": longest_drawdown_duration,
             "total_net_pnl": total_net_pnl,
             "daily_net_pnl": daily_net_pnl,
             "total_commission": total_commission,
