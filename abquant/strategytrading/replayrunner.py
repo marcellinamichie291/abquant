@@ -547,6 +547,8 @@ class ReplayRunner(StrategyRunner):
             total_trade_count = 0
             daily_trade_count = 0
             total_return = 0
+            longest_drawdown_duration = 0
+            principal_max_ddpercent = 0
             annual_return = 0
             daily_return = 0
             return_std = 0
